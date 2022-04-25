@@ -3,10 +3,16 @@ import path from "path";
 import cookieParser from "cookie-parser";
 import logger from "morgan";
 import dotenv from "dotenv";
+import helmet from "helmet";
 dotenv.config();
 
 // 라우터
 import indexRouter from "./routes/index.js";
+import authRouter from "./routes/auth.js";
+import userRouter from "./routes/user.js";
+import faqRouter from "./routes/faq.js";
+import noticeRouter from "./routes/notice.js";
+import advertiseRouter from "./routes/advertise.js";
 
 const app = express();
 const __dirname = path.resolve();
@@ -22,8 +28,16 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
+// 보안설정(Helmet)
+app.use(helmet());
+
 // APIs
 app.use("/", indexRouter);
+app.use("/auth", authRouter);
+app.use("/users", userRouter);
+app.use("/faq", faqRouter);
+app.use("/notice", noticeRouter);
+app.use("/advertisement", advertiseRouter);
 
 // 404
 app.use(function (req, res, next) {
