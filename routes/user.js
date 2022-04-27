@@ -40,4 +40,15 @@ router.patch("/penalty", userController.updatePenalty);
 
 // 페널티 삭제
 router.delete("/penalty", userController.deletePenalty);
+
+/**
+ * QnA : 문의 답변
+ */
+
+// 전체 문의 리스트 가져오기
+router.get("/qna/list", userController.getQNAList);
+
+// 사용자 별 문의 답변 목록 가져오기
+router.get("/qna/user", userController.getUserQNA);
+
 export default router;
