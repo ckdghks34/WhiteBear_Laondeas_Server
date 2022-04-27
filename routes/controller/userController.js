@@ -4,31 +4,33 @@ import pool from "../../config/dbpool.js";
 async function getUser(req, res, next) {
   const { user_id } = req.query;
 
-  if (user_id) {
-    const sql = `select * from user where id = ?`;
-    pool.query(sql, user_id, (err, results) => {
-      if (err) console.log(err);
-
-      // 아이디가 존재하지 않으면
-      if (results.length === 0) {
-        res.status(401).json({
-          message: "해당 아이디가 없습니다.",
-        });
-      }
-      // 아이디가 존재하면
-      else {
-        let user = results[0];
-        user.password = undefined;
-        res.status(200).json({
-          message: "아이디 조회 성공",
-          user: user,
-        });
-      }
+  if (user_id === undefined) {
+    res.status(401).json({
+      message: "유저 정보 조회 실패 , 필수 데이터가 없습니다.",
     });
   } else {
-    res.status(401).json({
-      message: "아이디를 입력해주세요.",
-    });
+    try {
+      const sql = `select * from user where id = ?`;
+
+      const results = await pool.query(sql, user_id);
+
+      if (results[0].length == 0) {
+        res.status(401).json({
+          message: "존재하지 않는 유저입니다.",
+        });
+      } else {
+        res.status(200).json({
+          message: "유저 정보 조회 성공",
+          user: results[0][0],
+        });
+      }
+    } catch (err) {
+      console.log(err);
+
+      res.status(400).json({
+        message: "유저 정보 조회 실패",
+      });
+    }
   }
 }
 
@@ -36,25 +38,30 @@ async function getUser(req, res, next) {
 async function updateUser(req, res, next) {
   const { user_id, user_name, user_password, user_email } = req.body;
 
-  if (user_id) {
-    const sql = `update user set name = ?, password = ?, email = ? where id = ?`;
-    pool.query(sql, [user_name, user_password, user_email, user_id], (err, result) => {
-      if (err) console.log(err);
-
-      if (result) {
-        res.status(200).json({
-          message: "회원정보 수정 성공",
-        });
-      } else {
-        res.status(401).json({
-          message: "회원정보 수정 실패",
-        });
-      }
+  if (
+    user_id === undefined ||
+    user_name === undefined ||
+    user_password === undefined ||
+    user_email === undefined
+  ) {
+    res.status(401).json({
+      message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
-    res.status(401).json({
-      message: "아이디를 입력해주세요.",
-    });
+    try {
+      const sql = `update user set name = ?, password = ?, email = ? where id = ?`;
+      await pool.pool(sql, [user_name, user_password, user_email, user_id]);
+
+      res.status(200).json({
+        message: "회원정보 수정 성공",
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(400).json({
+        message: "회원정보 수정 실패",
+      });
+    }
   }
 }
 
@@ -93,21 +100,21 @@ async function getPenaltyList(req, res, next) {
       message: "잘못된 접근입니다.",
     });
   } else {
-    const sql = `select * from penalty where user_seq = ?`;
-    pool.query(sql, user_seq, (err, results) => {
-      if (err) console.log(err);
+    try {
+      const sql = `select * from penalty where user_seq = ?`;
+      const results = await pool.query(sql, user_seq);
 
-      if (results) {
-        res.status(200).json({
-          message: "페널티 목록 조회 성공",
-          penaltyList: results,
-        });
-      } else {
-        res.status(401).json({
-          message: "페널티 목록 조회 실패",
-        });
-      }
-    });
+      res.status(200).json({
+        message: "페널티 목록 조회 성공",
+        penalty: results[0],
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(400).json({
+        message: "페널티 목록 조회 실패",
+      });
+    }
   }
 }
 
@@ -126,13 +133,13 @@ async function createAddressBook(req, res, next) {
 
   if (user_seq === undefined || address_seq === undefined) {
     res.status(401).json({
-      message: "잘못된 접근입니다.",
+      message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
-    const sql = `insert into address_book (user_seq, address_seq, name, receiver, address, phonenumber, is_default, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-    pool.query(
-      sql,
-      [
+    try {
+      const sql = `insert into address_book (user_seq, address_seq, name, receiver, address, phonenumber, is_default, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+      await pool.execute(sql, [
         user_seq,
         address_seq,
         name,
@@ -144,21 +151,18 @@ async function createAddressBook(req, res, next) {
         new Date(),
         user_seq,
         new Date(),
-      ],
-      (err, result) => {
-        if (err) console.log(err);
+      ]);
 
-        if (result) {
-          res.status(200).json({
-            message: "주소록 등록 성공",
-          });
-        } else {
-          res.status(401).json({
-            message: "주소록 등록 실패",
-          });
-        }
-      }
-    );
+      res.status(200).json({
+        message: "주소록 등록 성공",
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(400).json({
+        message: "주소록 등록 실패",
+      });
+    }
   }
 }
 
@@ -168,24 +172,24 @@ async function deleteAddressBook(req, res, next) {
 
   if (user_seq === undefined || address_seq === undefined) {
     res.status(401).json({
-      message: "잘못된 접근입니다.",
+      message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
-    const sql = `delete from user_address_book where user_seq = ? and address_seq = ?`;
+    try {
+      const sql = `delete from user_address_book where user_seq = ? and address_seq = ?`;
 
-    pool.query(sql, [user_seq, address_seq], (err, result) => {
-      if (err) console.log(err);
+      await pool.execute(sql, [user_seq, address_seq]);
 
-      if (result) {
-        res.status(200).json({
-          message: "주소록 삭제 성공",
-        });
-      } else {
-        res.status(401).json({
-          message: "주소록 삭제 실패",
-        });
-      }
-    });
+      res.status(200).json({
+        message: "주소록 삭제 성공",
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(400).json({
+        message: "주소록 삭제 실패",
+      });
+    }
   }
 }
 
@@ -195,14 +199,12 @@ async function updateAddressBook(req, res, next) {
 
   if (user_seq === undefined || address_seq === undefined) {
     res.status(401).json({
-      message: "유저 또는 주소록 정보가 없습니다.",
+      message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
-    const sql = `update user_address_book set name = ?, receiver = ?, address = ?, phonenumber = ?, is_default = ?, last_register_id = ?, last_register_date = ? where user_seq = ? and address_seq = ?`;
-
-    pool.query(
-      sql,
-      [
+    try {
+      const sql = `update user_address_book set name = ?, receiver = ?, address = ?, phonenumber = ?, is_default = ?, last_register_id = ?, last_register_date = ? where user_seq = ? and address_seq = ?`;
+      await pool.execute(sql, [
         name,
         receiver,
         address,
@@ -212,21 +214,18 @@ async function updateAddressBook(req, res, next) {
         new Date(),
         user_seq,
         address_seq,
-      ],
-      (err, result) => {
-        if (err) console.log(err);
+      ]);
 
-        if (result) {
-          res.status(200).json({
-            message: "주소록 수정 성공",
-          });
-        } else {
-          res.status(401).json({
-            message: "주소록 수정 실패",
-          });
-        }
-      }
-    );
+      res.status(200).json({
+        message: "주소록 수정 성공",
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(400).json({
+        message: "주소록 수정 실패",
+      });
+    }
   }
 }
 
@@ -236,25 +235,24 @@ async function getAddressBook(req, res, next) {
 
   if (user_seq === undefined) {
     res.status(401).json({
-      message: "유저 정보를 입력해주세요.",
+      message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
-    const sql = `select * from user_address_book where user_seq = ?`;
+    try {
+      const sql = `select * from user_address_book where user_seq = ?`;
+      const results = await pool.query(sql, user_seq);
 
-    pool.query(sql, user_seq, (err, results) => {
-      if (err) console.log(err);
+      res.status(200).json({
+        message: "주소록 조회 성공",
+        addressBook: results[0],
+      });
+    } catch (err) {
+      console.log(err);
 
-      if (results.length === 0) {
-        res.status(401).json({
-          message: "주소록이 없습니다.",
-        });
-      } else {
-        res.status(200).json({
-          message: "주소록 조회 성공",
-          addressBook: results,
-        });
-      }
-    });
+      res.status(400).json({
+        message: "주소록 조회 실패",
+      });
+    }
   }
 }
 
