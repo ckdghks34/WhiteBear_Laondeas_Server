@@ -1,12 +1,9 @@
-import mysql from "mysql";
-import dbconfig from "../../config/dbconfig.js";
-
-const conn = mysql.createConnection(dbconfig);
+import pool from "../../config/dbpool.js";
 
 // 공지사항 가져오기
 async function getNotice(req, res, next) {
   const sql = "select * from notice";
-  conn.query(sql, (err, results) => {
+  pool.query(sql, (err, results) => {
     if (err) console.log(err);
 
     res.status(200).json({
@@ -23,7 +20,7 @@ async function createNotice(req, res, next) {
     const sql =
       "insert into notice (author ,title, content,view_count, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?)";
 
-    conn.query(
+    pool.query(
       sql,
       [user_seq, title, content, 0, user_seq, new Date(), user_seq, new Date()],
       (err, result) => {
@@ -54,7 +51,7 @@ async function updateNotice(req, res, next) {
     const sql =
       "update notice set title = ?, content = ?, last_register_id = ?, last_register_date = ? where notice_seq = ?";
 
-    conn.query(sql, [title, content, user_seq, new Date(), notice_seq], (err, result) => {
+    pool.query(sql, [title, content, user_seq, new Date(), notice_seq], (err, result) => {
       if (err) console.log(err);
 
       if (result) {
@@ -81,7 +78,7 @@ async function deleteNotice(req, res, next) {
   if (notice_seq) {
     const sql = "delete from notice where notice_seq = ?";
 
-    conn.query(sql, [notice_seq], (err, result) => {
+    pool.query(sql, [notice_seq], (err, result) => {
       if (err) console.log(err);
 
       if (result) {
@@ -108,7 +105,7 @@ async function increaseViewCount(req, res, next) {
   if (notice_seq) {
     const sql = "update notice set view_count = view_count + 1 where notice_seq = ?";
 
-    conn.query(sql, [notice_seq], (err, result) => {
+    pool.query(sql, [notice_seq], (err, result) => {
       if (err) console.log(err);
 
       if (result) {
@@ -135,7 +132,7 @@ async function getNoticeDetail(req, res, next) {
   if (notice_seq) {
     const sql = "select * from notice where notice_seq = ?";
 
-    conn.query(sql, [notice_seq], (err, result) => {
+    pool.query(sql, [notice_seq], (err, result) => {
       if (err) console.log(err);
 
       if (result) {

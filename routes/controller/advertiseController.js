@@ -1,7 +1,4 @@
-import mysql from "mysql";
-import dbconfig from "../../config/dbconfig.js";
-
-const conn = mysql.createConnection(dbconfig);
+import pool from "../../config/dbpool.js";
 
 // 광고 신청 등록
 async function createAdvertise(req, res, next) {
@@ -15,7 +12,7 @@ async function createAdvertise(req, res, next) {
     const sql =
       "Insert into advertisement (company_name, contact, area, isagency, agreement_info, first_register_date, last_register_date) values (?, ?, ?, ?, ?, ?, ?)";
 
-    conn.query(
+    pool.query(
       sql,
       [company_name, contact, area, isagency, agreement_info, new Date(), new Date()],
       (err, result) => {
@@ -42,7 +39,7 @@ async function createAdvertise(req, res, next) {
 // 광고 신청 목록 가져오기
 async function getAdvertiseList(req, res, next) {
   const sql = "Select * from advertisement";
-  conn.query(sql, (err, result) => {
+  pool.query(sql, (err, result) => {
     if (err) console.log(err);
 
     if (result) {

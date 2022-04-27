@@ -1,12 +1,9 @@
-import mysql from "mysql";
-import dbconfig from "../../config/dbconfig.js";
-
-const conn = mysql.createConnection(dbconfig);
+import pool from "../../config/dbpool.js";
 
 // faq 불러오기
 async function getFaq(req, res, next) {
   const sql = "select * from faq";
-  conn.query(sql, (err, results) => {
+  pool.query(sql, (err, results) => {
     if (err) console.log(err);
 
     res.status(200).json({
@@ -23,7 +20,7 @@ async function createFaq(req, res, next) {
   if (category && title && content) {
     const sql = `insert into faq (category, title, content, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?,?,?,?,?)`;
 
-    conn.query(
+    pool.query(
       sql,
       [category, title, content, user_seq, new Date(), user_seq, new Date()],
       (err, result) => {
@@ -53,7 +50,7 @@ async function updateFaq(req, res, next) {
   if (category && title && content) {
     const sql = `update faq set category = ?, title = ?, content = ?, last_register_id = ?, last_register_date = ? where faq_seq = ?`;
 
-    conn.query(sql, [category, title, content, user_seq, new Date(), faq_seq], (err, result) => {
+    pool.query(sql, [category, title, content, user_seq, new Date(), faq_seq], (err, result) => {
       if (err) console.log(err);
 
       if (result) {
@@ -80,7 +77,7 @@ async function deleteFaq(req, res, next) {
   if (faq_seq) {
     const sql = `delete from faq where faq_seq = ?`;
 
-    conn.query(sql, [faq_seq], (err, result) => {
+    pool.query(sql, [faq_seq], (err, result) => {
       if (err) console.log(err);
 
       if (result) {
