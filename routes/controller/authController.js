@@ -1,9 +1,4 @@
-import mysql from "mysql";
-import dotenv from "dotenv";
-import bcrypt from "bcrypt";
-import dbconfig from "../../config/dbconfig.js";
-
-const conn = mysql.createConnection(dbconfig);
+import pool from "../../config/dbpool.js";
 
 // 회원가입
 async function signup(req, res, next) {
@@ -26,7 +21,7 @@ async function signup(req, res, next) {
   let now = new Date().toISOString().replace(/T/, " ").replace(/\..+/, "");
   user_password = bcrypt.hashSync(user_password, 10);
   const sql = `Insert into user (id, password, name, nickname, email, phonenumber, agreement_info, agreement_email, agreement_mms, is_advertiser,first_register_date,last_register_date,is_admin) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)`;
-  conn.query(
+  pool.query(
     sql,
     [
       user_id,
@@ -66,7 +61,7 @@ async function login(req, res, next) {
   if (user_id && user_password) {
     console.log(user_id, user_password);
     const sql = `SELECT * FROM user WHERE id = ?`;
-    conn.query(sql, user_id, (err, results) => {
+    pool.query(sql, user_id, (err, results) => {
       // 에러 발생 시  error 출력
       if (err) {
         console.log(err);
@@ -118,7 +113,7 @@ async function deleteUser(req, res, next) {
 
   if (user_id) {
     const sql = `DELETE FROM user WHERE id = ?`;
-    conn.query(sql, user_id, (err, result) => {
+    pool.query(sql, user_id, (err, result) => {
       if (err) {
         console.log(err);
       }
@@ -142,7 +137,7 @@ async function checkID(req, res, next) {
 
   if (user_id) {
     const sql = `SELECT * FROM user WHERE id = ?`;
-    conn.query(sql, user_id, (err, results) => {
+    pool.query(sql, user_id, (err, results) => {
       if (err) {
         console.log(err);
       }
