@@ -135,7 +135,7 @@ async function updateAdditionalInfo(req, res, next) {
 }
 
 // URL정보 수정
-async function updateURLInfo(req, res, next) {
+async function updateSNSInfo(req, res, next) {
   const { user_seq, blog, instagram, influencer, youtube } = req.body;
 
   if (
@@ -196,6 +196,15 @@ async function updatePassword(req, res, next) {
   }
 }
 
+// 프로필 사진 등록
+async function createProfile(req, res, next) {}
+
+// 프로필 사진 가져오기
+async function getProfile(req, res, next) {}
+
+// 프로필 사진 바꾸기
+async function updateProfile(req, res, next) {}
+
 // 관심 캠페인 가져오기
 async function getInterestCampaign(req, res, next) {
   const { user_seq } = req.body;
@@ -225,6 +234,13 @@ async function getInterestCampaign(req, res, next) {
     }
   }
 }
+
+// 관심 캠페인 등록
+async function createInterestCampaign(req, res, next) {}
+
+// 관심 캠페인 해제
+async function deleteInterestCampaign(req, res, next) {}
+
 // 나의 캠페인 가져오기
 async function getMyCampaign(req, res, next) {
   const { user_seq } = req.body;
@@ -284,6 +300,7 @@ async function getEndCampaign(req, res, next) {
     }
   }
 }
+
 // 출석체크
 async function attendanceCheck(req, res, next) {
   const { user_seq, content } = req.body;
@@ -377,6 +394,34 @@ async function accrual(req, res, next) {
   }
 }
 
+// 유저별 포인트 적립내역 가져오기
+async function getUserAccrualList(req, res, next) {
+  const { user_seq } = req.query;
+
+  if (user_seq === undefined) {
+    res.status(400).json({
+      message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
+    });
+  } else {
+    try {
+      const sql = `select accrual_seq,accrual_point,accrual_point_date,first_register_id,first_register_date from accrual_detail where user_seq = ?`;
+
+      const results = await pool.query(sql, user_seq);
+
+      res.status(200).json({
+        message: "적립 내역 조회 성공",
+        accrualList: results[0],
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(400).json({
+        message: "적립 내역 조회 실패",
+      });
+    }
+  }
+}
+
 // 출금 등록
 async function withdrawal(req, res, next) {
   const { user_seq, withdrawal_point, withdrawal_date, admin } = req.body;
@@ -447,25 +492,6 @@ async function withdrawalRequest(req, res, next) {
   }
 }
 
-// 전체 유저 출금 내역 가져오기
-async function getAllUserWithdrawalRequestList(req, res, next) {
-  try {
-    const sql = `select * from withdrawal_request`;
-    const results = await pool.query(sql);
-
-    res.status(200).json({
-      message: "전체 유저 출금 내역 가져오기 성공",
-      withdrawalRequestList: results[0],
-    });
-  } catch (err) {
-    console.log(err);
-
-    res.status(400).json({
-      message: "전체 유저 출금 내역 가져오기 실패",
-    });
-  }
-}
-
 // 유저별 출금 신청 내역 가져오기
 async function getWithdrawalRequestList(req, res, next) {
   const { user_seq } = req.body;
@@ -493,6 +519,25 @@ async function getWithdrawalRequestList(req, res, next) {
   }
 }
 
+// 전체 유저 출금 신청 내역 가져오기
+async function getAllUserWithdrawalRequestList(req, res, next) {
+  try {
+    const sql = `select * from withdrawal_request`;
+    const results = await pool.query(sql);
+
+    res.status(200).json({
+      message: "전체 유저 출금 내역 가져오기 성공",
+      withdrawalRequestList: results[0],
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(400).json({
+      message: "전체 유저 출금 내역 가져오기 실패",
+    });
+  }
+}
+
 // 전체 유저 포인트 적립내역 가져오기
 async function getAllUserAccrualList(req, res, next) {
   try {
@@ -513,7 +558,7 @@ async function getAllUserAccrualList(req, res, next) {
   }
 }
 
-// 전체 유저 포인트 출금내역 가져오기
+// 전체 유저  출금내역 가져오기
 async function getAllUserWithdrawalList(req, res, next) {
   try {
     const sql = `select withdrawal_seq,withdrawal_point,withdrawal_point_date,first_register_id,first_register_date from withdrawal_detail`;
@@ -533,35 +578,7 @@ async function getAllUserWithdrawalList(req, res, next) {
   }
 }
 
-// 유저별 포인트 적립내역 가져오기
-async function getUserAccrualList(req, res, next) {
-  const { user_seq } = req.query;
-
-  if (user_seq === undefined) {
-    res.status(400).json({
-      message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
-    });
-  } else {
-    try {
-      const sql = `select accrual_seq,accrual_point,accrual_point_date,first_register_id,first_register_date from accrual_detail where user_seq = ?`;
-
-      const results = await pool.query(sql, user_seq);
-
-      res.status(200).json({
-        message: "적립 내역 조회 성공",
-        accrualList: results[0],
-      });
-    } catch (err) {
-      console.log(err);
-
-      res.status(400).json({
-        message: "적립 내역 조회 실패",
-      });
-    }
-  }
-}
-
-// 유저별 포인트 출금내역 가져오기
+// 유저별 출금내역 가져오기
 async function getUserWithdrawalList(req, res, next) {
   const { user_seq } = req.query;
 
@@ -586,6 +603,26 @@ async function getUserWithdrawalList(req, res, next) {
         message: "출금 내역 조회 실패",
       });
     }
+  }
+}
+
+// 전체 메세지 목록 보기
+async function getAllMessageList(req, res, next) {
+  try {
+    const sql = `select * from message`;
+
+    const results = await pool.query(sql);
+
+    res.status(200).json({
+      message: "전체 메세지 목록 보기 성공",
+      messageList: results[0],
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(400).json({
+      message: "전체 메시지 조회 실패",
+    });
   }
 }
 
@@ -980,6 +1017,32 @@ async function getUserQNA(req, res, next) {
         message: "문의 정보 조회 실패",
       });
     }
+  }
+}
+
+// 전체 페널티 목록 가져오기
+async function getAllPenaltyList(req, res, next) {
+  try {
+    const sql = `select * from penalty`;
+
+    const results = await pool.query(sql);
+
+    if (results[0].length == 0) {
+      res.status(200).json({
+        message: "등록된 페널티가 없습니다.",
+      });
+    } else {
+      res.status(200).json({
+        message: "페널티 목록 조회 성공",
+        penalty_list: results[0],
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(400).json({
+      message: "페널티 목록 조회 실패",
+    });
   }
 }
 
@@ -1390,11 +1453,18 @@ export {
   getAllUserWithdrawalList,
   getEndCampaign,
   updateAdditionalInfo,
-  updateURLInfo,
+  updateSNSInfo,
   updatePassword,
   createPremiumRequest,
   getPremiumRequestList,
   getPremiumUserList,
   createPremium,
   deletePremium,
+  createProfile,
+  getProfile,
+  updateProfile,
+  createInterestCampaign,
+  deleteInterestCampaign,
+  getAllMessageList,
+  getAllPenaltyList,
 };
