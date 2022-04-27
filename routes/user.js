@@ -3,11 +3,127 @@ import * as userController from "./controller/userController.js";
 
 const router = express.Router();
 
+/**
+ * 회원 기능
+ */
+
 // 특정 아이디 조회하기
 router.get("/", userController.getUser);
 
-// 회원 정보 수정
+// 기본회원정보 수정 (이름, 성별, 생년월일, 닉네임, 이메일,전화번호)
 router.patch("/", userController.updateUser);
+
+// 부가 정보 수정(관심사, 지역, 채널)
+router.patch("/additional", userController.updateAdditionalInfo);
+
+// SNS 정보 수정
+router.patch("/sns", userController.updateSNSInfo);
+
+// 비밀번호 수정
+router.patch("/password", userController.updatePassword);
+
+// 프로필 사진 등록
+router.post("/profile", userController.createProfile);
+
+// 프로필 사진 가져오기
+router.get("/profile", userController.getProfile);
+
+// 프로필 사진 바꾸기
+router.patch("/profile", userController.updateProfile);
+
+// 관심 캠페인 가져오기
+router.get("/interest-campaign", userController.getInterestCampaign);
+
+// 관심 캠페인 등록
+router.post("/interest-campaign", userController.createInterestCampaign);
+
+// 관심 캠페인 해제
+router.delete("/interest-campaign", userController.deleteInterestCampaign);
+
+// 나의 캠페인 가져오기
+router.get("/my-campaign", userController.getMyCampaign);
+
+// 종료된 캠페인 가져오기
+router.get("/end-campaign", userController.getEndCampaign);
+
+/**
+ * 프리미엄 기능
+ */
+
+// 프리미엄 신청
+router.post("/premium/application", userController.createPremiumRequest);
+
+// 프리미엄 신청 목록
+router.get("/premium/application", userController.getPremiumRequestList);
+
+// 프리미엄 회원 목록 가져오기
+router.get("/premium/user", userController.getPremiumUserList);
+
+// 프리미엄 회원 등록
+router.post("/premium/user", userController.createPremium);
+
+// 프리미엄 회원 해제
+router.patch("/premium/user", userController.deletePremium);
+
+/**
+ * 출석 체크
+ */
+
+// 출석체크
+router.post("/attendance", userController.attendanceCheck);
+
+// 출석체크 리스트 가져오기
+router.get("/attendance", userController.getAttendanceList);
+
+/**
+ * 포인트 & 출금
+ */
+
+// 포인트 적립
+router.post("/point/accrual", userController.accrual);
+
+// 유저별 포인트 적립내역 가져오기
+router.get("/point/accrual/users", userController.getUserAccrualList);
+
+// 전체 유저 적립 내역 가져오기
+router.get("/point/accrual", userController.getAllUserAccrualList);
+
+// 출금 신청
+router.post("/point/withdrawal", userController.withdrawalRequest);
+
+// 유저별 출금 신청 내역 가져오기
+router.get("/point/withdrawal/users", userController.getWithdrawalRequestList);
+
+// 전체 유저 출금 신청 내역 가져오기
+router.get("/point/withdrawal", userController.getAllUserWithdrawalRequestList);
+
+// 출금 등록
+router.post("/withdrawal", userController.withdrawal);
+
+// 유저별 출금 내역 가져오기
+router.get("/withdrawal/users", userController.getUserWithdrawalList);
+
+// 전체 유저 출금 내역 가져오기
+router.get("/withdrawal", userController.getAllUserWithdrawalList);
+
+/**
+ * 메세지
+ */
+
+// 메세지 보내기
+router.post("/message", userController.sendMessage);
+
+// 메세지 확인
+router.patch("/message", userController.readMessage);
+
+// 유저 메세지 목록 보기
+router.get("/message", userController.getUserMessageList);
+
+// 전체 메세지 목록 보기
+router.get("/message/all", userController.getAllMessageList);
+
+// 유저 읽지않은 메세지 갯수
+router.get("/message/unread", userController.getUnreadMessageCount);
 
 /**
  * 유저 주소록
@@ -29,7 +145,10 @@ router.patch("/address", userController.updateAddressBook);
  * 유저 페널티
  */
 
-// 페널티 조회
+// 전체 페널티 조회
+router.get("/penalty/all", userController.getAllPenaltyList);
+
+// 유저 페널티 조회
 router.get("/penalty", userController.getPenaltyList);
 
 // 페널티 등록
@@ -45,8 +164,23 @@ router.delete("/penalty", userController.deletePenalty);
  * QnA : 문의 답변
  */
 
-// 전체 문의 리스트 가져오기
+// 문의 등록
+router.post("/qna", userController.createQuestion);
+
+// 답변 등록
+router.post("/qna/answer", userController.createAnswer);
+
+// 문의 수정
+router.patch("/qna", userController.updateQuestion);
+
+// 답변 수정
+router.patch("/qna/answer", userController.updateAnswer);
+
+// 전체 문의 답변 리스트 가져오기
 router.get("/qna/list", userController.getQNAList);
+
+// 특정 문의 답변 가져오기
+router.get("/qna", userController.getQNA);
 
 // 사용자 별 문의 답변 목록 가져오기
 router.get("/qna/user", userController.getUserQNA);
