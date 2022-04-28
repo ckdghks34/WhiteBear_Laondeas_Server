@@ -6,8 +6,10 @@ const router = express.Router();
 /**
  * 회원 기능
  */
+// 전체 회원 조회
+router.get("/all", userController.getAllUser);
 
-// 특정 아이디 조회하기
+// 특정 회원 조회하기
 router.get("/", userController.getUser);
 
 // 기본회원정보 수정 (이름, 성별, 생년월일, 닉네임, 이메일,전화번호)
@@ -69,7 +71,7 @@ router.patch("/premium/user", userController.deletePremium);
  * 출석 체크
  */
 
-// 출석체크
+// 출석체크 등록
 router.post("/attendance", userController.attendanceCheck);
 
 // 출석체크 리스트 가져오기
@@ -80,10 +82,11 @@ router.get("/attendance", userController.getAttendanceList);
  */
 
 // 포인트 적립
+// 수정 필요
 router.post("/point/accrual", userController.accrual);
 
 // 유저별 포인트 적립내역 가져오기
-router.get("/point/accrual/users", userController.getUserAccrualList);
+router.get("/point/accrual/user", userController.getUserAccrualList);
 
 // 전체 유저 적립 내역 가져오기
 router.get("/point/accrual", userController.getAllUserAccrualList);
@@ -92,7 +95,7 @@ router.get("/point/accrual", userController.getAllUserAccrualList);
 router.post("/point/withdrawal", userController.withdrawalRequest);
 
 // 유저별 출금 신청 내역 가져오기
-router.get("/point/withdrawal/users", userController.getWithdrawalRequestList);
+router.get("/point/withdrawal/user", userController.getWithdrawalRequestList);
 
 // 전체 유저 출금 신청 내역 가져오기
 router.get("/point/withdrawal", userController.getAllUserWithdrawalRequestList);
@@ -151,6 +154,9 @@ router.get("/penalty/all", userController.getAllPenaltyList);
 // 유저 페널티 조회
 router.get("/penalty", userController.getPenaltyList);
 
+// 진행 중인 페널티 목록
+router.get("/penalty-proceeding", userController.getPenaltyProceedingList);
+
 // 페널티 등록
 router.post("/penalty", userController.createPenalty);
 
@@ -182,7 +188,7 @@ router.get("/qna/list", userController.getQNAList);
 // 특정 문의 답변 가져오기
 router.get("/qna", userController.getQNA);
 
-// 사용자 별 문의 답변 목록 가져오기
+// 유저별 문의 답변 목록 가져오기
 router.get("/qna/user", userController.getUserQNA);
 
 export default router;

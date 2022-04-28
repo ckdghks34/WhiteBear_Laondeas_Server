@@ -3,25 +3,50 @@ import dotenv from "dotenv";
 import pool from "../../config/dbpool.js";
 dotenv.config();
 
-// 특정 아이디 조회하기
-async function getUser(req, res, next) {
-  const { user_id } = req.query;
+// 전체 유저 조회하기
+async function getAllUser(req, res, next) {
+  try {
+    const sql = `select * from user`;
 
-  if (user_id === undefined) {
+    const results = await pool.query(sql);
+
+    for (let i = 0; i < results[0].length; i++) {
+      results[0][i].password = undefined;
+    }
+
+    res.status(200).json({
+      message: "전체 유저 조회 성공",
+      users: results[0],
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(400).json({
+      message: "유저 정보 조회 실패",
+    });
+  }
+}
+
+// 특정 유저 조회하기
+async function getUser(req, res, next) {
+  const { user_seq } = req.query;
+
+  if (user_seq === undefined) {
     res.status(401).json({
       message: "유저 정보 조회 실패 , 필수 데이터가 없습니다.",
     });
   } else {
     try {
-      const sql = `select * from user where id = ?`;
+      const sql = `select * from user where user_seq = ?`;
 
-      const results = await pool.query(sql, user_id);
+      const results = await pool.query(sql, user_seq);
 
       if (results[0].length == 0) {
         res.status(401).json({
           message: "존재하지 않는 유저입니다.",
         });
       } else {
+        results[0][0].password = undefined;
         res.status(200).json({
           message: "유저 정보 조회 성공",
           user: results[0][0],
@@ -358,28 +383,19 @@ async function getAttendanceList(req, res, next) {
 
 // 포인트 적립
 async function accrual(req, res, next) {
-  const { user_seq, accrual_point, accrual_point_date, admin } = req.body;
+  const { user_seq, accrual_point, admin } = req.body;
 
-  if (
-    user_seq === undefined ||
-    accrual_point === undefined ||
-    accrual_point_date === undefined ||
-    admin === undefined
-  ) {
+  if (user_seq === undefined || accrual_point === undefined || admin === undefined) {
     res.status(401).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
     try {
       const sql = `insert into accrual_detail(user_seq,accrual_point,accrual_point_date, first_register_id, first_register_date) values(?,?,?,?,?)`;
+      const point_accrual_sql = `update user set point = point + ? where user_seq = ?`;
 
-      await pool.execute(sql, [
-        user_seq,
-        accrual_point,
-        accrual_point_date,
-        admin,
-        accrual_point_date,
-      ]);
+      await pool.execute(sql, [user_seq, accrual_point, new Date(), admin, new Date()]);
+      await pool.execute(point_accrual_sql, [accrual_point, user_seq]);
 
       res.status(200).json({
         message: "포인트 적립 성공",
@@ -404,7 +420,8 @@ async function getUserAccrualList(req, res, next) {
     });
   } else {
     try {
-      const sql = `select accrual_seq,accrual_point,accrual_point_date,first_register_id,first_register_date from accrual_detail where user_seq = ?`;
+      const sql = `select accrual_seq,u.user_seq,u.name,u.id, accrual_point,accrual_point_date,ad.first_register_id, ad.first_register_date 
+      from accrual_detail as ad join user as u on ad.user_seq = u.user_seq where ad.user_seq = ?`;
 
       const results = await pool.query(sql, user_seq);
 
@@ -424,28 +441,28 @@ async function getUserAccrualList(req, res, next) {
 
 // 출금 등록
 async function withdrawal(req, res, next) {
-  const { user_seq, withdrawal_point, withdrawal_date, admin } = req.body;
+  const { user_seq, withdrawal_point, admin } = req.body;
 
-  if (
-    user_seq === undefined ||
-    withdrawal_point === undefined ||
-    withdrawal_date === undefined ||
-    admin === undefined
-  ) {
+  if (user_seq === undefined || withdrawal_point === undefined || admin === undefined) {
     res.status(401).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
     try {
-      const sql = `insert into withdrawal_detail(user_seq,withdrawal_amount,withdrawal_date, first_register_id, first_register_date) values(?,?,?,?,?)`;
+      const sql = `insert into withdrawal_detail(user_seq,withdrawal_amount,withdrawal_date, first_register_id, first_register_date,last_register_id,last_register_date) values(?,?,?,?,?,?,?)`;
+      const point_modify_sql = `update user set point = point - ? where user_seq = ? and point >= ?`;
 
       await pool.execute(sql, [
         user_seq,
         withdrawal_point,
-        withdrawal_date,
+        new Date(),
         admin,
-        withdrawal_date,
+        new Date(),
+        admin,
+        new Date(),
       ]);
+
+      await pool.execute(point_modify_sql, [withdrawal_point, user_seq, withdrawal_point]);
 
       res.status(200).json({
         message: "출금 신청 성공",
@@ -469,14 +486,15 @@ async function withdrawalRequest(req, res, next) {
     });
   } else {
     try {
-      const sql = `insert into withdrawal_request(user_seq,withdrawal_amount,withdrawal_date, first_register_id, first_register_date) values(?,?,?,?,?)`;
+      const sql = `insert into withdrawal_request(user_seq,withdrawal_point,first_register_id, first_register_date, last_register_id, last_register_date) values(?,?,?,?,?,?)`;
 
       await pool.execute(sql, [
         user_seq,
         withdrawal_point,
-        withdrawal_date,
-        admin,
-        withdrawal_date,
+        user_seq,
+        new Date(),
+        user_seq,
+        new Date(),
       ]);
 
       res.status(200).json({
@@ -494,7 +512,7 @@ async function withdrawalRequest(req, res, next) {
 
 // 유저별 출금 신청 내역 가져오기
 async function getWithdrawalRequestList(req, res, next) {
-  const { user_seq } = req.body;
+  const { user_seq } = req.query;
 
   if (user_seq === undefined) {
     res.status(401).json({
@@ -541,7 +559,8 @@ async function getAllUserWithdrawalRequestList(req, res, next) {
 // 전체 유저 포인트 적립내역 가져오기
 async function getAllUserAccrualList(req, res, next) {
   try {
-    const sql = `select accrual_seq,accrual_point,accrual_point_date,first_register_id,first_register_date from accrual_detail`;
+    const sql = `select accrual_seq,u.user_seq,u.name,u.id, accrual_point,accrual_point_date,ad.first_register_id, ad.first_register_date 
+    from accrual_detail as ad join user as u on ad.user_seq = u.user_seq`;
 
     const results = await pool.query(sql);
 
@@ -1046,7 +1065,7 @@ async function getAllPenaltyList(req, res, next) {
   }
 }
 
-// 페널티 목록 가져오기
+// 유저 페널티 목록 가져오기
 async function getPenaltyList(req, res, next) {
   const { user_seq } = req.query;
 
@@ -1073,7 +1092,35 @@ async function getPenaltyList(req, res, next) {
   }
 }
 
-// 유저 페널티 추가
+// 진행 중인 페널티 목록 가져오기
+async function getPenaltyProceedingList(req, res, next) {
+  try {
+    const sql = `select p.penalty_seq, u.user_seq, u.id,u.name,u.nickname,p.content,p.end_date,p.first_register_id,p.first_register_id,p.last_register_id,p.last_register_date
+    from penalty as p join user as u on p.user_seq = u.user_seq
+    where p.end_date > ?`;
+
+    const results = await pool.query(sql, new Date());
+
+    if (results[0].length == 0) {
+      res.status(200).json({
+        message: "등록된 페널티가 없습니다.",
+      });
+    } else {
+      res.status(200).json({
+        message: "페널티 목록 조회 성공",
+        penalty: results[0],
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(400).json({
+      message: "페널티 목록 조회 실패",
+    });
+  }
+}
+
+// 유저 페널티 등록
 async function createPenalty(req, res, next) {
   // user_seq : 페널티 추가할 유저
   // content : 페널티 내용
@@ -1467,4 +1514,6 @@ export {
   deleteInterestCampaign,
   getAllMessageList,
   getAllPenaltyList,
+  getPenaltyProceedingList,
+  getAllUser,
 };
