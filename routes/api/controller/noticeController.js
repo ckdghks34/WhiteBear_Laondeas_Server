@@ -1,10 +1,12 @@
-import pool from "../../config/dbpool.js";
+import pool from "./../../../config/dbpool.js";
+
+const dbpool = await pool;
 
 // 공지사항 가져오기
 async function getNotice(req, res, next) {
   try {
     const sql = "select * from notice order by notice_seq desc";
-    const result = await pool.query(sql);
+    const result = await dbpool.query(sql);
     res.status(200).json({
       message: "공지사항 가져오기 성공",
       data: result[0],
@@ -28,7 +30,7 @@ async function createNotice(req, res, next) {
     try {
       const sql =
         "insert into notice (author ,title, content,view_count, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?)";
-      const result = await pool.execute(sql, [
+      const result = await dbpool.execute(sql, [
         user_seq,
         title,
         content,
@@ -44,7 +46,8 @@ async function createNotice(req, res, next) {
       });
     } catch (err) {
       console.log(err);
-      res.status(400).json({
+
+      res.status(500).json({
         message: "공지사항 등록 실패",
       });
     }
@@ -68,14 +71,15 @@ async function updateNotice(req, res, next) {
       const sql =
         "update notice set title = ?, content = ?, last_register_id = ?, last_register_date = ? where notice_seq = ?";
 
-      await pool.execute(sql, [title, content, user_seq, new Date(), notice_seq]);
+      await dbpool.execute(sql, [title, content, user_seq, new Date(), notice_seq]);
 
       res.status(200).json({
         message: "공지사항 수정 성공",
       });
     } catch (err) {
       console.log(err);
-      res.status(400).json({
+
+      res.status(500).json({
         message: "공지사항 수정 실패",
       });
     }
@@ -94,14 +98,15 @@ async function deleteNotice(req, res, next) {
     try {
       const sql = "delete from notice where notice_seq = ?";
 
-      await pool.execute(sql, [notice_seq]);
+      await dbpool.execute(sql, [notice_seq]);
 
       res.status(200).json({
         message: "공지사항 삭제 성공",
       });
     } catch (err) {
       console.log(err);
-      res.status(400).json({
+
+      res.status(500).json({
         message: "공지사항 삭제 실패",
       });
     }
@@ -120,14 +125,15 @@ async function increaseViewCount(req, res, next) {
     try {
       const sql = "update notice set view_count = view_count + 1 where notice_seq = ?";
 
-      await pool.execute(sql, [notice_seq]);
+      await dbpool.execute(sql, [notice_seq]);
 
       res.status(200).json({
         message: "조회수 증가 성공",
       });
     } catch (err) {
       console.log(err);
-      res.status(400).json({
+
+      res.status(500).json({
         message: "조회수 증가 실패",
       });
     }
@@ -145,7 +151,7 @@ async function getNoticeDetail(req, res, next) {
   } else {
     try {
       const sql = "select * from notice where notice_seq = ?";
-      const result = await pool.query(sql, [notice_seq]);
+      const result = await dbpool.query(sql, [notice_seq]);
 
       res.status(200).json({
         message: "공지사항 상세 조회 성공",
@@ -153,7 +159,8 @@ async function getNoticeDetail(req, res, next) {
       });
     } catch (err) {
       console.log(err);
-      res.status(400).json({
+
+      res.status(500).json({
         message: "공지사항 상세 조회 실패",
       });
     }

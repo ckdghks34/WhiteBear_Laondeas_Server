@@ -1,8 +1,10 @@
 import bcrypt from "bcrypt";
-import pool from "../../config/dbpool.js";
+import pool from "./../../../config/dbpool.js";
 import dotenv from "dotenv";
-import * as jwt from "./../../util/jwt-util.js";
+import * as jwt from "./../../../util/jwt-util.js";
 dotenv.config();
+
+const dbpool = await pool;
 
 // 회원가입
 async function signup(req, res, next) {
@@ -43,7 +45,7 @@ async function signup(req, res, next) {
       let now = new Date().toISOString().replace(/T/, " ").replace(/\..+/, "");
       user_password = bcrypt.hashSync(user_password, process.env.salt);
       const sql = `Insert into user (id, password, name, nickname, email, phonenumber, agreement_info, agreement_email, agreement_mms, is_advertiser,first_register_date,last_register_date,is_admin) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)`;
-      const result = await pool.execute(sql, [
+      const result = await dbpool.execute(sql, [
         user_id,
         user_password,
         user_name,
@@ -64,7 +66,8 @@ async function signup(req, res, next) {
       });
     } catch (err) {
       console.log(err);
-      res.status(401).json({
+
+      res.status(500).json({
         message: "회원가입 실패",
       });
     }
@@ -79,7 +82,7 @@ async function login(req, res, next) {
     console.log(user_id, user_password);
     try {
       const sql = `SELECT * FROM user WHERE id = ?`;
-      const results = await pool.query(sql, user_id);
+      const results = await dbpool.query(sql, user_id);
       // 아이디가 존재하지 않을 때
       if (results.length === 0) {
         res.status(401).json({
@@ -104,7 +107,7 @@ async function login(req, res, next) {
               // accessToken, refreshToken 데이터베이스 저장
               let tokensql = `insert into token values(?,?,?,?) on duplicate key update accesstoken = ?, refreshtoken = ?`;
 
-              await pool.execute(tokensql, [
+              await dbpool.execute(tokensql, [
                 loginUser.user_seq,
                 loginUser.id,
                 accessToken,
@@ -138,7 +141,8 @@ async function login(req, res, next) {
       }
     } catch (err) {
       console.log(err);
-      res.status(400).json({
+
+      res.status(500).json({
         message: "로그인 실패",
       });
     }
@@ -162,7 +166,7 @@ async function deleteUser(req, res, next) {
   } else {
     try {
       const sql = `DELETE FROM user WHERE id = ?`;
-      await pool.execute(sql, user_id);
+      await dbpool.execute(sql, user_id);
 
       res.status(200).json({
         message: "회원탈퇴 성공",
@@ -170,7 +174,7 @@ async function deleteUser(req, res, next) {
     } catch (err) {
       console.log(err);
 
-      res.status(401).json({
+      res.status(500).json({
         message: "회원탈퇴 실패",
       });
     }
@@ -189,7 +193,7 @@ async function checkID(req, res, next) {
     try {
       const sql = `SELECT * FROM user WHERE id = ?`;
 
-      const result = await pool.query(sql, user_id);
+      const result = await dbpool.query(sql, user_id);
 
       if (result[0].length === 0) {
         res.status(200).json({
@@ -204,14 +208,12 @@ async function checkID(req, res, next) {
       }
     } catch (err) {
       console.log(err);
-      res.status(400).json({
+
+      res.status(500).json({
         message: "아이디 중복 체크 실패",
       });
     }
   }
 }
-
-// access token 재발급
-async function refreshToken(req, res, next) {}
 
 export { signup, login, deleteUser, checkID };

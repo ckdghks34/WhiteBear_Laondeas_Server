@@ -1,11 +1,13 @@
-import pool from "../../config/dbpool.js";
+import pool from "./../../../config/dbpool.js";
+
+const dbpool = await pool;
 
 // faq 불러오기
 async function getFaq(req, res, next) {
   try {
     const sql = "select * from faq";
 
-    const results = await pool.query(sql);
+    const results = await dbpool.query(sql);
     console.log(results[0]);
 
     res.status(200).json({
@@ -15,7 +17,7 @@ async function getFaq(req, res, next) {
   } catch (err) {
     console.log(err);
 
-    res.status(400).json({
+    res.status(500).json({
       message: "faq 불러오기 실패",
     });
   }
@@ -38,7 +40,7 @@ async function createFaq(req, res, next) {
     try {
       const sql = `insert into faq (category, title, content, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?,?,?,?,?)`;
 
-      const results = await pool.execute(sql, [
+      const results = await dbpool.execute(sql, [
         category,
         title,
         content,
@@ -54,7 +56,7 @@ async function createFaq(req, res, next) {
     } catch (err) {
       console.log(err);
 
-      res.status(400).json({
+      res.status(500).json({
         message: "faq 등록 실패",
       });
     }
@@ -79,7 +81,7 @@ async function updateFaq(req, res, next) {
     try {
       const sql = `update faq set category = ?, title = ?, content = ?, last_register_id = ?, last_register_date = ? where faq_seq = ?`;
 
-      const results = await pool.execute(sql, [
+      const results = await dbpool.execute(sql, [
         category,
         title,
         content,
@@ -90,7 +92,7 @@ async function updateFaq(req, res, next) {
     } catch (err) {
       console.log(err);
 
-      res.status(400).json({
+      res.status(500).json({
         message: "faq 수정 실패",
       });
     }
@@ -109,7 +111,7 @@ async function deleteFaq(req, res, next) {
     try {
       const sql = `delete from faq where faq_seq = ?`;
 
-      const results = await pool.execute(sql, [faq_seq]);
+      const results = await dbpool.execute(sql, [faq_seq]);
 
       res.status(200).json({
         message: "faq 삭제 성공",
@@ -117,7 +119,7 @@ async function deleteFaq(req, res, next) {
     } catch (err) {
       console.log(err);
 
-      res.status(400).json({
+      res.status(500).json({
         message: "faq 삭제 실패",
       });
     }

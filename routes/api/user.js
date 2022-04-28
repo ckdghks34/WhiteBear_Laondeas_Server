@@ -1,4 +1,5 @@
 import express from "express";
+import { authJWT } from "./../../middleware/jwt/authJWT.js";
 import * as userController from "./controller/userController.js";
 
 const router = express.Router();
@@ -67,6 +68,9 @@ router.post("/premium/user", userController.createPremium);
 // 프리미엄 회원 해제
 router.patch("/premium/user", userController.deletePremium);
 
+// 프리미엄 신청 상세
+router.get("/premium/application/detail", userController.getPremiumRequestDetail);
+
 /**
  * 출석 체크
  */
@@ -82,7 +86,7 @@ router.get("/attendance", userController.getAttendanceList);
  */
 
 // 포인트 적립
-// 수정 필요
+
 router.post("/point/accrual", userController.accrual);
 
 // 유저별 포인트 적립내역 가져오기
@@ -143,6 +147,12 @@ router.delete("/address", userController.deleteAddressBook);
 
 // 주소록 수정
 router.patch("/address", userController.updateAddressBook);
+
+// 기본 배송지 변경
+router.patch("/address/default", userController.updateDefaultAddressBook);
+
+// 유저별 주소록 가져오기
+router.get("/address/user", userController.getUserAddressBook);
 
 /**
  * 유저 페널티
