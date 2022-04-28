@@ -1,4 +1,5 @@
 import express from "express";
+import * as refresh from "./../middleware/jwt/refresh.js";
 import * as authController from "./controller/authController.js";
 
 const router = express.Router();
@@ -14,5 +15,8 @@ router.delete("/", authController.deleteUser);
 
 // 동일 아이디 여부
 router.get("/checkID", authController.checkID);
+
+// access token 재발급
+router.get("/refresh", refresh.refresh);
 
 export default router;
