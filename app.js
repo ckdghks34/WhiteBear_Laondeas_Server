@@ -12,7 +12,7 @@ import authRouter from "./routes/auth.js";
 import userRouter from "./routes/user.js";
 import faqRouter from "./routes/faq.js";
 import noticeRouter from "./routes/notice.js";
-import advertiseRouter from "./routes/advertise.js";
+import advertiseRouter from "./routes/advertisement.js";
 
 const app = express();
 const __dirname = path.resolve();
