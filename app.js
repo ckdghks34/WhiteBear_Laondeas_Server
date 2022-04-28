@@ -7,12 +7,13 @@ import helmet from "helmet";
 dotenv.config();
 
 // 라우터
-import indexRouter from "./routes/index.js";
-import authRouter from "./routes/auth.js";
-import userRouter from "./routes/user.js";
-import faqRouter from "./routes/faq.js";
-import noticeRouter from "./routes/notice.js";
-import advertiseRouter from "./routes/advertisement.js";
+import indexRouter from "./routes/api/index.js";
+import authRouter from "./routes/api/auth.js";
+import userRouter from "./routes/api/user.js";
+import faqRouter from "./routes/api/faq.js";
+import noticeRouter from "./routes/api/notice.js";
+import advertiseRouter from "./routes/api/advertisement.js";
+import campaignRouter from "./routes/api/campaign.js";
 
 const app = express();
 const __dirname = path.resolve();
@@ -38,6 +39,7 @@ app.use("/users", userRouter);
 app.use("/faq", faqRouter);
 app.use("/notice", noticeRouter);
 app.use("/advertisement", advertiseRouter);
+app.use("/campaigns", campaignRouter);
 
 // 404
 app.use(function (req, res, next) {
