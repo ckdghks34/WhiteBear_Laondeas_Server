@@ -1,5 +1,5 @@
 import express from "express";
-import { authJWT } from "../middleware/jwt/authJWT.js";
+import { authJWT } from "./../../middleware/jwt/authJWT.js";
 import * as faqController from "./controller/faqController.js";
 
 const router = express.Router();

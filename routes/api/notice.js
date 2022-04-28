@@ -1,4 +1,5 @@
 import express from "express";
+import { authJWT } from "./../../middleware/jwt/authJWT.js";
 import * as noticeController from "./controller/noticeController.js";
 
 const router = express.Router();

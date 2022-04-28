@@ -1,4 +1,6 @@
-import pool from "../../config/dbpool.js";
+import pool from "./../../../config/dbpool.js";
+
+const dbpool = await pool;
 
 // 광고 신청 등록
 async function createAdvertise(req, res, next) {
@@ -19,7 +21,7 @@ async function createAdvertise(req, res, next) {
       const sql =
         "Insert into advertisement (company_name, contact, area, isagency, agreement_info, first_register_date, last_register_date) values (?, ?, ?, ?, ?, ?, ?)";
 
-      const results = await pool.execute(sql, []);
+      const results = await dbpool.execute(sql, []);
 
       res.status(200).json({
         message: "광고 신청 등록 성공",
@@ -27,7 +29,7 @@ async function createAdvertise(req, res, next) {
     } catch (err) {
       console.log(err);
 
-      res.status(400).json({
+      res.status(500).json({
         message: "광고 신청 등록 실패",
       });
     }
@@ -38,7 +40,7 @@ async function createAdvertise(req, res, next) {
 async function getAdvertiseList(req, res, next) {
   try {
     const sql = "Select * from advertisement";
-    const results = await pool.query(sql);
+    const results = await dbpool.query(sql);
 
     res.status(200).json({
       message: "광고 신청 목록 가져오기 성공",
@@ -47,7 +49,7 @@ async function getAdvertiseList(req, res, next) {
   } catch (err) {
     console.log(err);
 
-    res.status(400).json({
+    res.status(500).json({
       message: "광고 신청 목록 가져오기 실패",
     });
   }

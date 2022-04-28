@@ -1,5 +1,5 @@
 import express from "express";
-import * as refresh from "./../middleware/jwt/refresh.js";
+import * as refresh from "./../../middleware/jwt/refresh.js";
 import * as authController from "./controller/authController.js";
 
 const router = express.Router();
