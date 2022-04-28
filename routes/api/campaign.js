@@ -28,6 +28,9 @@ router.get("/all/popular", campaignController.getAllCampaignByPopular);
 // 전체 선정마감순 캠페인 + 페이징 (get)
 router.get("/all/selection", campaignController.getAllCampaignBySelection);
 
+// 진행중인 캠페인 + 페이징 (get)
+router.get("/progress", campaignController.getCampaignByProgress);
+
 // 진행중인 캠페인 최신순 + 페이징 (get)
 router.get("/progress/lastest", campaignController.getCampaignByProgressBylastest);
 
@@ -50,16 +53,16 @@ router.get("/progress/type/popular", campaignController.getCampaignByTypeByPopul
 router.get("/progress/type/selection", campaignController.getCampaignByTypeBySelection);
 
 // 진행중인 캠페인 필터링 + 페이징 (get)
-router.get("/progress/filter", campaignController.getCampaignByProgress);
+router.get("/progress/filter", campaignController.getCampaignByFiltering);
 
 // 진행중인 캠페인 필터링 최신순 + 페이징 (get)
-router.get("/progress/filter/lastest", campaignController.getCampaignByProgressBylastest);
+router.get("/progress/filter/lastest", campaignController.getCampaignByFilteringBylastest);
 
 // 진행중인 캠페인 필터링 인기순 + 페이징 (get)
-router.get("/progress/filter/popular", campaignController.getCampaignByProgressByPopular);
+router.get("/progress/filter/popular", campaignController.getCampaignByFilteringByPopular);
 
 // 진행중인 캠페인 필터링 선정마감순 + 페이징 (get)
-router.get("/progress/filter/selection", campaignController.getCampaignByProgressBySelection);
+router.get("/progress/filter/selection", campaignController.getCampaignByFilteringBySelection);
 
 // 진행중인 프리미엄 캠페인 + 페이징 (get)
 router.get("/progress/premium", campaignController.getPremiumCampaign);

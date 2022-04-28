@@ -410,6 +410,9 @@ async function getAllCampaignByPopular(req, res, next) {}
 // 전체 선정마감순 캠페인 + 페이징
 async function getAllCampaignBySelection(req, res, next) {}
 
+// 진행중인 캠페인 + 페이징
+async function getCampaignByProgress(req, res, next) {}
+
 // 진행중인 캠페인 최신순 + 페이징
 async function getCampaignByProgressBylastest(req, res, next) {}
 
@@ -432,16 +435,16 @@ async function getCampaignByTypeByPopular(req, res, next) {}
 async function getCampaignByTypeBySelection(req, res, next) {}
 
 // 진행중인 캠페인 필터링 + 페이징
-async function getCampaignByProgress(req, res, next) {}
+async function getCampaignByFiltering(req, res, next) {}
 
 // 진행중인 캠페인 필터링 최신순 + 페이징
-async function getCampaignByProgressBylastest(req, res, next) {}
+async function getCampaignByFilteringBylastest(req, res, next) {}
 
 // 진행중인 캠페인 필터링 인기순 + 페이징
-async function getCampaignByProgressByPopular(req, res, next) {}
+async function getCampaignByFilteringByPopular(req, res, next) {}
 
 // 진행중인 캠페인 필터링 선정마감순 + 페이징
-async function getCampaignByProgressBySelection(req, res, next) {}
+async function getCampaignByFilteringBySelection(req, res, next) {}
 
 // 진행중인 프리미엄 캠페인 + 페이징
 async function getPremiumCampaign(req, res, next) {}
@@ -564,20 +567,21 @@ export {
   createCampaign,
   updateCampaign,
   deleteCampaign,
+  getCampaignByProgress,
   getAllCampaignBylastest,
   getAllCampaignByPopular,
   getAllCampaignBySelection,
   getCampaignByProgressBylastest,
   getCampaignByProgressByPopular,
-  getCampaignByProgressBySelection as getCampaignBySelectionByProgress,
+  getCampaignByProgressBySelection,
   getCampaignByType,
   getCampaignByTypeBylastest,
   getCampaignByTypeByPopular,
   getCampaignByTypeBySelection,
-  getCampaignByProgress,
-  getCampaignByProgressBylastest,
-  getCampaignByProgressByPopular,
-  getCampaignByProgressBySelection,
+  getCampaignByFiltering,
+  getCampaignByFilteringBylastest,
+  getCampaignByFilteringByPopular,
+  getCampaignByFilteringBySelection,
   getCampaignByChannel,
   getCampaignByChannelBylastest,
   getCampaignByChannelByPopular,
