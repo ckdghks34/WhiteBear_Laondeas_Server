@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import pool from "../../config/dbpool.js";
 import dotenv from "dotenv";
+import * as jwt from "./../../util/jwt-util.js";
 dotenv.config();
 
 // 회원가입
@@ -76,44 +77,71 @@ async function login(req, res, next) {
 
   if (user_id && user_password) {
     console.log(user_id, user_password);
-    const sql = `SELECT * FROM user WHERE id = ?`;
-    pool.query(sql, user_id, (err, results) => {
-      // 에러 발생 시  error 출력
-      if (err) {
-        console.log(err);
-      }
+    try {
+      const sql = `SELECT * FROM user WHERE id = ?`;
+      const results = await pool.query(sql, user_id);
       // 아이디가 존재하지 않을 때
       if (results.length === 0) {
         res.status(401).json({
           message: "아이디가 존재하지 않습니다.",
         });
-        console.log("아이디가 존재하지 않습니다.");
+        console.log("로그인 시도 : 아이디가 존재하지 않습니다.");
       } else {
         // 입력받은 비밀번호와 데이터베이스에 저장된 비밀번호(암호화 된) 비교
-        bcrypt.compare(user_password, results[0].password, (err, result) => {
-          if (err) {
-            console.log(err);
-          }
-
+        try {
+          const result = bcrypt.compareSync(user_password, results[0][0].password);
           // 비밀번호가 맞으면
           if (result) {
-            let loginUser = results[0];
-            loginUser.password = undefined;
+            try {
+              let loginUser = results[0][0];
+              loginUser.password = undefined;
+              let user = { user_seq: loginUser.user_seq, id: loginUser.id };
 
-            res.status(200).json({
-              message: "로그인 성공",
-              user: loginUser,
-            });
+              // accessToken, refreshToken 발급
+              const accessToken = await jwt.sign(user);
+              const refreshToken = await jwt.refresh();
+
+              // accessToken, refreshToken 데이터베이스 저장
+              let tokensql = `insert into token values(?,?,?,?) on duplicate key update accesstoken = ?, refreshtoken = ?`;
+
+              await pool.execute(tokensql, [
+                loginUser.user_seq,
+                loginUser.id,
+                accessToken,
+                refreshToken,
+                accessToken,
+                refreshToken,
+              ]);
+
+              res.status(200).json({
+                message: "로그인 성공",
+                user: loginUser,
+                data: {
+                  accessToken,
+                  refreshToken,
+                },
+              });
+            } catch (err) {
+              console.log(err);
+              res.status(401).json({
+                message: "로그인 실패",
+              });
+            }
           }
-          // 비밀번호가 틀리면
-          else {
-            res.status(401).json({
-              message: "아이디 또는 비밀번호가 일치하지 않습니다.",
-            });
-          }
-        });
+        } catch (err) {
+          console.log(err);
+
+          res.status(401).json({
+            message: "비밀번호가 일치하지 않습니다.",
+          });
+        }
       }
-    });
+    } catch (err) {
+      console.log(err);
+      res.status(400).json({
+        message: "로그인 실패",
+      });
+    }
   }
 }
 
@@ -134,7 +162,7 @@ async function deleteUser(req, res, next) {
   } else {
     try {
       const sql = `DELETE FROM user WHERE id = ?`;
-      const result = await pool.execute(sql, user_id);
+      await pool.execute(sql, user_id);
 
       res.status(200).json({
         message: "회원탈퇴 성공",
@@ -182,5 +210,8 @@ async function checkID(req, res, next) {
     }
   }
 }
+
+// access token 재발급
+async function refreshToken(req, res, next) {}
 
 export { signup, login, deleteUser, checkID };
