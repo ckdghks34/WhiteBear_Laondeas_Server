@@ -9,6 +9,7 @@
     "stop": "npx pm2 stop all"
   },
   "dependencies": {
+    "aws-sdk": "^2.1123.0",
     "bcrypt": "^5.0.1",
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
@@ -19,6 +20,7 @@
     "http-errors": "~1.6.3",
     "jsonwebtoken": "^8.5.1",
     "morgan": "~1.9.1",
+    "multer-s3": "^2.10.0",
     "mysql": "^2.18.1",
     "mysql2": "^2.3.3"
   },
