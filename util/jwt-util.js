@@ -23,7 +23,6 @@ async function verify(token) {
 
   try {
     decoded = jwt.verify(token, secret);
-    console.log("도대체 어디지?");
     console.log(decoded);
     return {
       verification: true,
@@ -31,11 +30,10 @@ async function verify(token) {
       seq: decoded.user_seq,
     };
   } catch (err) {
-    console.log("여긴가?");
-
     return {
       verification: false,
       message: err.message,
+      error: err,
     };
   }
 }
