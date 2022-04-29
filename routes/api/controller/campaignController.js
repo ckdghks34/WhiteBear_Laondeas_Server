@@ -47,15 +47,17 @@ async function getCampaign(req, res, next) {
     });
   } else {
     try {
-      const sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, view_count, first_register_id, first_register_date ,cc.count as applicant_count from campaign as c join (select campaign_seq,count(*) as count from campaign_application group by campaign_seq) as cc on c.campaign_seq = cc.campaign_seq where c.campaign_seq = ?`;
+      const sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, view_count, first_register_id, first_register_date ,ifnull(cc.count,0) as applicant_count from campaign as c left join (select campaign_seq,count(*) as count from campaign_application group by campaign_seq) as cc on c.campaign_seq = cc.campaign_seq where c.campaign_seq = ?`;
       const qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
       const results = await dbpool.query(sql, [campaign_seq]);
 
       const qna_results = await dbpool.query(qna_sql, [campaign_seq]);
+      let campaign = results[0][0];
+      let keyword = campaign.keyword.split(",");
 
-      results[0][0].qna = qna_results[0];
-      results[0][0].keyword = results[0][0].keyword.split(",");
+      campaign["qna"] = qna_results[0];
+      campaign.keyword = results[0][0].keyword.split(",");
 
       res.status(200).json({
         message: "특정 캠페인 가져오기 성공",
@@ -74,7 +76,6 @@ async function getCampaign(req, res, next) {
 // 캠페인 등록
 async function createCampaign(req, res, next) {
   const {
-    campaign_seq,
     advertiser,
     is_premium,
     title,
@@ -88,7 +89,7 @@ async function createCampaign(req, res, next) {
     misson,
     reward,
     accrual_point,
-    additional_infomation,
+    additional_information,
     recruit_start_date,
     recruit_end_date,
     reviewer_announcement_date,
@@ -99,7 +100,6 @@ async function createCampaign(req, res, next) {
   } = req.body;
 
   if (
-    campaign_seq === undefined ||
     advertiser === undefined ||
     is_premium === undefined ||
     title === undefined ||
@@ -113,30 +113,26 @@ async function createCampaign(req, res, next) {
     misson === undefined ||
     reward === undefined ||
     accrual_point === undefined ||
-    additional_infomation === undefined ||
+    additional_information === undefined ||
     recruit_start_date === undefined ||
     recruit_end_date === undefined ||
     reviewer_announcement_date === undefined ||
     agreement_portrait === undefined ||
     agreement_provide_info === undefined ||
-    user_seq === undefined ||
-    channel === undefined ||
-    keyword === undefined ||
-    product === undefined ||
-    qna === undefined
+    user_seq === undefined
   ) {
     res.status(400).json({
       message: "잘못된 요청입니다. 필수 데이터가 없습니다.",
     });
   } else {
     try {
-      const campaign_sql = `insert into campaign (campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, view_count, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ? ,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`;
-      const qna_sql = `insert into campaign_qna (campaign_seq, question, answer, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?)`;
+      const campaign_sql = `insert into campaign (advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, view_count, first_register_id, first_register_date, last_register_id, last_register_date) values 
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      const qna_sql = `insert into campaign_qna (question, answer, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?)`;
 
       await dbpool.beginTransaction();
 
       await dbpool.execute(campaign_sql, [
-        campaign_seq,
         advertiser,
         is_premium,
         title,
@@ -150,29 +146,34 @@ async function createCampaign(req, res, next) {
         misson,
         reward,
         accrual_point,
-        additional_infomation,
+        additional_information,
         recruit_start_date,
         recruit_end_date,
         reviewer_announcement_date,
         agreement_portrait,
         agreement_provide_info,
         1,
+        0,
         user_seq,
         new Date(),
         user_seq,
         new Date(),
       ]);
-
-      for (let i = 0; i < qna.length; i++) {
-        await dbpool.execute(qna_sql, [
-          campaign_seq,
-          qna[i].question,
-          qna[i].answer,
-          user_seq,
-          new Date(),
-          user_seq,
-          new Date(),
-        ]);
+      if (qna !== undefined) {
+        const campaign_seq =
+          (await dbpool.execute("select Max(campaign_seq) as campaign_seq from campaign"))[0][0]
+            .campaign_seq + 1;
+        for (let i = 0; i < qna.length; i++) {
+          await dbpool.execute(qna_sql, [
+            campaign_seq,
+            qna[i].question,
+            qna[i].answer,
+            user_seq,
+            new Date(),
+            user_seq,
+            new Date(),
+          ]);
+        }
       }
 
       await dbpool.commit();
@@ -330,6 +331,86 @@ async function deleteCampaign(req, res, next) {
 
       res.status(500).json({
         message: "캠페인 삭제 실패",
+      });
+    }
+  }
+}
+
+// 캠페인 사진 등록
+async function uploadCampaignImage(req, res, next) {
+  const { campaign_seq, user_seq } = req.body;
+  const files = req.files;
+  if (campaign_seq === undefined) {
+    res.status(400).json({
+      message: "잘못된 요청입니다. 캠페인 데이터가 없습니다.",
+    });
+  } else {
+    try {
+      const sql = `insert into campaign_file (campaign_seq, name, path, extension, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?)`;
+      const delete_sql = `delete from campaign_file where campaign_seq = ?`;
+
+      await dbpool.beginTransaction();
+
+      await dbpool.execute(delete_sql, [campaign_seq]);
+
+      for (let i = 0; i < files.length; i++) {
+        let filename = files[i].originalname;
+        let filepath = files[i].location;
+        let ext = files[i].mimetype.split("/")[1];
+
+        console.log(filename, filepath, ext, campaign_seq, user_seq);
+
+        await dbpool.execute(sql, [
+          campaign_seq,
+          filename,
+          filepath,
+          ext,
+          user_seq,
+          new Date(),
+          user_seq,
+          new Date(),
+        ]);
+      }
+      await dbpool.commit();
+
+      res.status(200).json({
+        message: "캠페인 사진 등록 성공",
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "캠페인 사진 등록 실패",
+      });
+    }
+  }
+}
+
+// 캠페인 사진 삭제
+async function deleteCampaignImage(req, res, next) {}
+
+// 캠페인 사진 가져오기
+async function getCampaignImage(req, res, next) {
+  const { campaign_seq } = req.query;
+  if (campaign_seq === undefined) {
+    res.status(400).json({
+      message: "잘못된 요청입니다. 필수 데이터가 없습니다.",
+    });
+  } else {
+    try {
+      const sql = `select * from campaign_file where campaign_seq = ?`;
+
+      const result = await dbpool.execute(sql, [campaign_seq]);
+
+      res.status(200).json({
+        message: "캠페인 사진 가져오기 성공",
+        campaignImg: result[0],
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "캠페인 사진 가져오기 실패",
       });
     }
   }
@@ -2330,6 +2411,9 @@ export {
   createCampaign,
   updateCampaign,
   deleteCampaign,
+  uploadCampaignImage,
+  deleteCampaignImage,
+  getCampaignImage,
   getCampaignByProgress,
   getAllCampaignBylastest,
   getAllCampaignByPopular,

@@ -246,13 +246,66 @@ async function updatePassword(req, res, next) {
 }
 
 // 프로필 사진 등록
-async function createProfile(req, res, next) {}
+async function createProfile(req, res, next) {
+  const { user_seq, id } = req.body;
+  const filename = req.file.originalname;
+  const ext = req.file.mimetype.split("/")[1];
+  const filepath = req.file.location;
+
+  try {
+    const sql = `insert into user_file(user_seq,name,path,extension,first_register_id,first_register_date,last_register_id,last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?) on duplicate key update name = ?, path = ?, extension = ?, last_register_id = ?, last_register_date = ?`;
+    await dbpool.execute(sql, [
+      user_seq,
+      filename,
+      filepath,
+      ext,
+      user_seq,
+      new Date(),
+      user_seq,
+      new Date(),
+      filename,
+      filepath,
+      ext,
+      user_seq,
+      new Date(),
+    ]);
+
+    res.status(200).json({
+      message: "프로필 사진 등록 성공",
+      location: filepath,
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "프로필 사진 등록 실패",
+    });
+  }
+}
 
 // 프로필 사진 가져오기
-async function getProfile(req, res, next) {}
+async function getProfile(req, res, next) {
+  const { user_seq } = req.query;
 
-// 프로필 사진 바꾸기
-async function updateProfile(req, res, next) {}
+  try {
+    const sql = `select * from user_file where user_seq = ? where representative = 1`;
+    const results = await dbpool.execute(sql, [user_seq]);
+
+    res.status(200).json({
+      message: "프로필 사진 가져오기 성공",
+      profileImg: results[0].path,
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "프로필 사진 가져오기 실패",
+    });
+  }
+}
+
+// // 프로필 사진 바꾸기
+// async function updateProfile(req, res, next) {}
 
 // 관심 캠페인 가져오기
 async function getInterestCampaign(req, res, next) {
@@ -1712,7 +1765,7 @@ export {
   deletePremium,
   createProfile,
   getProfile,
-  updateProfile,
+  // updateProfile,
   createInterestCampaign,
   deleteInterestCampaign,
   getAllMessageList,
