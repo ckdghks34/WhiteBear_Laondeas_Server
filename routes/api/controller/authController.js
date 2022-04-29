@@ -45,7 +45,7 @@ async function signup(req, res, next) {
       let now = new Date().toISOString().replace(/T/, " ").replace(/\..+/, "");
       user_password = bcrypt.hashSync(user_password, process.env.salt);
       const sql = `Insert into user (id, password, name, nickname, email, phonenumber, agreement_info, agreement_email, agreement_mms, is_advertiser,first_register_date,last_register_date,is_admin) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)`;
-      const result = await dbpool.execute(sql, [
+      await dbpool.execute(sql, [
         user_id,
         user_password,
         user_name,

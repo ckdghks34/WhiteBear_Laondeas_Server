@@ -13,6 +13,15 @@ router.post("/login", authController.login);
 // 회원탈퇴
 router.delete("/", authController.deleteUser);
 
+// 아이디찾기
+// router.get("/find/id", authController.findID);
+
+// 비밀번호찾기
+// router.get("/find/pw", authController.findPW);
+
+// 로그아웃
+// router.get("/logout", authController.logout);
+
 // 동일 아이디 여부
 router.get("/checkID", authController.checkID);
 
