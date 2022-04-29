@@ -89,7 +89,7 @@ router.get("/channel/popular", campaignController.getCampaignByChannelByPopular)
 router.get("/channel/selection", campaignController.getCampaignByChannelBySelection);
 
 // 연관 캠페인 + 페이징 (get)
-router.get("/relation", campaignController.getCampaignByRelation);
+// router.get("/relation", campaignController.getCampaignByRelation);
 
 // 캠페인 검색 + 페이징 (get)
 router.get("/search", campaignController.getCampaignBySearch);
@@ -157,10 +157,12 @@ router.get(
 );
 
 // 광고주 캠페인 평가 목록 가져오기 (get)
-router.get(
-  "/advertiser/campaign/evaluation",
-  authJWT,
-  campaignController.getCampaignEvaluationByAdvertiser
-);
+// router.get(
+//   "/advertiser/campaign/evaluation",
+//   authJWT,
+//   campaignController.getCampaignEvaluationByAdvertiser
+// );
+
+router.get("/test/test", campaignController.test);
 
 export default router;

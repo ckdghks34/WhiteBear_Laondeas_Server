@@ -3,17 +3,30 @@ import pool from "./../../../config/dbpool.js";
 const dbpool = await pool;
 
 let pagelimit = 20;
+
 // 전체 캠페인 가져오기
 async function getAllCampaign(req, res, next) {
   try {
-    const sql = `SELECT * FROM campaign`;
+    const sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, view_count, first_register_id, first_register_date ,cc.count as applicant_count from campaign as c join (select campaign_seq,count(*) as count from campaign_application group by campaign_seq) as cc on c.campaign_seq = cc.campaign_seq`;
+    const qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
     const results = await dbpool.query(sql);
 
-    const campaigns = await getCampaignInfo(results[0], results[0][0].campaign_seq);
+    for (let i = 0; i < results[0].length; i++) {
+      let campaign_seq = results[0][i].campaign_seq;
+
+      const qna_results = await dbpool.execute(qna_sql, [campaign_seq]);
+
+      // 캠페인 QnA 추가
+      results[0][i].qna = qna_results[0];
+      // 캠페인 키워드 파싱 후 추가
+      results[0][i].keyword = results[0][i].keyword.split(",");
+    }
 
     res.status(200).json({
       message: "캠페인 전체 가져오기 성공",
-      campaigns: campaigns,
+      campaigns: results[0],
+      totalcount: results[0].length,
     });
   } catch (err) {
     console.log(err);
@@ -34,14 +47,19 @@ async function getCampaign(req, res, next) {
     });
   } else {
     try {
-      const sql = `SELECT * FROM campaign WHERE campaign_seq = ?`;
+      const sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, view_count, first_register_id, first_register_date ,cc.count as applicant_count from campaign as c join (select campaign_seq,count(*) as count from campaign_application group by campaign_seq) as cc on c.campaign_seq = cc.campaign_seq where c.campaign_seq = ?`;
+      const qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
       const results = await dbpool.query(sql, [campaign_seq]);
 
-      const campaign = await getCampaignInfo(results[0], campaign_seq);
+      const qna_results = await dbpool.query(qna_sql, [campaign_seq]);
+
+      results[0][0].qna = qna_results[0];
+      results[0][0].keyword = results[0][0].keyword.split(",");
 
       res.status(200).json({
         message: "특정 캠페인 가져오기 성공",
-        campaign: campaign,
+        campaign: results[0][0],
       });
     } catch (err) {
       console.log(err);
@@ -60,7 +78,11 @@ async function createCampaign(req, res, next) {
     advertiser,
     is_premium,
     title,
-    type,
+    category,
+    product,
+    channel,
+    area,
+    keyword,
     headcount,
     siteURL,
     misson,
@@ -69,13 +91,10 @@ async function createCampaign(req, res, next) {
     additional_infomation,
     recruit_start_date,
     recruit_end_date,
-    rewviewer_announcement_date,
+    reviewer_announcement_date,
     agreement_portrait,
     agreement_provide_info,
     user_seq,
-    channel,
-    keyword,
-    product,
     qna,
   } = req.body;
 
@@ -84,7 +103,11 @@ async function createCampaign(req, res, next) {
     advertiser === undefined ||
     is_premium === undefined ||
     title === undefined ||
-    type === undefined ||
+    category === undefined ||
+    product === undefined ||
+    channel === undefined ||
+    area === undefined ||
+    keyword === undefined ||
     headcount === undefined ||
     siteURL === undefined ||
     misson === undefined ||
@@ -93,7 +116,7 @@ async function createCampaign(req, res, next) {
     additional_infomation === undefined ||
     recruit_start_date === undefined ||
     recruit_end_date === undefined ||
-    rewviewer_announcement_date === undefined ||
+    reviewer_announcement_date === undefined ||
     agreement_portrait === undefined ||
     agreement_provide_info === undefined ||
     user_seq === undefined ||
@@ -107,10 +130,7 @@ async function createCampaign(req, res, next) {
     });
   } else {
     try {
-      const campaign_sql = `insert into campaign (campaign_seq,advertiser,is_premium,title,type,headcount,siteURL,misson,reward,accrual_point,additional_infomation,recruit_start_date,recruit_end_date,rewviewer_announcement_date,agreement_portrait,agreement_provide_info,campaign_state, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ? ,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-      const channel_sql = `insert into campaign_channel (campaign_seq, channel_code, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?)`;
-      const keyword_sql = `insert into campaign_keyword (campaign_seq, keyword, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?)`;
-      const product_sql = `insert into campaign_product (campaign_seq, product_code, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?)`;
+      const campaign_sql = `insert into campaign (campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, view_count, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ? ,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`;
       const qna_sql = `insert into campaign_qna (campaign_seq, question, answer, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?)`;
 
       await dbpool.beginTransaction();
@@ -120,7 +140,11 @@ async function createCampaign(req, res, next) {
         advertiser,
         is_premium,
         title,
-        type,
+        category,
+        product,
+        channel,
+        area,
+        keyword,
         headcount,
         siteURL,
         misson,
@@ -129,7 +153,7 @@ async function createCampaign(req, res, next) {
         additional_infomation,
         recruit_start_date,
         recruit_end_date,
-        rewviewer_announcement_date,
+        reviewer_announcement_date,
         agreement_portrait,
         agreement_provide_info,
         1,
@@ -138,39 +162,6 @@ async function createCampaign(req, res, next) {
         user_seq,
         new Date(),
       ]);
-
-      for (let i = 0; i < channel.length; i++) {
-        await dbpool.execute(channel_sql, [
-          campaign_seq,
-          channel[i],
-          user_seq,
-          new Date(),
-          user_seq,
-          new Date(),
-        ]);
-      }
-
-      for (let i = 0; i < keyword.length; i++) {
-        await dbpool.execute(keyword_sql, [
-          campaign_seq,
-          keyword[i],
-          user_seq,
-          new Date(),
-          user_seq,
-          new Date(),
-        ]);
-      }
-
-      for (let i = 0; i < product.length; i++) {
-        await dbpool.execute(product_sql, [
-          campaign_seq,
-          product[i],
-          user_seq,
-          new Date(),
-          user_seq,
-          new Date(),
-        ]);
-      }
 
       for (let i = 0; i < qna.length; i++) {
         await dbpool.execute(qna_sql, [
@@ -206,7 +197,11 @@ async function updateCampaign(req, res, next) {
     advertiser,
     is_premium,
     title,
-    type,
+    category,
+    product,
+    channel,
+    area,
+    keyword,
     headcount,
     siteURL,
     misson,
@@ -215,13 +210,10 @@ async function updateCampaign(req, res, next) {
     additional_infomation,
     recruit_start_date,
     recruit_end_date,
-    rewviewer_announcement_date,
+    reviewer_announcement_date,
     agreement_portrait,
     agreement_provide_info,
     user_seq,
-    channel,
-    keyword,
-    product,
     qna,
   } = req.body;
 
@@ -230,7 +222,11 @@ async function updateCampaign(req, res, next) {
     advertiser === undefined ||
     is_premium === undefined ||
     title === undefined ||
-    type === undefined ||
+    category === undefined ||
+    product === undefined ||
+    channel === undefined ||
+    area === undefined ||
+    keyword === undefined ||
     headcount === undefined ||
     siteURL === undefined ||
     misson === undefined ||
@@ -239,13 +235,10 @@ async function updateCampaign(req, res, next) {
     additional_infomation === undefined ||
     recruit_start_date === undefined ||
     recruit_end_date === undefined ||
-    rewviewer_announcement_date === undefined ||
+    reviewer_announcement_date === undefined ||
     agreement_portrait === undefined ||
     agreement_provide_info === undefined ||
     user_seq === undefined ||
-    channel === undefined ||
-    keyword === undefined ||
-    product === undefined ||
     qna === undefined
   ) {
     res.status(400).json({
@@ -253,10 +246,8 @@ async function updateCampaign(req, res, next) {
     });
   } else {
     try {
-      const campaign_sql = `update campaign set advertiser = ?, is_premium = ?, title = ?, type = ?, headcount = ?, siteURL = ?, misson = ?, reward = ?, accrual_point = ?, additional_infomation = ?, recruit_start_date = ?, recruit_end_date = ?, rewviewer_announcement_date = ?, agreement_portrait = ?, agreement_provide_info = ?, last_register_id = ?, last_register_date = ? where campaign_seq = ?`;
-      const channel_sql = `insert into campaign_channel (campaign_seq, channel_code, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?)`;
-      const keyword_sql = `insert into campaign_keyword (campaign_seq, keyword, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?)`;
-      const product_sql = `insert into campaign_product (campaign_seq, product_code, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?)`;
+      const campaign_sql = `update campaign set advertiser = ?, is_premium = ?, title = ?, category = ?, product = ?, channel = ? , area = ?, keyword = ?, headcount = ?, siteURL = ?, misson = ?, reward = ?, accrual_point = ?, additional_infomation = ?, recruit_start_date = ?, recruit_end_date = ?, reviewer_announcement_date = ?, agreement_portrait = ?, agreement_provide_info = ?, last_register_id = ?, last_register_date = ? where campaign_seq = ?`;
+
       const qna_sql = `insert into campaign_qna (campaign_seq, question, answer, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?)`;
 
       await dbpool.beginTransaction();
@@ -275,7 +266,7 @@ async function updateCampaign(req, res, next) {
         additional_infomation,
         recruit_start_date,
         recruit_end_date,
-        rewviewer_announcement_date,
+        reviewer_announcement_date,
         agreement_portrait,
         agreement_provide_info,
         1,
@@ -283,43 +274,8 @@ async function updateCampaign(req, res, next) {
         new Date(),
       ]);
 
-      await dbpool.execute(`delete from campaign_channel where campaign_seq = ?`, [campaign_seq]);
-      for (let i = 0; i < channel.length; i++) {
-        await dbpool.execute(channel_sql, [
-          campaign_seq,
-          channel[i],
-          user_seq,
-          new Date(),
-          user_seq,
-          new Date(),
-        ]);
-      }
-
-      await dbpool.execute(`delete from campaign_keyword where campaign_seq = ?`, [campaign_seq]);
-      for (let i = 0; i < keyword.length; i++) {
-        await dbpool.execute(keyword_sql, [
-          campaign_seq,
-          keyword[i],
-          user_seq,
-          new Date(),
-          user_seq,
-          new Date(),
-        ]);
-      }
-
-      await dbpool.execute(`delete from campaign_product where campaign_seq = ?`, [campaign_seq]);
-      for (let i = 0; i < product.length; i++) {
-        await dbpool.execute(product_sql, [
-          campaign_seq,
-          product[i],
-          user_seq,
-          new Date(),
-          user_seq,
-          new Date(),
-        ]);
-      }
-
       await dbpool.execute(`delete from campaign_qna where campaign_seq = ?`, [campaign_seq]);
+
       for (let i = 0; i < qna.length; i++) {
         await dbpool.execute(qna_sql, [
           campaign_seq,
@@ -357,8 +313,14 @@ async function deleteCampaign(req, res, next) {
   } else {
     try {
       const campaign_sql = `delete from campaign where campaign_seq = ?`;
+      const qna_sql = `delete from campaign_qna where campaign_seq = ?`;
+
+      await dbpool.beginTransaction();
 
       await dbpool.execute(campaign_sql, [campaign_seq]);
+      await dbpool.execute(qna_sql, [campaign_seq]);
+
+      await dbpool.commit();
 
       res.status(200).json({
         message: "캠페인 삭제 성공",
@@ -378,22 +340,32 @@ async function getAllCampaignBylastest(req, res, next) {
   try {
     const { page } = req.query;
     const offset = (page - 1) * pagelimit;
-    const campaign_sql = `select * from campaign order by recruit_start_date desc limit ? offset ?`;
-    const campaign_count_sql = `select count(*) as count from campaign`;
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                          join
+                          (select campaign_seq,count(*) as count
+                            from campaign_application group by campaign_seq) as cc
+                          on c.campaign_seq = cc.campaign_seq
+                          order by recruit_start_date desc limit ? offset ?`;
 
-    const campaign_results = await dbpool.execute(campaign_sql, [pagelimit, offset]);
-    const campaign_count_results = await dbpool.execute(campaign_count_sql);
+    const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-    const campaigns = await getCampaignInfo(
-      campaign_results[0],
-      campaign_results[0][0].campaign_seq
-    );
-    const totalCount = campaign_count_results[0][0].count;
+    const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+
+    // campaign + qna / applicant
+    for (let i = 0; i < campaign_results[0].length; i++) {
+      let campaign_seq = campaign_results[0][i].campaign_seq;
+
+      const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+      campaign_results[0][i].qna = campaign_qna_results[0];
+      campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+    }
 
     res.status(200).json({
       message: "캠페인 조회 성공",
-      campaigs: campaigns,
-      totalCount: totalCount,
+      campaigns: campaign_results[0],
+      totalCount: campaign_count_results[0].length,
     });
   } catch (err) {
     console.log(err);
@@ -405,160 +377,1951 @@ async function getAllCampaignBylastest(req, res, next) {
 }
 
 // 전체 인기순 캠페인 + 페이징
-async function getAllCampaignByPopular(req, res, next) {}
+async function getAllCampaignByPopular(req, res, next) {
+  try {
+    const { page } = req.query;
+    const offset = (page - 1) * pagelimit;
+
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                          join
+                          (select campaign_seq,count(*) as count
+                            from campaign_application group by campaign_seq) as cc
+                          on c.campaign_seq = cc.campaign_seq
+                          order by applicant_count desc limit ? offset ?`;
+    const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+    const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+
+    // campaign + qna
+    for (let i = 0; i < campaign_results[0].length; i++) {
+      let campaign_seq = campaign_results[0][i].campaign_seq;
+
+      const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+      campaign_results[0][i].qna = campaign_qna_results[0];
+      campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+    }
+
+    res.status(200).json({
+      message: "캠페인 조회 성공",
+      campaigns: campaign_results[0],
+      totalCount: campaign_results[0].length,
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
 
 // 전체 선정마감순 캠페인 + 페이징
-async function getAllCampaignBySelection(req, res, next) {}
+async function getAllCampaignBySelection(req, res, next) {
+  try {
+    const { page } = req.query;
+    const offset = (page - 1) * pagelimit;
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                          join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                          on c.campaign_seq = cc.campaign_seq
+                          order by recruit_end_date desc limit ? offset ?`;
+    const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+    const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+
+    // campaign + qna / applicant
+    for (let i = 0; i < campaign_results[0].length; i++) {
+      let campaign_seq = campaign_results[0][i].campaign_seq;
+
+      const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+      campaign_results[0][i].qna = campaign_qna_results[0];
+      campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+    }
+
+    res.status(200).json({
+      message: "캠페인 조회 성공",
+      campaigs: campaign_results[0],
+      totalCount: campaign_results[0].length,
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
 
 // 진행중인 캠페인 + 페이징
-async function getCampaignByProgress(req, res, next) {}
+async function getCampaignByProgress(req, res, next) {
+  try {
+    const { page } = req.query;
+    const offset = (page - 1) * pagelimit;
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count 
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where recruit_start_date <= now() and recruit_end_date >= now()
+                            order by recruit_end_date desc limit ? offset ?`;
+    const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+    const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+
+    // campaign + qna / applicant
+    for (let i = 0; i < campaign_results[0].length; i++) {
+      let campaign_seq = campaign_results[0][i].campaign_seq;
+
+      const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+      campaign_results[0][i].qna = campaign_qna_results[0];
+      campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+    }
+
+    res.status(200).json({
+      message: "캠페인 조회 성공",
+      campaigns: campaign_results[0],
+      totalCount: campaign_results[0].length,
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
 
 // 진행중인 캠페인 최신순 + 페이징
-async function getCampaignByProgressBylastest(req, res, next) {}
+async function getCampaignByProgressBylastest(req, res, next) {
+  try {
+    const { page } = req.query;
+    const offset = (page - 1) * pagelimit;
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where recruit_start_date <= now() and recruit_end_date >= now()
+                            order by recruit_start_date desc limit ? offset ?`;
+    const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+    const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+
+    // campaign + qna / applicant
+    for (let i = 0; i < campaign_results[0].length; i++) {
+      let campaign_seq = campaign_results[0][i].campaign_seq;
+
+      const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+      campaign_results[0][i].qna = campaign_qna_results[0];
+      campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+    }
+
+    res.status(200).json({
+      message: "캠페인 조회 성공",
+      campaigns: campaign_results[0],
+      totalCount: campaign_results[0].length,
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
 
 // 진행중인 캠페인 인기순 + 페이징
-async function getCampaignByProgressByPopular(req, res, next) {}
+async function getCampaignByProgressByPopular(req, res, next) {
+  try {
+    const { page } = req.query;
+    const offset = (page - 1) * pagelimit;
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where recruit_start_date <= now() and recruit_end_date >= now()
+                            order by applicant_count desc limit ? offset ?`;
+    const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+    const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+
+    // campaign + qna / applicant
+    for (let i = 0; i < campaign_results[0].length; i++) {
+      let campaign_seq = campaign_results[0][i].campaign_seq;
+
+      const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+      campaign_results[0][i].qna = campaign_qna_results[0];
+      campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+    }
+
+    res.status(200).json({
+      message: "캠페인 조회 성공",
+      campaigns: campaign_results[0],
+      totalCount: campaign_results[0].length,
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
 
 // 진행중인 캠페인 선정마감순 + 페이징
-async function getCampaignByProgressBySelection(req, res, next) {}
+async function getCampaignByProgressBySelection(req, res, next) {
+  try {
+    const { page } = req.query;
+    const offset = (page - 1) * pagelimit;
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where recruit_start_date <= now() and recruit_end_date >= now()
+                            order by recruit_end_date desc limit ? offset ?`;
+    const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-// 진행중인 타입별(방문형,배송형,기자단) 캠페인 + 페이징
-async function getCampaignByType(req, res, next) {}
+    const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+
+    // campaign + qna / applicant
+    for (let i = 0; i < campaign_results[0].length; i++) {
+      let campaign_seq = campaign_results[0][i].campaign_seq;
+
+      const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+      campaign_results[0][i].qna = campaign_qna_results[0];
+      campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+    }
+
+    res.status(200).json({
+      message: "캠페인 조회 성공",
+      campaigns: campaign_results[0],
+      totalCount: campaign_results[0].length,
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
+
+// 진행중인 카테고리별(방문형,배송형,기자단) 캠페인 + 페이징
+async function getCampaignByType(req, res, next) {
+  try {
+    const { page, category } = req.query;
+    const offset = (page - 1) * pagelimit;
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where category = ? and recruit_start_date <= now() and recruit_end_date >= now()  limit ? offset ?`;
+    const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+    const campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
+
+    // campaign + qna / applicant
+    for (let i = 0; i < campaign_results[0].length; i++) {
+      let campaign_seq = campaign_results[0][i].campaign_seq;
+
+      const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+      campaign_results[0][i].qna = campaign_qna_results[0];
+      campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+    }
+
+    res.status(200).json({
+      message: "캠페인 조회 성공",
+      campaigns: campaign_results[0],
+      totalCount: campaign_results[0].length,
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
 
 // 진행중인 타입별(방문형,배송형,기자단) 캠페인 최신순 + 페이징
-async function getCampaignByTypeBylastest(req, res, next) {}
+async function getCampaignByTypeBylastest(req, res, next) {
+  try {
+    const { page, category } = req.query;
+    const offset = (page - 1) * pagelimit;
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where category = ? and recruit_start_date <= now() and recruit_end_date >= now()  order by recruit_start_date desc limit ? offset ?`;
+    const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+    const campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
+
+    // campaign + qna / applicant
+    for (let i = 0; i < campaign_results[0].length; i++) {
+      let campaign_seq = campaign_results[0][i].campaign_seq;
+
+      const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+      campaign_results[0][i].qna = campaign_qna_results[0];
+      campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+    }
+
+    res.status(200).json({
+      message: "캠페인 조회 성공",
+      campaigns: campaign_results[0],
+      totalCount: campaign_results[0].length,
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
 
 // 진행중인 타입별(방문형,배송형,기자단) 캠페인 인기순 + 페이징
-async function getCampaignByTypeByPopular(req, res, next) {}
+async function getCampaignByTypeByPopular(req, res, next) {
+  try {
+    const { page, category } = req.query;
+    const offset = (page - 1) * pagelimit;
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where category = ? and recruit_start_date <= now() and recruit_end_date >= now()  order by applicant_count desc limit ? offset ?`;
+    const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+    const campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
+
+    // campaign + qna / applicant
+    for (let i = 0; i < campaign_results[0].length; i++) {
+      let campaign_seq = campaign_results[0][i].campaign_seq;
+
+      const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+      campaign_results[0][i].qna = campaign_qna_results[0];
+      campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+    }
+
+    res.status(200).json({
+      message: "캠페인 조회 성공",
+      campaigns: campaign_results[0],
+      totalCount: campaign_results[0].length,
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
 
 // 진행중인 타입별(방문형,배송형,기자단) 캠페인 선정마감순 + 페이징
-async function getCampaignByTypeBySelection(req, res, next) {}
+async function getCampaignByTypeBySelection(req, res, next) {
+  try {
+    const { page, category } = req.query;
+    const offset = (page - 1) * pagelimit;
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where category = ? and recruit_start_date <= now() and recruit_end_date >= now()  order by recruit_end_date desc limit ? offset ?`;
+    const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+    const campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
+
+    // campaign + qna / applicant
+    for (let i = 0; i < campaign_results[0].length; i++) {
+      let campaign_seq = campaign_results[0][i].campaign_seq;
+
+      const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+      campaign_results[0][i].qna = campaign_qna_results[0];
+      campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+    }
+
+    res.status(200).json({
+      message: "캠페인 조회 성공",
+      campaigns: campaign_results[0],
+      totalCount: campaign_results[0].length,
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
 
 // 진행중인 캠페인 필터링 + 페이징
-async function getCampaignByFiltering(req, res, next) {}
+async function getCampaignByFiltering(req, res, next) {
+  try {
+    let { page, category, product, channel, area, premium } = req.query;
+
+    if (page === undefined) {
+      res.status(400).json({
+        message: "페이지 정보가 없습니다.",
+      });
+    } else {
+      const offset = (page - 1) * pagelimit;
+
+      let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where recruit_start_date <= now() and recruit_end_date >= now()`;
+      const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+      let sql_param = [];
+
+      if (category !== undefined) {
+        category = category.split(",");
+        campaign_sql += ` or category in (?)`;
+        sql_param.push(category);
+      }
+
+      if (product !== undefined) {
+        product = product.split(",");
+        campaign_sql += ` or product in (?)`;
+        sql_param.push(product);
+      }
+
+      if (channel !== undefined) {
+        channel = channel.split(",");
+        campaign_sql += ` or channel in (?)`;
+        sql_param.push(channel);
+      }
+
+      if (area !== undefined) {
+        area = area.split(",");
+        campaign_sql += ` or area in (?)`;
+        sql_param.push(area);
+      }
+
+      if (premium !== undefined) {
+        campaign_sql += ` or is_premium = 0 `;
+      } else {
+        campaign_sql += ` or is_premium = 1 `;
+      }
+
+      campaign_sql += `limit ? offset ?`;
+
+      sql_param.push(pagelimit);
+      sql_param.push(offset);
+
+      const campaign_results = await dbpool.query(campaign_sql, sql_param);
+
+      // campaign + qna
+      for (let i = 0; i < campaign_results[0].length; i++) {
+        let campaign_seq = campaign_results[0][i].campaign_seq;
+
+        const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      }
+
+      res.status(200).json({
+        message: "캠페인 조회 성공",
+        campaigns: campaign_results[0],
+        totalCount: campaign_results[0].length,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
 
 // 진행중인 캠페인 필터링 최신순 + 페이징
-async function getCampaignByFilteringBylastest(req, res, next) {}
+async function getCampaignByFilteringBylastest(req, res, next) {
+  try {
+    let { page, category, product, channel, area, premium } = req.query;
+
+    if (page === undefined) {
+      res.status(400).json({
+        message: "페이지 정보가 없습니다.",
+      });
+    } else {
+      const offset = (page - 1) * pagelimit;
+
+      let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where recruit_start_date <= now() and recruit_end_date >= now()`;
+      const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+      let sql_param = [];
+      if (category !== undefined) {
+        category = category.split(",");
+        campaign_sql += ` or category in (?)`;
+        sql_param.push(category);
+      }
+
+      if (product !== undefined) {
+        product = product.split(",");
+        campaign_sql += ` or product in (?)`;
+        sql_param.push(product);
+      }
+
+      if (channel !== undefined) {
+        channel = channel.split(",");
+        campaign_sql += ` or channel in (?)`;
+        sql_param.push(channel);
+      }
+
+      if (area !== undefined) {
+        area = area.split(",");
+        campaign_sql += ` or area in (?)`;
+        sql_param.push(area);
+      }
+
+      if (premium !== undefined) {
+        campaign_sql += ` or is_premium = 0`;
+      } else {
+        campaign_sql += ` or is_premium = 1`;
+      }
+
+      campaign_sql += `order by recruit_start_date desc limit ? offset ?`;
+
+      sql_param.push(pagelimit);
+      sql_param.push(offset);
+
+      const campaign_results = await dbpool.query(campaign_sql, sql_param);
+
+      // campaign + qna
+      for (let i = 0; i < campaign_results[0].length; i++) {
+        let campaign_seq = campaign_results[0][i].campaign_seq;
+
+        const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      }
+
+      res.status(200).json({
+        message: "캠페인 조회 성공",
+        campaigns: campaign_results[0],
+        totalCount: campaign_results[0].length,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
 
 // 진행중인 캠페인 필터링 인기순 + 페이징
-async function getCampaignByFilteringByPopular(req, res, next) {}
+async function getCampaignByFilteringByPopular(req, res, next) {
+  try {
+    let { page, category, product, channel, area, premium } = req.query;
+
+    if (page === undefined) {
+      res.status(400).json({
+        message: "페이지 정보가 없습니다.",
+      });
+    } else {
+      const offset = (page - 1) * pagelimit;
+
+      let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where recruit_start_date <= now() and recruit_end_date >= now()`;
+      const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+      let sql_param = [];
+      if (category !== undefined) {
+        category = category.split(",");
+        campaign_sql += ` or category in (?)`;
+        sql_param.push(category);
+      }
+
+      if (product !== undefined) {
+        product = product.split(",");
+        campaign_sql += ` or product in (?)`;
+        sql_param.push(product);
+      }
+
+      if (channel !== undefined) {
+        channel = channel.split(",");
+        campaign_sql += ` or channel in (?)`;
+        sql_param.push(channel);
+      }
+
+      if (area !== undefined) {
+        area = area.split(",");
+        campaign_sql += ` or area in (?)`;
+        sql_param.push(area);
+      }
+
+      if (premium !== undefined) {
+        campaign_sql += ` or is_premium = 0`;
+      } else {
+        campaign_sql += ` or is_premium = 1`;
+      }
+
+      campaign_sql += `order by applicant_count desc limit ? offset ?`;
+
+      sql_param.push(pagelimit);
+      sql_param.push(offset);
+
+      const campaign_results = await dbpool.query(campaign_sql, sql_param);
+
+      // campaign + qna
+      for (let i = 0; i < campaign_results[0].length; i++) {
+        let campaign_seq = campaign_results[0][i].campaign_seq;
+
+        const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      }
+
+      res.status(200).json({
+        message: "캠페인 조회 성공",
+        campaigns: campaign_results[0],
+        totalCount: campaign_results[0].length,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
 
 // 진행중인 캠페인 필터링 선정마감순 + 페이징
-async function getCampaignByFilteringBySelection(req, res, next) {}
+async function getCampaignByFilteringBySelection(req, res, next) {
+  try {
+    let { page, category, product, channel, area, premium } = req.query;
+
+    if (page === undefined) {
+      res.status(400).json({
+        message: "페이지 정보가 없습니다.",
+      });
+    } else {
+      const offset = (page - 1) * pagelimit;
+
+      let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where recruit_start_date <= now() and recruit_end_date >= now()`;
+      const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+      let sql_param = [];
+      if (category !== undefined) {
+        category = category.split(",");
+        campaign_sql += ` and category in (?)`;
+        sql_param.push(category);
+      }
+
+      if (product !== undefined) {
+        product = product.split(",");
+        campaign_sql += ` or product in (?)`;
+        sql_param.push(product);
+      }
+
+      if (channel !== undefined) {
+        channel = channel.split(",");
+        campaign_sql += ` or channel in (?)`;
+        sql_param.push(channel);
+      }
+
+      if (area !== undefined) {
+        area = area.split(",");
+        campaign_sql += ` or area in (?)`;
+        sql_param.push(area);
+      }
+
+      if (premium !== undefined) {
+        campaign_sql += ` or is_premium = 0`;
+      } else {
+        campaign_sql += ` or is_premium = 1`;
+      }
+
+      campaign_sql += `order by recruit_end_date desc limit ? offset ?`;
+
+      sql_param.push(pagelimit);
+      sql_param.push(offset);
+
+      const campaign_results = await dbpool.query(campaign_sql, sql_param);
+
+      // campaign + qna
+      for (let i = 0; i < campaign_results[0].length; i++) {
+        let campaign_seq = campaign_results[0][i].campaign_seq;
+
+        const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      }
+
+      res.status(200).json({
+        message: "캠페인 조회 성공",
+        campaigns: campaign_results[0],
+        totalCount: campaign_results[0].length,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
 
 // 진행중인 프리미엄 캠페인 + 페이징
-async function getPremiumCampaign(req, res, next) {}
+async function getPremiumCampaign(req, res, next) {
+  try {
+    let { page } = req.query;
+
+    if (page === undefined) {
+      res.status(400).json({
+        message: "페이지 정보가 없습니다.",
+      });
+    } else {
+      const offset = (page - 1) * pagelimit;
+
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1 order by recruit_end_date desc limit ? offset ?`;
+      const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+      const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+
+      // campaign + qna
+      for (let i = 0; i < campaign_results[0].length; i++) {
+        let campaign_seq = campaign_results[0][i].campaign_seq;
+
+        const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      }
+
+      res.status(200).json({
+        message: "캠페인 조회 성공",
+        campaigns: campaign_results[0],
+        totalCount: campaign_results[0].length,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
 
 // 진행중인 프리미엄 캠페인 최신순 + 페이징
-async function getPremiumCampaignBylastest(req, res, next) {}
+async function getPremiumCampaignBylastest(req, res, next) {
+  try {
+    let { page } = req.query;
+
+    if (page === undefined) {
+      res.status(400).json({
+        message: "페이지 정보가 없습니다.",
+      });
+    } else {
+      const offset = (page - 1) * pagelimit;
+
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1 order by recruit_start_date desc limit ? offset ?`;
+      const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+      const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+
+      // campaign + qna
+      for (let i = 0; i < campaign_results[0].length; i++) {
+        let campaign_seq = campaign_results[0][i].campaign_seq;
+
+        const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      }
+
+      res.status(200).json({
+        message: "캠페인 조회 성공",
+        campaigns: campaign_results[0],
+        totalCount: campaign_results[0].length,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
 
 // 진행중인 프리미엄 캠페인 인기순 + 페이징
-async function getPremiumCampaignByPopular(req, res, next) {}
+async function getPremiumCampaignByPopular(req, res, next) {
+  try {
+    let { page } = req.query;
+
+    if (page === undefined) {
+      res.status(400).json({
+        message: "페이지 정보가 없습니다.",
+      });
+    } else {
+      const offset = (page - 1) * pagelimit;
+
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1 order by applicant_count desc limit ? offset ?`;
+      const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+      const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+
+      // campaign + qna
+      for (let i = 0; i < campaign_results[0].length; i++) {
+        let campaign_seq = campaign_results[0][i].campaign_seq;
+
+        const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      }
+
+      res.status(200).json({
+        message: "캠페인 조회 성공",
+        campaigns: campaign_results[0],
+        totalCount: campaign_results[0].length,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
 
 // 진행중인 프리미엄 캠페인 선정마감순 + 페이징
-async function getPremiumCampaignBySelection(req, res, next) {}
+async function getPremiumCampaignBySelection(req, res, next) {
+  try {
+    let { page } = req.query;
+
+    if (page === undefined) {
+      res.status(400).json({
+        message: "페이지 정보가 없습니다.",
+      });
+    } else {
+      const offset = (page - 1) * pagelimit;
+
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1 order by recruit_end_date desc limit ? offset ?`;
+      const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+      const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+
+      // campaign + qna
+      for (let i = 0; i < campaign_results[0].length; i++) {
+        let campaign_seq = campaign_results[0][i].campaign_seq;
+
+        const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      }
+
+      res.status(200).json({
+        message: "캠페인 조회 성공",
+        campaigns: campaign_results[0],
+        totalCount: campaign_results[0].length,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
 
 // 채널별 캠페인 + 페이징
-async function getCampaignByChannel(req, res, next) {}
+async function getCampaignByChannel(req, res, next) {
+  try {
+    let { page, channel } = req.query;
+
+    if (page === undefined || channel === undefined) {
+      res.status(400).json({
+        message: "페이지 정보가 없습니다.",
+      });
+    } else {
+      const offset = (page - 1) * pagelimit;
+
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where recruit_start_date <= now() and recruit_end_date >= now() and channel = ? limit ? offset ?`;
+      const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+      const campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
+
+      // campaign + qna
+      for (let i = 0; i < campaign_results[0].length; i++) {
+        let campaign_seq = campaign_results[0][i].campaign_seq;
+
+        const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      }
+
+      res.status(200).json({
+        message: "캠페인 조회 성공",
+        campaigns: campaign_results[0],
+        totalCount: campaign_results[0].length,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
 
 // 채널별 최신순 캠페인 + 페이징
-async function getCampaignByChannelBylastest(req, res, next) {}
+async function getCampaignByChannelBylastest(req, res, next) {
+  try {
+    let { page, channel } = req.query;
+
+    if (page === undefined || channel === undefined) {
+      res.status(400).json({
+        message: "페이지 정보가 없습니다.",
+      });
+    } else {
+      const offset = (page - 1) * pagelimit;
+
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where recruit_start_date <= now() and recruit_end_date >= now() and channel = ? order by recruit_start_date desc limit ? offset ?`;
+      const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+      const campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
+
+      // campaign + qna
+      for (let i = 0; i < campaign_results[0].length; i++) {
+        let campaign_seq = campaign_results[0][i].campaign_seq;
+
+        const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      }
+
+      res.status(200).json({
+        message: "캠페인 조회 성공",
+        campaigns: campaign_results[0],
+        totalCount: campaign_results[0].length,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
 
 // 채널별 인기순 캠페인 + 페이징
-async function getCampaignByChannelByPopular(req, res, next) {}
+async function getCampaignByChannelByPopular(req, res, next) {
+  try {
+    let { page, channel } = req.query;
+
+    if (page === undefined || channel === undefined) {
+      res.status(400).json({
+        message: "페이지 정보가 없습니다.",
+      });
+    } else {
+      const offset = (page - 1) * pagelimit;
+
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where recruit_start_date <= now() and recruit_end_date >= now() and channel = ? order by applicant_count desc limit ? offset ?`;
+      const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+      const campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
+
+      // campaign + qna
+      for (let i = 0; i < campaign_results[0].length; i++) {
+        let campaign_seq = campaign_results[0][i].campaign_seq;
+
+        const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      }
+
+      res.status(200).json({
+        message: "캠페인 조회 성공",
+        campaigns: campaign_results[0],
+        totalCount: campaign_results[0].length,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
 
 // 채널별 선정 마감순 캠페인 + 페이징
-async function getCampaignByChannelBySelection(req, res, next) {}
+async function getCampaignByChannelBySelection(req, res, next) {
+  try {
+    let { page, channel } = req.query;
+
+    if (page === undefined || channel === undefined) {
+      res.status(400).json({
+        message: "페이지 정보가 없습니다.",
+      });
+    } else {
+      const offset = (page - 1) * pagelimit;
+
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where recruit_start_date <= now() and recruit_end_date >= now() and channel = ? order by recurit_end_date desc limit ? offset ?`;
+      const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+      const campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
+
+      // campaign + qna
+      for (let i = 0; i < campaign_results[0].length; i++) {
+        let campaign_seq = campaign_results[0][i].campaign_seq;
+
+        const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      }
+
+      res.status(200).json({
+        message: "캠페인 조회 성공",
+        campaigns: campaign_results[0],
+        totalCount: campaign_results[0].length,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
 
 // 연관 캠페인 + 페이징
-async function getCampaignByRelation(req, res, next) {}
+/*
+async function getCampaignByRelation(req, res, next) {
+  try {
+    let { page, campaign_seq } = req.query;
+
+    if (page === undefined || campaign_seq === undefined) {
+      res.status(400).json({
+        message: "페이지 정보가 없습니다.",
+      });
+    } else {
+      const offset = (page - 1) * pagelimit;
+
+      const campaign_sql = `select campaign_seq,count(*) as count
+      from campaign_application
+      where campaign_seq = 1;
+      
+      select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count from campaign as c join (select campaign_seq,count(*) as count from campaign_application group by campaign_seq) as cc on c.campaign_seq = cc.campaign_seq order by applicant_count desc limit 1 offset 1;
+      
+      select fir.*
+      from 
+      (select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count,view_count
+      from campaign as c
+        join
+        (select campaign_seq,count(*) as count
+          from campaign_application group by campaign_seq) as cc              
+        on c.campaign_seq = cc.campaign_seq
+      ) as fir, (select * from campaign where campaign_seq = 1) as sec
+      where true and fir.campaign_seq = ? or fir.area = sec.area or fir.category = sec.category or fir.channel = sec.channel
+      limit ? offset ?;`;
+
+      const campaign_results = await dbpool.query(campaign_sql, [campaign_seq, pagelimit, offset]);
+
+      // campaign + qna
+      for (let i = 0; i < campaign_results[0].length; i++) {
+        let campaign_seq = campaign_results[0][i].campaign_seq;
+
+        const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results[0][i].keyword = campaign_results[0][i].
+}
+*/
 
 // 캠페인 검색 + 페이징
-async function getCampaignBySearch(req, res, next) {}
+async function getCampaignBySearch(req, res, next) {
+  try {
+    let { page, search } = req.query;
+
+    if (page === undefined || search === undefined) {
+      res.status(400).json({
+        message: "페이지 정보가 없습니다.",
+      });
+    } else {
+      const offset = (page - 1) * pagelimit;
+
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?) order by applicant_count desc limit ? offset ?`;
+      const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+      const campaign_results = await dbpool.query(campaign_sql, [
+        search,
+        search,
+        pagelimit,
+        offset,
+      ]);
+
+      // campaign + qna
+      for (let i = 0; i < campaign_results[0].length; i++) {
+        let campaign_seq = campaign_results[0][i].campaign_seq;
+
+        const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      }
+
+      res.status(200).json({
+        message: "캠페인 검색 성공",
+        campaigns: campaign_results[0],
+        totalCount: campaign_results[0].length,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 검색 실패",
+    });
+  }
+}
 
 // 캠페인 검색 + 페이징 최신순
-async function getCampaignBySearchBylastest(req, res, next) {}
+async function getCampaignBySearchBylastest(req, res, next) {
+  try {
+    let { page, search } = req.query;
+
+    if (page === undefined || search === undefined) {
+      res.status(400).json({
+        message: "페이지 정보가 없습니다.",
+      });
+    } else {
+      const offset = (page - 1) * pagelimit;
+
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?) order by recruit_start_date desc limit ? offset ?`;
+      const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+      const campaign_results = await dbpool.query(campaign_sql, [
+        search,
+        search,
+        pagelimit,
+        offset,
+      ]);
+
+      // campaign + qna
+      for (let i = 0; i < campaign_results[0].length; i++) {
+        let campaign_seq = campaign_results[0][i].campaign_seq;
+
+        const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      }
+
+      res.status(200).json({
+        message: "캠페인 검색 성공",
+        campaigns: campaign_results[0],
+        totalCount: campaign_results[0].length,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 검색 실패",
+    });
+  }
+}
 
 // 캠페인 검색 + 페이징 인기순
-async function getCampaignBySearchByPopular(req, res, next) {}
+async function getCampaignBySearchByPopular(req, res, next) {
+  try {
+    let { page, search } = req.query;
+
+    if (page === undefined || search === undefined) {
+      res.status(400).json({
+        message: "페이지 정보가 없습니다.",
+      });
+    } else {
+      const offset = (page - 1) * pagelimit;
+
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?) order by applicant_count desc limit ? offset ?`;
+      const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+      const campaign_results = await dbpool.query(campaign_sql, [
+        search,
+        search,
+        pagelimit,
+        offset,
+      ]);
+
+      // campaign + qna
+      for (let i = 0; i < campaign_results[0].length; i++) {
+        let campaign_seq = campaign_results[0][i].campaign_seq;
+
+        const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      }
+
+      res.status(200).json({
+        message: "캠페인 검색 성공",
+        campaigns: campaign_results[0],
+        totalCount: campaign_results[0].length,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 검색 실패",
+    });
+  }
+}
 
 // 캠페인 검색 + 페이징 선정마감순
-async function getCampaignBySearchBySelection(req, res, next) {}
+async function getCampaignBySearchBySelection(req, res, next) {
+  try {
+    let { page, search } = req.query;
+
+    if (page === undefined || search === undefined) {
+      res.status(400).json({
+        message: "페이지 정보가 없습니다.",
+      });
+    } else {
+      const offset = (page - 1) * pagelimit;
+
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+                          from campaign as c
+                            join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?) order by recruit_end_date desc limit ? offset ?`;
+      const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+
+      const campaign_results = await dbpool.query(campaign_sql, [
+        search,
+        search,
+        pagelimit,
+        offset,
+      ]);
+
+      // campaign + qna
+      for (let i = 0; i < campaign_results[0].length; i++) {
+        let campaign_seq = campaign_results[0][i].campaign_seq;
+
+        const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+
+        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      }
+
+      res.status(200).json({
+        message: "캠페인 검색 성공",
+        campaigns: campaign_results[0],
+        totalCount: campaign_results[0].length,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 검색 실패",
+    });
+  }
+}
 
 // 캠페인 신청
-async function applyCampaign(req, res, next) {}
+async function applyCampaign(req, res, next) {
+  try {
+    // 캠페인 신청 정보
+    // 캠페인 시퀀스, 유저 시퀀스, 내용숙지여부, 선택리워드, 얼굴노출여부, 공동블로그, 카메라 코드
+    const {
+      campaign_seq,
+      user_seq,
+      acquaint_content,
+      select_reward,
+      face_exposure,
+      joint_blog,
+      camera_code,
+    } = req.body;
+
+    if (campaign_seq === undefined || user_seq === undefined) {
+      res.status(400).json({
+        message: "캠페인 정보가 없습니다.",
+      });
+    } else {
+      const sql = `insert into campaign_application (user_seq, campaign_seq, acquaint_content, select_reward, camera_code, face_exposure, joint_blog, status, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+      await dbpool.query(sql, [
+        user_seq,
+        campaign_seq,
+        acquaint_content,
+        select_reward,
+        camera_code,
+        face_exposure,
+        joint_blog,
+        1,
+        user_seq,
+        new Date(),
+        user_seq,
+        user_seq,
+      ]);
+
+      res.status(200).json({
+        message: "캠페인 신청 성공",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 신청 실패",
+    });
+  }
+}
 
 // 캠페인 신청 취소
-async function cancelCampaign(req, res, next) {}
+async function cancelCampaign(req, res, next) {
+  try {
+    // 캠페인 신청 정보
+    // 캠페인 시퀀스, 유저 시퀀스
+    const { campaign_seq, user_seq } = req.body;
+
+    if (campaign_seq === undefined || user_seq === undefined) {
+      res.status(400).json({
+        message: "캠페인 정보가 없습니다.",
+      });
+    } else {
+      const sql = `delete from campaign_application where user_seq = ? and campaign_seq = ?`;
+
+      await dbpool.query(sql, [campaign_seq, user_seq]);
+
+      res.status(200).json({
+        message: "캠페인 신청 취소 성공",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 신청 취소 실패",
+    });
+  }
+}
 
 // 특정 캠페인 신청자 목록
-async function getCampaignApplicant(req, res, next) {}
+async function getCampaignApplicant(req, res, next) {
+  try {
+    // 캠페인 시퀀스
+    const { campaign_seq } = req.query;
+
+    if (campaign_seq === undefined) {
+      res.status(400).json({
+        message: "캠페인 정보가 없습니다.",
+      });
+    } else {
+      const sql = `select f.*, u.id,u.name,u.phonenumber, u.gender, u.birth, is_premium, u.is_premium, u.is_advertiser
+      from (select ca.campaign_seq,ca.user_seq, ca.select_reward, ca.camera_code,joint_blog,ca.status
+      from campaign_application as ca join campaign as c on ca.campaign_seq = c.campaign_seq
+      where ca.campaign_seq = ?) as f join user as u on f.user_seq = u.user_seq`;
+
+      const results = await dbpool.query(sql, [campaign_seq]);
+
+      res.status(200).json({
+        message: "특정 캠페인 신청자 목록 성공",
+        applicants: results[0],
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "특정 캠페인 신청자 목록 실패",
+    });
+  }
+}
 
 // 리뷰어 선정 등록
-async function createCampaignReviewer(req, res, next) {}
+async function createCampaignReviewer(req, res, next) {
+  try {
+    // 캠페인 시퀀스, 유저 시퀀스
+    const { campaign_seq, user_seq, admin } = req.body;
+
+    if (campaign_seq === undefined || user_seq === undefined) {
+      res.status(400).json({
+        message: "캠페인 정보가 없습니다.",
+      });
+    } else {
+      const sql = `insert into reviewer (campaign_seq, user_seq, complete_mission, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?)`;
+      const status_sql = `update campaign_application set status = 2 where campaign_seq = ? and user_seq = ?`;
+
+      await dbpool.beginTransaction();
+      await dbpool.execute(sql, [campaign_seq, user_seq, 0, admin, new Date(), admin, new Date()]);
+      await dbpool.execute(status_sql, [campaign_seq, user_seq]);
+      await dbpool.commit();
+
+      res.status(200).json({
+        message: "리뷰어 선정 등록 성공",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "리뷰어 선정 등록 실패",
+    });
+  }
+}
 
 // 리뷰어 선정 취소
-async function deleteCampaignReviewer(req, res, next) {}
+async function deleteCampaignReviewer(req, res, next) {
+  try {
+    // 리뷰어 시퀀스
+    const { campaign_seq, user_seq } = req.body;
+
+    if (campaign_seq === undefined || user_seq === undefined) {
+      res.status(400).json({
+        message: "리뷰어 정보가 없습니다.",
+      });
+    } else {
+      const sql = `delete from reviewer where campaign_seq = ? and user_seq = ?`;
+
+      await dbpool.query(sql, [campaign_seq, user_seq]);
+
+      res.status(200).json({
+        message: "리뷰어 선정 취소 성공",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "리뷰어 선정 취소 실패",
+    });
+  }
+}
 
 // 특정 캠페인 리뷰어 선정자 목록
-async function getCampaignReviewer(req, res, next) {}
+async function getCampaignReviewer(req, res, next) {
+  try {
+    const { campaign_seq } = req.query;
+
+    if (campaign_seq === undefined) {
+      res.status(400).json({
+        message: "캠페인 정보가 없습니다.",
+      });
+    } else {
+      const sql = `select f.*, u.id,u.name,u.phonenumber, u.gender, u.birth, is_premium, u.is_premium, u.is_advertiser
+      from (select r.campaign_seq, r.user_seq
+      from reviewer as r join campaign as c on r.campaign_seq = c.campaign_seq
+      where r.campaign_seq = ?) as f join user as u on f.user_seq = u.user_seq`;
+
+      const results = await dbpool.query(sql, [campaign_seq]);
+
+      res.status(200).json({
+        message: "특정 캠페인 리뷰어 선정자 목록 성공",
+        reviewers: results[0],
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "특정 캠페인 리뷰어 선정자 목록 실패",
+    });
+  }
+}
 
 // 캠페인 QnA 등록
-async function createCampaignQnA(req, res, next) {}
+async function createCampaignQnA(req, res, next) {
+  try {
+    // 캠페인 시퀀스, 유저 시퀀스, 질문, 응답
+    const { campaign_seq, user_seq, question, answer } = req.body;
+
+    if (campaign_seq === undefined || user_seq === undefined || content === undefined) {
+      res.status(400).json({
+        message: "캠페인 정보가 없습니다.",
+      });
+    } else {
+      const sql = `insert into campaign_qna (campaign_seq, user_seq, question, answer, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?)`;
+
+      await dbpool.execute(sql, [
+        campaign_seq,
+        user_seq,
+        question,
+        answer,
+        user_seq,
+        new Date(),
+        user_seq,
+        new Date(),
+      ]);
+
+      res.status(200).json({
+        message: "캠페인 QnA 등록 성공",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 QnA 등록 실패",
+    });
+  }
+}
 
 // 캠페인 QnA 수정
-async function updateCampaignQnA(req, res, next) {}
+async function updateCampaignQnA(req, res, next) {
+  try {
+    // 캠페인 시퀀스, 유저 시퀀스, 질문, 응답
+    const { question_seq, campaign_seq, user_seq, question, answer } = req.body;
+
+    if (campaign_seq === undefined || user_seq === undefined || content === undefined) {
+      res.status(400).json({
+        message: "캠페인 정보가 없습니다.",
+      });
+    } else {
+      const sql = `update campaign_qna set question = ?, answer = ?, last_register_id = ?, last_register_date = ? where campaign_seq = ? and question_seq = ?`;
+
+      await dbpool.execute(sql, [
+        question,
+        answer,
+        user_seq,
+        new Date(),
+        campaign_seq,
+        question_seq,
+      ]);
+
+      res.status(200).json({
+        message: "캠페인 QnA 수정 성공",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 QnA 수정 실패",
+    });
+  }
+}
 
 // 캠페인 QnA 삭제
-async function deleteCampaignQnA(req, res, next) {}
+async function deleteCampaignQnA(req, res, next) {
+  try {
+    // 캠페인 시퀀스, 유저 시퀀스, 질문, 응답
+    const { campaign_seq, question_seq } = req.body;
+
+    if (campaign_seq === undefined || question_seq === undefined) {
+      res.status(400).json({
+        message: "캠페인 정보가 없습니다.",
+      });
+    } else {
+      const sql = `delete from campaign_qna where campaign_seq = ? and question_seq = ?`;
+
+      await dbpool.execute(sql, [campaign_seq, question_seq]);
+
+      res.status(200).json({
+        message: "캠페인 QnA 삭제 성공",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 QnA 삭제 실패",
+    });
+  }
+}
 
 // 캠페인 평가 등록
-async function createCampaignEvaluation(req, res, next) {}
+async function createCampaignEvaluation(req, res, next) {
+  try {
+    // 캠페인 시퀀스, 유저 시퀀스, 평가
+    const { campaign_seq, user_seq, evaluation, content } = req.body;
+
+    if (campaign_seq === undefined || user_seq === undefined || content === undefined) {
+      res.status(400).json({
+        message: "캠페인 정보가 없습니다.",
+      });
+    } else {
+      const sql = `insert into campaign_evaluation (campaign_seq, user_seq, evaluation, content, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?)`;
+
+      await dbpool.execute(sql, [
+        campaign_seq,
+        user_seq,
+        evaluation,
+        content,
+        user_seq,
+        new Date(),
+        user_seq,
+        new Date(),
+      ]);
+
+      res.status(200).json({
+        message: "캠페인 평가 등록 성공",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 평가 등록 실패",
+    });
+  }
+}
 
 // 캠페인 평가 수정
-async function updateCampaignEvaluation(req, res, next) {}
+async function updateCampaignEvaluation(req, res, next) {
+  try {
+    // 캠페인 시퀀스, 유저 시퀀스, 평가, 내용
+    const { campaign_seq, user_seq, evaluation, content } = req.body;
+
+    if (campaign_seq === undefined || user_seq === undefined || content === undefined) {
+      res.status(400).json({
+        message: "캠페인 정보가 없습니다.",
+      });
+    } else {
+      const sql = `update campaign_evaluation set evaluation = ?, content = ?, last_register_id = ?, last_register_date = ? where campaign_seq = ? and user_seq = ?`;
+
+      await dbpool.execute(sql, [
+        evaluation,
+        content,
+        user_seq,
+        new Date(),
+        campaign_seq,
+        user_seq,
+      ]);
+
+      res.status(200).json({
+        message: "캠페인 평가 수정 성공",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 평가 수정 실패",
+    });
+  }
+}
 
 // 캠페인 평가 삭제
-async function deleteCampaignEvaluation(req, res, next) {}
+async function deleteCampaignEvaluation(req, res, next) {
+  try {
+    // 캠페인 시퀀스, 유저 시퀀스, 평가, 내용
+    const { campaign_seq, user_seq } = req.body;
+
+    if (campaign_seq === undefined || user_seq === undefined) {
+      res.status(400).json({
+        message: "캠페인 정보가 없습니다.",
+      });
+    } else {
+      const sql = `delete from campaign_evaluation where campaign_seq = ? and user_seq = ?`;
+
+      await dbpool.execute(sql, [campaign_seq, user_seq]);
+
+      res.status(200).json({
+        message: "캠페인 평가 삭제 성공",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 평가 삭제 실패",
+    });
+  }
+}
 
 // 광고주 캠페인 정보 가져오기
-async function getCampaignByAdvertiser(req, res, next) {}
+async function getCampaignByAdvertiser(req, res, next) {
+  try {
+    const { user_seq } = req.query;
+
+    if (user_seq === undefined) {
+      res.status(400).json({
+        message: "광고주 정보가 없습니다.",
+      });
+    } else {
+      const sql = `select * from campaign where advertiser = ?`;
+
+      const result = await dbpool.execute(sql, [user_seq]);
+
+      res.status(200).json({
+        message: "광고주 캠페인 정보 가져오기 성공",
+        data: result[0],
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "광고주 캠페인 정보 가져오기 실패",
+    });
+  }
+}
 
 // 광고주 캠페인 신청자 목록 가져오기
-async function getCampaignApplicantByAdvertiser(req, res, next) {}
+async function getCampaignApplicantByAdvertiser(req, res, next) {
+  try {
+    const { user_seq } = req.query;
+
+    if (user_seq === undefined) {
+      res.status(400).json({
+        message: "광고주 정보가 없습니다.",
+      });
+    } else {
+      const sql = `select f.*, u.id,u.name,u.phonenumber, u.gender, u.birth, is_premium, u.is_premium, u.is_advertiser
+      from
+      (select ca.campaign_seq,ca.user_seq, ca.select_reward, ca.camera_code,joint_blog,ca.status
+      from campaign_application as ca join (select * from campaign where advertiser = ?) as sec on ca.campaign_seq = sec.campaign_seq) as f join user as u on f.user_seq = u.user_seq`;
+
+      const result = await dbpool.execute(sql, [user_seq]);
+
+      res.status(200).json({
+        message: "광고주 캠페인 신청자 목록 가져오기 성공",
+        data: result[0],
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "광고주 캠페인 신청자 목록 가져오기 실패",
+    });
+  }
+}
 
 // 광고주 캠페인 리뷰어 선정자 목록 가져오기
-async function getCampaignReviewerByAdvertiser(req, res, next) {}
+async function getCampaignReviewerByAdvertiser(req, res, next) {
+  try {
+    const { user_seq } = req.query;
 
-// 광고주 캠페인 평가 목록 가져오기
-async function getCampaignEvaluationByAdvertiser(req, res, next) {}
+    if (user_seq === undefined) {
+      res.status(400).json({
+        message: "광고주 정보가 없습니다.",
+      });
+    } else {
+      const sql = `select f.*, u.id,u.name,u.phonenumber, u.gender, u.birth, is_premium, u.is_premium, u.is_advertiser
+      from
+      (select r.campaign_seq, r.user_seq
+      from reviewer as r join (select * from campaign where advertiser = ?) as sec on r.campaign_seq = sec.campaign_seq) as f join user as u on f.user_seq = u.user_seq`;
 
-// 캠페인 channel,product,keyword,qna 반환
-async function getCampaignInfo(campains, campaign_seq) {
-  let data = [];
+      const result = await dbpool.execute(sql, [user_seq]);
 
-  for (let i = 0; i < campains.length; i++) {
-    let campaign = campains[i];
+      res.status(200).json({
+        message: "광고주 캠페인 리뷰어 선정자 목록 가져오기 성공",
+        data: result[0],
+      });
+    }
+  } catch (err) {
+    console.log(err);
 
-    const channel_sql = `select cc.channel_code, ct.code_name as channel_name from campaign_channel as cc join code_table as ct on cc.channel_code = ct.code_value where cc.campaign_seq = ?`;
-    const keyword_sql = `select ck.keyword, ct.code_name as keyword from campaign_keyword as ck join code_table as ct on ck.keyword = ct.code_value where ck.campaign_seq = ?`;
-    const product_sql = `select cp.product_code, ct.code_name as product_name from campaign_product as cp join code_table as ct on cp.product_code = ct.code_value where cp.campaign_seq = ?`;
-    const qna_sql = `select question_seq,question,answer from campaign_qna where campaign_seq = ?`;
-
-    const channel_results = await dbpool.execute(channel_sql, [campaign_seq]);
-    const keyword_results = await dbpool.execute(keyword_sql, [campaign_seq]);
-    const product_results = await dbpool.execute(product_sql, [campaign_seq]);
-    const qna_results = await dbpool.execute(qna_sql, [campaign_seq]);
-
-    campaign.channel = channel_results[0];
-    campaign.keyword = keyword_results[0];
-    campaign.product = product_results[0];
-    campaign.qna = qna_results[0];
-
-    data.push(campaign);
+    res.status(500).json({
+      message: "광고주 캠페인 리뷰어 선정자 목록 가져오기 실패",
+    });
   }
+}
 
-  return data;
+// // 광고주 캠페인 평가 목록 가져오기
+// async function getCampaignEvaluationByAdvertiser(req, res, next) {
+
+// }
+
+// 캠페인 총 갯수
+async function test(req, res, next) {
+  let { region, category, product } = req.query;
+
+  // region = region.split(",");
+  // category = category.split(",");
+  // product = product.split(",");
+
+  console.log(region);
+  console.log(category);
+  console.log(product);
+
+  // console.log(region[0]);
+  // console.log(category[0]);
+
+  // const a = `asdfasdf;`;
+  // const b = `zxcvzxvv`;
+  // const c = `qweqweqr`;
+  // const d = a + b + c;
+  // console.log(d);
+
+  res.json({
+    success: true,
+    message: "캠페인 총 갯수 조회 성공",
+  });
+}
+
+// 미션 완료
+async function missionComplete(req, res, next) {
+  try {
+    const { user_seq, campaign_seq } = req.body;
+
+    const sql = `update campaign_application set status = 1 where user_seq = ? and campaign_seq = ?`;
+
+    await dbpool.execute(sql, [user_seq, campaign_seq]);
+
+    res.status(200).json({
+      message: "미션 완료 성공",
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "미션 완료 실패",
+    });
+  }
+}
+
+// 미션 완료 취소
+async function missionCancel(req, res, next) {
+  try {
+    const { user_seq, campaign_seq } = req.body;
+
+    const sql = `update campaign_application set status = 0 where user_seq = ? and campaign_seq = ?`;
+
+    await dbpool.execute(sql, [user_seq, campaign_seq]);
+
+    res.status(200).json({
+      message: "미션 완료 취소 성공",
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "미션 완료 취소 실패",
+    });
+  }
 }
 
 export {
@@ -586,7 +2349,6 @@ export {
   getCampaignByChannelBylastest,
   getCampaignByChannelByPopular,
   getCampaignByChannelBySelection,
-  getCampaignByRelation,
   getCampaignBySearch,
   getCampaignBySearchBylastest,
   getCampaignBySearchByPopular,
@@ -606,9 +2368,10 @@ export {
   getCampaignByAdvertiser,
   getCampaignApplicantByAdvertiser,
   getCampaignReviewerByAdvertiser,
-  getCampaignEvaluationByAdvertiser,
+  // getCampaignEvaluationByAdvertiser,
   getPremiumCampaign,
   getPremiumCampaignBylastest,
   getPremiumCampaignByPopular,
   getPremiumCampaignBySelection,
+  test,
 };
