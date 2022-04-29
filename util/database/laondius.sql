@@ -34,7 +34,7 @@ CREATE TABLE `accrual_detail` (
   PRIMARY KEY (`accrual_seq`),
   KEY `FK_user_TO_accrual_detail_1` (`user_seq`),
   CONSTRAINT `FK_user_TO_accrual_detail_1` FOREIGN KEY (`user_seq`) REFERENCES `user` (`user_seq`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -64,7 +64,7 @@ CREATE TABLE `advertisement` (
   `first_register_date` datetime NOT NULL,
   `last_register_date` datetime NOT NULL,
   PRIMARY KEY (`advertising_seq`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -97,7 +97,7 @@ CREATE TABLE `answer` (
   PRIMARY KEY (`answer_seq`,`qna_seq`),
   KEY `FK_Question_TO_Answer_1` (`qna_seq`),
   CONSTRAINT `FK_Question_TO_Answer_1` FOREIGN KEY (`qna_seq`) REFERENCES `question` (`qna_seq`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -128,7 +128,7 @@ CREATE TABLE `attendance` (
   PRIMARY KEY (`attendance_seq`,`user_seq`),
   KEY `FK_user_TO_attendance_1` (`user_seq`),
   CONSTRAINT `FK_user_TO_attendance_1` FOREIGN KEY (`user_seq`) REFERENCES `user` (`user_seq`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -156,7 +156,7 @@ CREATE TABLE `blacklist` (
   `last_register_id` int DEFAULT NULL,
   `last_register_date` datetime DEFAULT NULL,
   PRIMARY KEY (`blacklist_seq`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -203,7 +203,7 @@ CREATE TABLE `campaign` (
   `last_register_id` int DEFAULT NULL,
   `last_register_date` datetime DEFAULT NULL,
   PRIMARY KEY (`campaign_seq`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -226,11 +226,11 @@ CREATE TABLE `campaign_application` (
   `user_seq` int NOT NULL COMMENT 'Auto_Increment',
   `campaign_seq` int NOT NULL COMMENT 'Auto Increment',
   `acquaint_content` tinyint(1) NOT NULL DEFAULT '0',
-  `select_reward` text NOT NULL,
-  `camera_code` varchar(10) NOT NULL COMMENT '코드테이블 값 참조',
+  `select_reward` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `camera_code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '코드테이블 값 참조',
   `face_exposure` tinyint(1) NOT NULL,
   `joint_blog` tinyint(1) NOT NULL,
-  `status` varchar(10) NOT NULL,
+  `status` varchar(10) COLLATE utf8mb4_general_ci NOT NULL COMMENT '/home/ubuntu/laondius/laon-web-server/util/database',
   `first_register_id` int NOT NULL,
   `first_register_date` datetime NOT NULL,
   `last_register_id` int NOT NULL,
@@ -239,7 +239,7 @@ CREATE TABLE `campaign_application` (
   KEY `FK_campaign_TO_campaign_application_1` (`campaign_seq`),
   CONSTRAINT `FK_campaign_TO_campaign_application_1` FOREIGN KEY (`campaign_seq`) REFERENCES `campaign` (`campaign_seq`),
   CONSTRAINT `FK_user_TO_campaign_application_1` FOREIGN KEY (`user_seq`) REFERENCES `user` (`user_seq`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -271,7 +271,7 @@ CREATE TABLE `campaign_evaluation` (
   KEY `FK_user_TO_campaign_evaluation_1` (`user_seq`),
   CONSTRAINT `FK_campaign_TO_campaign_evaluation_1` FOREIGN KEY (`campaign_seq`) REFERENCES `campaign` (`campaign_seq`),
   CONSTRAINT `FK_user_TO_campaign_evaluation_1` FOREIGN KEY (`user_seq`) REFERENCES `user` (`user_seq`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -303,7 +303,7 @@ CREATE TABLE `campaign_file` (
   PRIMARY KEY (`file_seq`,`campaign_seq`),
   KEY `FK_campaign_TO_campaign_file_1` (`campaign_seq`),
   CONSTRAINT `FK_campaign_TO_campaign_file_1` FOREIGN KEY (`campaign_seq`) REFERENCES `campaign` (`campaign_seq`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -334,7 +334,7 @@ CREATE TABLE `campaign_qna` (
   PRIMARY KEY (`question_seq`),
   KEY `FK_campaign_TO_campaign_qna_1` (`campaign_seq`),
   CONSTRAINT `FK_campaign_TO_campaign_qna_1` FOREIGN KEY (`campaign_seq`) REFERENCES `campaign` (`campaign_seq`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -359,7 +359,7 @@ CREATE TABLE `code_table` (
   `top_level_code` varchar(10) DEFAULT NULL,
   `code_step` int NOT NULL,
   PRIMARY KEY (`code_value`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -388,7 +388,7 @@ CREATE TABLE `faq` (
   `last_register_id` int NOT NULL,
   `last_register_date` datetime NOT NULL,
   PRIMARY KEY (`faq_seq`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -419,7 +419,7 @@ CREATE TABLE `interest_campaign` (
   KEY `FK_campaign_TO_interest_campaign_1` (`campaign_seq`),
   CONSTRAINT `FK_campaign_TO_interest_campaign_1` FOREIGN KEY (`campaign_seq`) REFERENCES `campaign` (`campaign_seq`),
   CONSTRAINT `FK_user_TO_interest_campaign_1` FOREIGN KEY (`user_seq`) REFERENCES `user` (`user_seq`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -449,7 +449,7 @@ CREATE TABLE `message` (
   `last_register_id` int NOT NULL,
   `last_register_date` datetime NOT NULL,
   PRIMARY KEY (`message_seq`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -479,7 +479,7 @@ CREATE TABLE `notice` (
   `last_register_id` int NOT NULL,
   `last_register_date` datetime NOT NULL,
   PRIMARY KEY (`notice_seq`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -509,7 +509,7 @@ CREATE TABLE `penalty` (
   `last_register_id` int NOT NULL,
   `last_register_date` datetime NOT NULL,
   PRIMARY KEY (`penalty_seq`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -537,7 +537,7 @@ CREATE TABLE `popup` (
   `last_register_id` int DEFAULT NULL,
   `last_register_date` datetime DEFAULT NULL,
   PRIMARY KEY (`popup_seq`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -567,7 +567,7 @@ CREATE TABLE `premium_application` (
   PRIMARY KEY (`premium_seq`,`user_seq`),
   KEY `FK_user_TO_premium_application_1` (`user_seq`),
   CONSTRAINT `FK_user_TO_premium_application_1` FOREIGN KEY (`user_seq`) REFERENCES `user` (`user_seq`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -597,7 +597,7 @@ CREATE TABLE `question` (
   `last_register_id` int NOT NULL,
   `last_register_date` datetime DEFAULT NULL,
   PRIMARY KEY (`qna_seq`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -629,7 +629,7 @@ CREATE TABLE `reviewer` (
   KEY `FK_campaign_TO_reviewer_1` (`campaign_seq`),
   CONSTRAINT `FK_campaign_TO_reviewer_1` FOREIGN KEY (`campaign_seq`) REFERENCES `campaign` (`campaign_seq`),
   CONSTRAINT `FK_user_TO_reviewer_1` FOREIGN KEY (`user_seq`) REFERENCES `user` (`user_seq`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -654,7 +654,7 @@ CREATE TABLE `token` (
   `accesstoken` text NOT NULL,
   `refreshtoken` text NOT NULL,
   PRIMARY KEY (`user_seq`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -711,7 +711,7 @@ CREATE TABLE `user` (
   `last_register_date` datetime DEFAULT NULL,
   PRIMARY KEY (`user_seq`),
   UNIQUE KEY `id_UNIQUE` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -746,7 +746,7 @@ CREATE TABLE `user_address_book` (
   PRIMARY KEY (`address_seq`,`user_seq`),
   KEY `FK_user_TO_user_address_book_1` (`user_seq`),
   CONSTRAINT `FK_user_TO_user_address_book_1` FOREIGN KEY (`user_seq`) REFERENCES `user` (`user_seq`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -775,7 +775,7 @@ CREATE TABLE `user_area` (
   PRIMARY KEY (`user_area_code`,`user_seq`),
   KEY `FK_user_TO_user_area_1` (`user_seq`),
   CONSTRAINT `FK_user_TO_user_area_1` FOREIGN KEY (`user_seq`) REFERENCES `user` (`user_seq`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -804,7 +804,7 @@ CREATE TABLE `user_channel` (
   PRIMARY KEY (`channel_code`,`user_seq`),
   KEY `FK_user_TO_user_channel_1` (`user_seq`),
   CONSTRAINT `FK_user_TO_user_channel_1` FOREIGN KEY (`user_seq`) REFERENCES `user` (`user_seq`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -835,7 +835,7 @@ CREATE TABLE `user_file` (
   `last_register_id` int DEFAULT NULL,
   `last_register_date` datetime DEFAULT NULL,
   PRIMARY KEY (`file_seq`,`user_seq`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -863,7 +863,7 @@ CREATE TABLE `user_interest` (
   `last_register_date` datetime NOT NULL,
   PRIMARY KEY (`user_seq`,`user_interest_code`),
   CONSTRAINT `FK_user_TO_user_interest_1` FOREIGN KEY (`user_seq`) REFERENCES `user` (`user_seq`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -894,7 +894,7 @@ CREATE TABLE `withdrawal_detail` (
   PRIMARY KEY (`withdrawal_seq`),
   KEY `FK_user_TO_withdrawal_detail_1` (`user_seq`),
   CONSTRAINT `FK_user_TO_withdrawal_detail_1` FOREIGN KEY (`user_seq`) REFERENCES `user` (`user_seq`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -923,7 +923,7 @@ CREATE TABLE `withdrawal_request` (
   `last_register_id` int DEFAULT NULL,
   `last_register_date` datetime DEFAULT NULL,
   PRIMARY KEY (`request_seq`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -953,4 +953,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2022-04-30  0:01:30
+-- Dump completed on 2022-04-30  0:04:18
