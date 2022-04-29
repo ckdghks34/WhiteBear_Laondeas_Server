@@ -1,5 +1,6 @@
 import express from "express";
 import { authJWT } from "./../../middleware/jwt/authJWT.js";
+import { profileUpload } from "./../../middleware/multer.js";
 import * as userController from "./controller/userController.js";
 
 const router = express.Router();
@@ -26,13 +27,13 @@ router.patch("/sns", userController.updateSNSInfo);
 router.patch("/password", userController.updatePassword);
 
 // 프로필 사진 등록
-router.post("/profile", userController.createProfile);
+router.post("/profile", profileUpload.single("profile_img"), userController.createProfile);
 
 // 프로필 사진 가져오기
 router.get("/profile", userController.getProfile);
 
 // 프로필 사진 바꾸기
-router.patch("/profile", userController.updateProfile);
+// router.patch("/profile", userController.updateProfile);
 
 // 관심 캠페인 가져오기
 router.get("/interest-campaign", userController.getInterestCampaign);

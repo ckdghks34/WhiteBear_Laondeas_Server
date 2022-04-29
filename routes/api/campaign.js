@@ -1,5 +1,6 @@
 import express from "express";
 import { authJWT } from "./../../middleware/jwt/authJWT.js";
+import { campaignUpload } from "./../../middleware/multer.js";
 import * as campaignController from "./controller/campaignController.js";
 
 const router = express.Router();
@@ -8,16 +9,29 @@ const router = express.Router();
 router.get("/all", campaignController.getAllCampaign);
 
 // 특정 캠페인 가져오기 (get)
-router.get("/", authJWT, campaignController.getCampaign);
+router.get("/", campaignController.getCampaign);
 
 // 캠페인 등록 (post)
-router.post("/", authJWT, campaignController.createCampaign);
+router.post("/", campaignController.createCampaign);
 
 // 캠페인 수정 (patch)
 router.patch("/", authJWT, campaignController.updateCampaign);
 
 // 캠페인 삭제 (delete)
 router.delete("/", authJWT, campaignController.deleteCampaign);
+
+// 캠페인 사진 업로드 (post)
+router.post(
+  "/image",
+  campaignUpload.array("campaign_img", 10),
+  campaignController.uploadCampaignImage
+);
+
+// 캠페인 사진 가져오기 (get)
+router.get("/image", authJWT, campaignController.getCampaignImage);
+
+// 캠페인 사진 삭제 (delete)
+router.delete("/image", authJWT, campaignController.deleteCampaignImage);
 
 // 전체 최신순 캠페인 + 페이징 (get)
 router.get("/all/lastest", campaignController.getAllCampaignBylastest);
