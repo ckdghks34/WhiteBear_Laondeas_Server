@@ -203,7 +203,7 @@ CREATE TABLE `campaign` (
   `last_register_id` int DEFAULT NULL,
   `last_register_date` datetime DEFAULT NULL,
   PRIMARY KEY (`campaign_seq`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -212,6 +212,7 @@ CREATE TABLE `campaign` (
 
 LOCK TABLES `campaign` WRITE;
 /*!40000 ALTER TABLE `campaign` DISABLE KEYS */;
+INSERT INTO `campaign` VALUES (3,1,1,'프리미엄테스트','방문형','뷰티','블로그','서울','뷰티뷰티,테스트',10,'testtestset.com','테스트 성공하십쇼','뷰티테스트',10000,'화이팅 테스트','2022-04-30','2022-05-07','2022-05-07',1,1,1,0,10,'2022-04-30 02:19:49',10,'2022-04-30 02:19:49');
 /*!40000 ALTER TABLE `campaign` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -292,18 +293,16 @@ DROP TABLE IF EXISTS `campaign_file`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `campaign_file` (
   `file_seq` int NOT NULL AUTO_INCREMENT,
-  `campaign_seq` int NOT NULL COMMENT 'Auto Increment',
-  `name` varchar(100) NOT NULL,
-  `path` varchar(255) NOT NULL,
-  `type` varchar(10) NOT NULL,
-  `first_register_id` int NOT NULL,
-  `first_register_date` datetime NOT NULL,
-  `last_register_id` int NOT NULL,
-  `last_register_date` datetime NOT NULL,
-  PRIMARY KEY (`file_seq`,`campaign_seq`),
-  KEY `FK_campaign_TO_campaign_file_1` (`campaign_seq`),
-  CONSTRAINT `FK_campaign_TO_campaign_file_1` FOREIGN KEY (`campaign_seq`) REFERENCES `campaign` (`campaign_seq`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `campaign_seq` int NOT NULL,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `path` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `extension` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `first_register_id` int DEFAULT NULL,
+  `first_register_date` datetime DEFAULT NULL,
+  `last_register_id` int DEFAULT NULL,
+  `last_register_date` datetime DEFAULT NULL,
+  PRIMARY KEY (`file_seq`,`campaign_seq`)
+) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -312,6 +311,7 @@ CREATE TABLE `campaign_file` (
 
 LOCK TABLES `campaign_file` WRITE;
 /*!40000 ALTER TABLE `campaign_file` DISABLE KEYS */;
+INSERT INTO `campaign_file` VALUES (26,3,'1mplei.jpg','https://laondius.s3.ap-northeast-2.amazonaws.com/campaignimage/16512530896211mplei.jpeg','jpeg',10,'2022-04-30 02:24:50',10,'2022-04-30 02:24:50'),(27,3,'asdasdassamplei.jpg','https://laondius.s3.ap-northeast-2.amazonaws.com/campaignimage/1651253089621asdasdassamplei.jpeg','jpeg',10,'2022-04-30 02:24:50',10,'2022-04-30 02:24:50'),(28,3,'sample3.jpg','https://laondius.s3.ap-northeast-2.amazonaws.com/campaignimage/1651253089622sample3.jpeg','jpeg',10,'2022-04-30 02:24:50',10,'2022-04-30 02:24:50'),(29,3,'samplei.jpg','https://laondius.s3.ap-northeast-2.amazonaws.com/campaignimage/1651253089622samplei.jpeg','jpeg',10,'2022-04-30 02:24:50',10,'2022-04-30 02:24:50'),(30,3,'samplei1.jpg','https://laondius.s3.ap-northeast-2.amazonaws.com/campaignimage/1651253089622samplei1.jpeg','jpeg',10,'2022-04-30 02:24:50',10,'2022-04-30 02:24:50');
 /*!40000 ALTER TABLE `campaign_file` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -824,17 +824,15 @@ DROP TABLE IF EXISTS `user_file`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `user_file` (
-  `file_seq` int NOT NULL AUTO_INCREMENT,
   `user_seq` int NOT NULL,
-  `name` varchar(255) DEFAULT NULL,
-  `path` text,
-  `extension` varchar(10) DEFAULT NULL,
-  `representative` tinyint(1) DEFAULT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `path` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `extension` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `first_register_id` int DEFAULT NULL,
   `first_register_date` datetime DEFAULT NULL,
   `last_register_id` int DEFAULT NULL,
   `last_register_date` datetime DEFAULT NULL,
-  PRIMARY KEY (`file_seq`,`user_seq`)
+  PRIMARY KEY (`user_seq`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -844,6 +842,7 @@ CREATE TABLE `user_file` (
 
 LOCK TABLES `user_file` WRITE;
 /*!40000 ALTER TABLE `user_file` DISABLE KEYS */;
+INSERT INTO `user_file` VALUES (9,'map.png','https://laondius.s3.ap-northeast-2.amazonaws.com/profileimage/1651249546719map.png','png',9,'2022-04-30 01:24:34',9,'2022-04-30 01:25:47');
 /*!40000 ALTER TABLE `user_file` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -953,4 +952,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2022-04-30  0:04:18
+-- Dump completed on 2022-04-30  9:38:44
