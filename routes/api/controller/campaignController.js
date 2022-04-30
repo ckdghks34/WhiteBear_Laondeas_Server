@@ -7,10 +7,15 @@ let pagelimit = 20;
 // 전체 캠페인 가져오기
 async function getAllCampaign(req, res, next) {
   try {
-    const sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, view_count, first_register_id, first_register_date ,cc.count as applicant_count from campaign as c join (select campaign_seq,count(*) as count from campaign_application group by campaign_seq) as cc on c.campaign_seq = cc.campaign_seq`;
-    const qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+    const sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, view_count, first_register_id, first_register_date ,ifnull(cc.count,0) as applicant_count 
+    from campaign as c 
+      left join (select campaign_seq,count(*) as count 
+        from campaign_application group by campaign_seq) as cc 
+      on c.campaign_seq = cc.campaign_seq`;
+    const qna_sql = `select * from campaign_qna`;
 
     const results = await dbpool.query(sql);
+    let campaign = results[0];
 
     for (let i = 0; i < results[0].length; i++) {
       let campaign_seq = results[0][i].campaign_seq;
@@ -18,15 +23,15 @@ async function getAllCampaign(req, res, next) {
       const qna_results = await dbpool.execute(qna_sql, [campaign_seq]);
 
       // 캠페인 QnA 추가
-      results[0][i].qna = qna_results[0];
+      campaign["qna"] = qna_results[0];
       // 캠페인 키워드 파싱 후 추가
-      results[0][i].keyword = results[0][i].keyword.split(",");
+      campaign.keyword = results[0][i].keyword.split(",");
     }
 
     res.status(200).json({
       message: "캠페인 전체 가져오기 성공",
-      campaigns: results[0],
-      totalcount: results[0].length,
+      campaigns: campaign,
+      totalcount: campaign.length,
     });
   } catch (err) {
     console.log(err);
@@ -423,7 +428,7 @@ async function getAllCampaignBylastest(req, res, next) {
     const offset = (page - 1) * pagelimit;
     const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                          join
+                          left join
                           (select campaign_seq,count(*) as count
                             from campaign_application group by campaign_seq) as cc
                           on c.campaign_seq = cc.campaign_seq
@@ -431,22 +436,22 @@ async function getAllCampaignBylastest(req, res, next) {
 
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-    const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
-
+    let campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+    const campaign = campaign_results[0];
     // campaign + qna / applicant
     for (let i = 0; i < campaign_results[0].length; i++) {
       let campaign_seq = campaign_results[0][i].campaign_seq;
 
       const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-      campaign_results[0][i].qna = campaign_qna_results[0];
-      campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign["qna"] = campaign_qna_results[0];
+      campaign.keyword = campaign_results[0][i].keyword.split(",");
     }
 
     res.status(200).json({
       message: "캠페인 조회 성공",
-      campaigns: campaign_results[0],
-      totalCount: campaign_count_results[0].length,
+      campaigns: campaign,
+      totalCount: campaign.length,
     });
   } catch (err) {
     console.log(err);
@@ -465,14 +470,14 @@ async function getAllCampaignByPopular(req, res, next) {
 
     const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                          join
+                          left join
                           (select campaign_seq,count(*) as count
                             from campaign_application group by campaign_seq) as cc
                           on c.campaign_seq = cc.campaign_seq
                           order by applicant_count desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-    const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+    let campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
     // campaign + qna
     for (let i = 0; i < campaign_results[0].length; i++) {
@@ -480,7 +485,7 @@ async function getAllCampaignByPopular(req, res, next) {
 
       const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-      campaign_results[0][i].qna = campaign_qna_results[0];
+      campaign_results["qna"] = campaign_qna_results[0];
       campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
     }
 
@@ -505,14 +510,14 @@ async function getAllCampaignBySelection(req, res, next) {
     const offset = (page - 1) * pagelimit;
     const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                          join
+                          left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                           on c.campaign_seq = cc.campaign_seq
                           order by recruit_end_date desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-    const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+    let campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
     // campaign + qna / applicant
     for (let i = 0; i < campaign_results[0].length; i++) {
@@ -520,7 +525,7 @@ async function getAllCampaignBySelection(req, res, next) {
 
       const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-      campaign_results[0][i].qna = campaign_qna_results[0];
+      campaign_results["qna"] = campaign_qna_results[0];
       campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
     }
 
@@ -545,7 +550,7 @@ async function getCampaignByProgress(req, res, next) {
     const offset = (page - 1) * pagelimit;
     const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count 
                           from campaign as c
-                            join
+                            left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
@@ -553,7 +558,7 @@ async function getCampaignByProgress(req, res, next) {
                             order by recruit_end_date desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-    const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+    let campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
     // campaign + qna / applicant
     for (let i = 0; i < campaign_results[0].length; i++) {
@@ -561,7 +566,7 @@ async function getCampaignByProgress(req, res, next) {
 
       const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-      campaign_results[0][i].qna = campaign_qna_results[0];
+      campaign_results["qna"] = campaign_qna_results[0];
       campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
     }
 
@@ -586,7 +591,7 @@ async function getCampaignByProgressBylastest(req, res, next) {
     const offset = (page - 1) * pagelimit;
     const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                          left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
@@ -594,7 +599,7 @@ async function getCampaignByProgressBylastest(req, res, next) {
                             order by recruit_start_date desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-    const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+    let campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
     // campaign + qna / applicant
     for (let i = 0; i < campaign_results[0].length; i++) {
@@ -602,7 +607,7 @@ async function getCampaignByProgressBylastest(req, res, next) {
 
       const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-      campaign_results[0][i].qna = campaign_qna_results[0];
+      campaign_results["qna"] = campaign_qna_results[0];
       campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
     }
 
@@ -627,7 +632,7 @@ async function getCampaignByProgressByPopular(req, res, next) {
     const offset = (page - 1) * pagelimit;
     const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                           left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
@@ -635,7 +640,7 @@ async function getCampaignByProgressByPopular(req, res, next) {
                             order by applicant_count desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-    const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+    let campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
     // campaign + qna / applicant
     for (let i = 0; i < campaign_results[0].length; i++) {
@@ -643,7 +648,7 @@ async function getCampaignByProgressByPopular(req, res, next) {
 
       const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-      campaign_results[0][i].qna = campaign_qna_results[0];
+      campaign_results["qna"] = campaign_qna_results[0];
       campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
     }
 
@@ -668,7 +673,7 @@ async function getCampaignByProgressBySelection(req, res, next) {
     const offset = (page - 1) * pagelimit;
     const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                           left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
@@ -676,7 +681,7 @@ async function getCampaignByProgressBySelection(req, res, next) {
                             order by recruit_end_date desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-    const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+    let campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
     // campaign + qna / applicant
     for (let i = 0; i < campaign_results[0].length; i++) {
@@ -684,7 +689,7 @@ async function getCampaignByProgressBySelection(req, res, next) {
 
       const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-      campaign_results[0][i].qna = campaign_qna_results[0];
+      campaign_results["qna"] = campaign_qna_results[0];
       campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
     }
 
@@ -709,14 +714,14 @@ async function getCampaignByType(req, res, next) {
     const offset = (page - 1) * pagelimit;
     const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                           left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
                             where category = ? and recruit_start_date <= now() and recruit_end_date >= now()  limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-    const campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
+    let campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
 
     // campaign + qna / applicant
     for (let i = 0; i < campaign_results[0].length; i++) {
@@ -724,7 +729,7 @@ async function getCampaignByType(req, res, next) {
 
       const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-      campaign_results[0][i].qna = campaign_qna_results[0];
+      campaign_results["qna"] = campaign_qna_results[0];
       campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
     }
 
@@ -749,14 +754,14 @@ async function getCampaignByTypeBylastest(req, res, next) {
     const offset = (page - 1) * pagelimit;
     const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                           left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
                             where category = ? and recruit_start_date <= now() and recruit_end_date >= now()  order by recruit_start_date desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-    const campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
+    let campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
 
     // campaign + qna / applicant
     for (let i = 0; i < campaign_results[0].length; i++) {
@@ -764,7 +769,7 @@ async function getCampaignByTypeBylastest(req, res, next) {
 
       const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-      campaign_results[0][i].qna = campaign_qna_results[0];
+      campaign_results["qna"] = campaign_qna_results[0];
       campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
     }
 
@@ -789,14 +794,14 @@ async function getCampaignByTypeByPopular(req, res, next) {
     const offset = (page - 1) * pagelimit;
     const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                           left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
                             where category = ? and recruit_start_date <= now() and recruit_end_date >= now()  order by applicant_count desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-    const campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
+    let campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
 
     // campaign + qna / applicant
     for (let i = 0; i < campaign_results[0].length; i++) {
@@ -804,7 +809,7 @@ async function getCampaignByTypeByPopular(req, res, next) {
 
       const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-      campaign_results[0][i].qna = campaign_qna_results[0];
+      campaign_results["qna"] = campaign_qna_results[0];
       campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
     }
 
@@ -829,14 +834,14 @@ async function getCampaignByTypeBySelection(req, res, next) {
     const offset = (page - 1) * pagelimit;
     const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                           left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
                             where category = ? and recruit_start_date <= now() and recruit_end_date >= now()  order by recruit_end_date desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-    const campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
+    let campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
 
     // campaign + qna / applicant
     for (let i = 0; i < campaign_results[0].length; i++) {
@@ -844,7 +849,7 @@ async function getCampaignByTypeBySelection(req, res, next) {
 
       const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-      campaign_results[0][i].qna = campaign_qna_results[0];
+      campaign_results["qna"] = campaign_qna_results[0];
       campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
     }
 
@@ -876,7 +881,7 @@ async function getCampaignByFiltering(req, res, next) {
 
       let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                           left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
@@ -920,7 +925,7 @@ async function getCampaignByFiltering(req, res, next) {
       sql_param.push(pagelimit);
       sql_param.push(offset);
 
-      const campaign_results = await dbpool.query(campaign_sql, sql_param);
+      let campaign_results = await dbpool.query(campaign_sql, sql_param);
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
@@ -928,7 +933,7 @@ async function getCampaignByFiltering(req, res, next) {
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results["qna"] = campaign_qna_results[0];
         campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
       }
 
@@ -961,7 +966,7 @@ async function getCampaignByFilteringBylastest(req, res, next) {
 
       let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                           left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
@@ -1004,7 +1009,7 @@ async function getCampaignByFilteringBylastest(req, res, next) {
       sql_param.push(pagelimit);
       sql_param.push(offset);
 
-      const campaign_results = await dbpool.query(campaign_sql, sql_param);
+      let campaign_results = await dbpool.query(campaign_sql, sql_param);
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
@@ -1012,7 +1017,7 @@ async function getCampaignByFilteringBylastest(req, res, next) {
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results["qna"] = campaign_qna_results[0];
         campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
       }
 
@@ -1045,7 +1050,7 @@ async function getCampaignByFilteringByPopular(req, res, next) {
 
       let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                           left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
@@ -1088,7 +1093,7 @@ async function getCampaignByFilteringByPopular(req, res, next) {
       sql_param.push(pagelimit);
       sql_param.push(offset);
 
-      const campaign_results = await dbpool.query(campaign_sql, sql_param);
+      let campaign_results = await dbpool.query(campaign_sql, sql_param);
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
@@ -1096,7 +1101,7 @@ async function getCampaignByFilteringByPopular(req, res, next) {
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results["qna"] = campaign_qna_results[0];
         campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
       }
 
@@ -1129,7 +1134,7 @@ async function getCampaignByFilteringBySelection(req, res, next) {
 
       let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                           left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
@@ -1172,7 +1177,7 @@ async function getCampaignByFilteringBySelection(req, res, next) {
       sql_param.push(pagelimit);
       sql_param.push(offset);
 
-      const campaign_results = await dbpool.query(campaign_sql, sql_param);
+      let campaign_results = await dbpool.query(campaign_sql, sql_param);
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
@@ -1180,7 +1185,7 @@ async function getCampaignByFilteringBySelection(req, res, next) {
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results["qna"] = campaign_qna_results[0];
         campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
       }
 
@@ -1213,14 +1218,14 @@ async function getPremiumCampaign(req, res, next) {
 
       const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                           left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1 order by recruit_end_date desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-      const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+      let campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
@@ -1228,7 +1233,7 @@ async function getPremiumCampaign(req, res, next) {
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results["qna"] = campaign_qna_results[0];
         campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
       }
 
@@ -1261,14 +1266,14 @@ async function getPremiumCampaignBylastest(req, res, next) {
 
       const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                           left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1 order by recruit_start_date desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-      const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+      let campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
@@ -1276,7 +1281,7 @@ async function getPremiumCampaignBylastest(req, res, next) {
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results["qna"] = campaign_qna_results[0];
         campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
       }
 
@@ -1309,14 +1314,14 @@ async function getPremiumCampaignByPopular(req, res, next) {
 
       const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                           left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1 order by applicant_count desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-      const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+      let campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
@@ -1324,7 +1329,7 @@ async function getPremiumCampaignByPopular(req, res, next) {
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results["qna"] = campaign_qna_results[0];
         campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
       }
 
@@ -1357,14 +1362,14 @@ async function getPremiumCampaignBySelection(req, res, next) {
 
       const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                           left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1 order by recruit_end_date desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-      const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+      let campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
@@ -1372,7 +1377,7 @@ async function getPremiumCampaignBySelection(req, res, next) {
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results["qna"] = campaign_qna_results[0];
         campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
       }
 
@@ -1405,14 +1410,14 @@ async function getCampaignByChannel(req, res, next) {
 
       const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                           left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and channel = ? limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-      const campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
+      let campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
@@ -1420,7 +1425,7 @@ async function getCampaignByChannel(req, res, next) {
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results["qna"] = campaign_qna_results[0];
         campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
       }
 
@@ -1453,14 +1458,14 @@ async function getCampaignByChannelBylastest(req, res, next) {
 
       const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                           left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and channel = ? order by recruit_start_date desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-      const campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
+      let campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
@@ -1468,7 +1473,7 @@ async function getCampaignByChannelBylastest(req, res, next) {
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results["qna"] = campaign_qna_results[0];
         campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
       }
 
@@ -1501,14 +1506,14 @@ async function getCampaignByChannelByPopular(req, res, next) {
 
       const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                           left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and channel = ? order by applicant_count desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-      const campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
+      let campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
@@ -1516,7 +1521,7 @@ async function getCampaignByChannelByPopular(req, res, next) {
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results["qna"] = campaign_qna_results[0];
         campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
       }
 
@@ -1549,14 +1554,14 @@ async function getCampaignByChannelBySelection(req, res, next) {
 
       const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                           left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and channel = ? order by recurit_end_date desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-      const campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
+      let campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
@@ -1564,7 +1569,7 @@ async function getCampaignByChannelBySelection(req, res, next) {
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results["qna"] = campaign_qna_results[0];
         campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
       }
 
@@ -1614,7 +1619,7 @@ async function getCampaignByRelation(req, res, next) {
       where true and fir.campaign_seq = ? or fir.area = sec.area or fir.category = sec.category or fir.channel = sec.channel
       limit ? offset ?;`;
 
-      const campaign_results = await dbpool.query(campaign_sql, [campaign_seq, pagelimit, offset]);
+      let campaign_results = await dbpool.query(campaign_sql, [campaign_seq, pagelimit, offset]);
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
@@ -1622,7 +1627,7 @@ async function getCampaignByRelation(req, res, next) {
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results["qna"] = campaign_qna_results[0];
         campaign_results[0][i].keyword = campaign_results[0][i].
 }
 */
@@ -1641,19 +1646,14 @@ async function getCampaignBySearch(req, res, next) {
 
       const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                           left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?) order by applicant_count desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-      const campaign_results = await dbpool.query(campaign_sql, [
-        search,
-        search,
-        pagelimit,
-        offset,
-      ]);
+      let campaign_results = await dbpool.query(campaign_sql, [search, search, pagelimit, offset]);
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
@@ -1661,7 +1661,7 @@ async function getCampaignBySearch(req, res, next) {
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results["qna"] = campaign_qna_results[0];
         campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
       }
 
@@ -1694,19 +1694,14 @@ async function getCampaignBySearchBylastest(req, res, next) {
 
       const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                           left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?) order by recruit_start_date desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-      const campaign_results = await dbpool.query(campaign_sql, [
-        search,
-        search,
-        pagelimit,
-        offset,
-      ]);
+      let campaign_results = await dbpool.query(campaign_sql, [search, search, pagelimit, offset]);
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
@@ -1714,7 +1709,7 @@ async function getCampaignBySearchBylastest(req, res, next) {
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results["qna"] = campaign_qna_results[0];
         campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
       }
 
@@ -1747,19 +1742,14 @@ async function getCampaignBySearchByPopular(req, res, next) {
 
       const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                           left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?) order by applicant_count desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-      const campaign_results = await dbpool.query(campaign_sql, [
-        search,
-        search,
-        pagelimit,
-        offset,
-      ]);
+      let campaign_results = await dbpool.query(campaign_sql, [search, search, pagelimit, offset]);
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
@@ -1767,7 +1757,7 @@ async function getCampaignBySearchByPopular(req, res, next) {
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results["qna"] = campaign_qna_results[0];
         campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
       }
 
@@ -1800,19 +1790,14 @@ async function getCampaignBySearchBySelection(req, res, next) {
 
       const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
-                            join
+                           left join
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?) order by recruit_end_date desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
 
-      const campaign_results = await dbpool.query(campaign_sql, [
-        search,
-        search,
-        pagelimit,
-        offset,
-      ]);
+      let campaign_results = await dbpool.query(campaign_sql, [search, search, pagelimit, offset]);
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
@@ -1820,7 +1805,7 @@ async function getCampaignBySearchBySelection(req, res, next) {
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-        campaign_results[0][i].qna = campaign_qna_results[0];
+        campaign_results["qna"] = campaign_qna_results[0];
         campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
       }
 
