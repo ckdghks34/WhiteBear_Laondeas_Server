@@ -2390,6 +2390,33 @@ async function missionCancel(req, res, next) {
   }
 }
 
+// 캠페인 조회수 증가
+async function increaseCampaignViewCount(req, res, next) {
+  try {
+    const { campaign_seq } = req.body;
+
+    if (campaign_seq === undefined) {
+      res.status(400).json({
+        message: "캠페인 정보가 없습니다.",
+      });
+    }
+
+    const sql = `update campaign set view_count = view_count + 1 where campaign_seq = ?`;
+
+    await dbpool.execute(sql, [campaign_seq]);
+
+    res.status(200).json({
+      message: "캠페인 조회수 증가 성공",
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "캠페인 조회수 증가 실패",
+    });
+  }
+}
+
 export {
   getAllCampaign,
   getCampaign,
@@ -2442,5 +2469,6 @@ export {
   getPremiumCampaignBylastest,
   getPremiumCampaignByPopular,
   getPremiumCampaignBySelection,
+  increaseCampaignViewCount,
   test,
 };

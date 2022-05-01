@@ -177,6 +177,8 @@ router.get(
 //   campaignController.getCampaignEvaluationByAdvertiser
 // );
 
+router.patch("/campaign/view-count", campaignController.increaseCampaignViewCount);
+
 router.get("/test/test", campaignController.test);
 
 export default router;
