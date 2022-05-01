@@ -1834,17 +1834,31 @@ async function applyCampaign(req, res, next) {
       user_seq,
       acquaint_content,
       select_reward,
+      address,
+      receiver,
+      receiver_phonenumber,
       face_exposure,
       joint_blog,
       camera_code,
     } = req.body;
 
-    if (campaign_seq === undefined || user_seq === undefined) {
+    if (
+      campaign_seq === undefined ||
+      user_seq === undefined ||
+      acquaint_content === undefined ||
+      select_reward === undefined ||
+      address === undefined ||
+      receiver === undefined ||
+      receiver_phonenumber === undefined ||
+      face_exposure === undefined ||
+      joint_blog === undefined ||
+      camera_code === undefined
+    ) {
       res.status(400).json({
-        message: "캠페인 정보가 없습니다.",
+        message: "캠페인 신청 정보가 없습니다.",
       });
     } else {
-      const sql = `insert into campaign_application (user_seq, campaign_seq, acquaint_content, select_reward, camera_code, face_exposure, joint_blog, status, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      const sql = `insert into campaign_application (user_seq, campaign_seq, acquaint_content, select_reward, camera_code, face_exposure, address, receiver, recevier_phonenumber, joint_blog, status, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
       await dbpool.query(sql, [
         user_seq,
@@ -1853,12 +1867,15 @@ async function applyCampaign(req, res, next) {
         select_reward,
         camera_code,
         face_exposure,
+        address,
+        receiver,
+        receiver_phonenumber,
         joint_blog,
-        1,
+        "1",
         user_seq,
         new Date(),
         user_seq,
-        user_seq,
+        new Date(),
       ]);
 
       res.status(200).json({
@@ -1915,7 +1932,7 @@ async function getCampaignApplicant(req, res, next) {
       });
     } else {
       const sql = `select f.*, u.id,u.name,u.phonenumber, u.gender, u.birth, is_premium, u.is_premium, u.is_advertiser
-      from (select ca.campaign_seq,ca.user_seq, ca.select_reward, ca.camera_code,joint_blog,ca.status
+      from (select ca.campaign_seq,ca.user_seq, ca.select_reward, ca.address,ca.receiver,ca.receiver_phonenumber, ca.camera_code,joint_blog,ca.status
       from campaign_application as ca join campaign as c on ca.campaign_seq = c.campaign_seq
       where ca.campaign_seq = ?) as f join user as u on f.user_seq = u.user_seq`;
 
@@ -2266,7 +2283,7 @@ async function getCampaignApplicantByAdvertiser(req, res, next) {
     } else {
       const sql = `select f.*, u.id,u.name,u.phonenumber, u.gender, u.birth, is_premium, u.is_premium, u.is_advertiser
       from
-      (select ca.campaign_seq,ca.user_seq, ca.select_reward, ca.camera_code,joint_blog,ca.status
+      (select ca.campaign_seq,ca.user_seq, ca.select_reward, ca.camera_code,joint_blog,ca.status, ca.address,ca.receiver,ca.receiver_phonenumber,
       from campaign_application as ca join (select * from campaign where advertiser = ?) as sec on ca.campaign_seq = sec.campaign_seq) as f join user as u on f.user_seq = u.user_seq`;
 
       const result = await dbpool.execute(sql, [user_seq]);
