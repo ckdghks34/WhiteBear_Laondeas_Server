@@ -259,9 +259,9 @@ async function updatePassword(req, res, next) {
       const sql =
         "update user set password = ?, last_register_id = ?, last_register_date = ? where user_seq = ?";
 
-      password = bcrypt.hashSync(password, 10);
+      const new_password = bcrypt.hashSync(password, 10);
 
-      await dbpool.execute(sql, [password, user_seq, new Date(), user_seq]);
+      await dbpool.execute(sql, [new_password, user_seq, new Date(), user_seq]);
 
       res.status(200).json({
         message: "비밀번호 수정 성공",
