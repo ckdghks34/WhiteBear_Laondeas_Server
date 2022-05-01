@@ -174,6 +174,46 @@ async function updateAdditionalInfo(req, res, next) {
   }
 }
 
+// 부가정보 가져오기
+async function getAdditionalInfo(req, res, next) {
+  const { user_seq } = req.query;
+
+  if (user_seq === undefined) {
+    res.status(401).json({
+      message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
+    });
+  } else {
+    try {
+      const interest_sql = `SELECT ui.user_seq, ui.user_interest_code, ct.code_name, ui.first_register_id, ui.first_register_date FROM user_interest as ui join code_table as ct on ui.user_interest_code = ct.code_value where user_seq = ?`;
+
+      const area_sql = `SELECT ua.user_seq, ua.user_area_code, ct.code_name, ua.first_register_id, ua.first_register_date FROM user_area as ua join code_table as ct on ua.user_area_code = ct.code_value where user_seq = ?`;
+
+      const channel_sql = `SELECT uc.user_seq, uc.user_channel_code, ct.code_name, uc.first_register_id, uc.first_register_date FROM user_channel as uc join code_table as ct on uc.user_channel_code = ct.code_value where user_seq = ?`;
+
+      const interest_result = await dbpool.query(interest_sql, [user_seq]);
+      const area_result = await dbpool.query(area_sql, [user_seq]);
+      const channel_result = await dbpool.query(channel_sql, [user_seq]);
+
+      let additionalInfo = [];
+
+      additionalInfo["interest"] = interest_result[0];
+      additionalInfo["area"] = area_result[0];
+      additionalInfo["channel"] = channel_result[0];
+
+      res.status(200).json({
+        message: "부가 회원 정보 가져오기 성공",
+        additionalInfo: additionalInfo,
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "유저 정보 조회 실패",
+      });
+    }
+  }
+}
+
 // URL정보 수정
 async function updateSNSInfo(req, res, next) {
   const { user_seq, blog, instagram, influencer, youtube } = req.body;
@@ -1775,4 +1815,5 @@ export {
   updateDefaultAddressBook,
   getUserAddressBook,
   getPremiumRequestDetail,
+  getAdditionalInfo,
 };

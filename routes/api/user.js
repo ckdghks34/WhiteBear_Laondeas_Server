@@ -20,6 +20,9 @@ router.patch("/", userController.updateUser);
 // 부가 정보 수정(관심사, 지역, 채널)
 router.patch("/additional", userController.updateAdditionalInfo);
 
+// 부가 정보 가져오기(관심사, 지역, 채널)
+router.get("/additional", userController.getAdditionalInfo);
+
 // SNS 정보 수정
 router.patch("/sns", userController.updateSNSInfo);
 
