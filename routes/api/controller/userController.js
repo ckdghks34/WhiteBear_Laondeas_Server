@@ -229,17 +229,9 @@ async function updateSNSInfo(req, res, next) {
     });
   } else {
     try {
-      const sql = `update user set blog = ? and instagram = ? and influencer = ? and youtube = ? and last_register_id = ? and last_register_date = ? where user_seq = ?`;
+      const sql = `update user set blog = ? , instagram = ? , influencer = ? , youtube = ? , last_register_date = ? where user_seq = ?`;
 
-      await dbpool.execute(sql, [
-        blog,
-        instagram,
-        influencer,
-        youtube,
-        user_seq,
-        new Date(),
-        user_seq,
-      ]);
+      await dbpool.execute(sql, [blog, instagram, influencer, youtube, new Date(), user_seq]);
 
       res.status(200).json({
         message: "부가정보 수정 성공",
