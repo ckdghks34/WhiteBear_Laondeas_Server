@@ -78,13 +78,13 @@ async function signup(req, res, next) {
 async function login(req, res, next) {
   const { user_id, user_password } = req.body;
 
-  if (user_id && user_password) {
+  if (user_id !== undefined && user_password !== undefined) {
     console.log(user_id, user_password);
     try {
       const sql = `SELECT * FROM user WHERE id = ?`;
       const results = await dbpool.query(sql, user_id);
       // 아이디가 존재하지 않을 때
-      if (results.length === 0) {
+      if (results[0].length === 0) {
         res.status(401).json({
           message: "아이디가 존재하지 않습니다.",
         });
@@ -126,10 +126,15 @@ async function login(req, res, next) {
               });
             } catch (err) {
               console.log(err);
+
               res.status(401).json({
                 message: "로그인 실패",
               });
             }
+          } else {
+            res.status(401).json({
+              message: "비밀번호가 일치하지 않습니다.",
+            });
           }
         } catch (err) {
           console.log(err);
@@ -154,10 +159,30 @@ async function login(req, res, next) {
 // 비밀번호 찾기
 
 // 로그아웃
+async function logout(req, res, next) {
+  const { user_seq } = req.body;
+
+  if (user_seq !== undefined) {
+    try {
+      const sql = `delete from token where user_seq = ?`;
+      await dbpool.execute(sql, user_seq);
+
+      res.status(200).json({
+        message: "로그아웃 성공",
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "로그아웃 실패",
+      });
+    }
+  }
+}
 
 // 회원탈퇴
 async function deleteUser(req, res, next) {
-  const { user_id } = req.body;
+  const { user_seq } = req.body;
 
   if (user_id === undefined) {
     res.status(401).json({
@@ -165,8 +190,8 @@ async function deleteUser(req, res, next) {
     });
   } else {
     try {
-      const sql = `DELETE FROM user WHERE id = ?`;
-      await dbpool.execute(sql, user_id);
+      const sql = `DELETE FROM user WHERE user_seq = ?`;
+      await dbpool.execute(sql, user_seq);
 
       res.status(200).json({
         message: "회원탈퇴 성공",
@@ -216,4 +241,56 @@ async function checkID(req, res, next) {
   }
 }
 
-export { signup, login, deleteUser, checkID };
+// 코드 목록가져오기
+async function getCodetable(req, res, next) {
+  try {
+    const sql = `SELECT * FROM code_table`;
+
+    const results = await dbpool.query(sql);
+
+    res.status(200).json({
+      message: "코드테이블 조회 성공",
+      data: results,
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "코드테이블 조회 실패",
+    });
+  }
+}
+
+// 코드 등록
+async function addCode(req, res, next) {
+  const { code_value, code_name, top_level_code, code_step } = req.body;
+
+  if (
+    code_value === undefined ||
+    code_name === undefined ||
+    top_level_code === undefined ||
+    code_step === undefined
+  ) {
+    res.status(401).json({
+      message: "코드 등록 실패, 필수 항목이 없습니다.",
+    });
+  }
+
+  try {
+    const sql = `INSERT INTO code_table (code_value, code_name, top_level_code, code_step) VALUES (?,?,?,?)`;
+
+    await dbpool.execute(sql, [code_value, code_name, top_level_code, code_step]);
+
+    res.status(200).json({
+      message: "코드 등록 성공",
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "코드 등록 실패",
+    });
+  }
+}
+
+export { signup, login, deleteUser, checkID, getCodetable, addCode, logout };
