@@ -74,7 +74,6 @@ async function updateUser(req, res, next) {
     gender === undefined ||
     birth === undefined ||
     nickname === undefined ||
-    email === undefined ||
     phonenumber === undefined
   ) {
     res.status(401).json({
@@ -82,7 +81,7 @@ async function updateUser(req, res, next) {
     });
   } else {
     try {
-      const sql = `update user set name = ? and gender = ? and birth = ? and nickname = ? and email = ? and phonenumber = ? where user_seq = ?`;
+      const sql = `update user set name = ?, gender = ?, birth = ?, nickname = ?, phonenumber = ? where user_seq = ?`;
 
       await dbpool.execute(sql, [name, gender, birth, nickname, email, phonenumber, user_seq]);
 
