@@ -34,4 +34,7 @@ router.get("/code", authController.getCodetable);
 // 코드 등록 하기
 router.post("/code", authController.addCode);
 
+// token 로그인
+router.post("/login/token", authController.tokenLogin);
+
 export default router;
