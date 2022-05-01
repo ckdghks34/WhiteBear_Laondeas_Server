@@ -257,7 +257,7 @@ async function updatePassword(req, res, next) {
   } else {
     try {
       const sql =
-        "update user set password = ? and last_register_id = ? and last_register_date = ? where user_seq = ?";
+        "update user set password = ?, last_register_id = ?, last_register_date = ? where user_seq = ?";
 
       password = bcrypt.hashSync(password, 10);
 
@@ -556,7 +556,7 @@ async function accrual(req, res, next) {
   } else {
     try {
       const sql = `insert into accrual_detail(user_seq,accrual_point,accrual_point_date, first_register_id, first_register_date) values(?,?,?,?,?)`;
-      const point_accrual_sql = `update user set point = point + ? and last_register_id = ? and last_register_date = ? where user_seq = ?`;
+      const point_accrual_sql = `update user set point = point + ?, last_register_id = ?, last_register_date = ? where user_seq = ?`;
 
       await dbpool.beginTransaction();
       await dbpool.execute(sql, [user_seq, accrual_point, new Date(), admin, new Date()]);
@@ -616,7 +616,7 @@ async function withdrawal(req, res, next) {
   } else {
     try {
       const sql = `insert into withdrawal_detail(user_seq,withdrawal_amount,withdrawal_date, first_register_id, first_register_date,last_register_id,last_register_date) values(?,?,?,?,?,?,?)`;
-      const point_modify_sql = `update user set point = point - ? and last_register_id = ? and last_register_date = ? where user_seq = ? and point >= ?`;
+      const point_modify_sql = `update user set point = point - ? , last_register_id = ? , last_register_date = ? where user_seq = ? and point >= ?`;
 
       await dbpool.beginTransaction();
 
@@ -895,7 +895,7 @@ async function readMessage(req, res, next) {
     });
   } else {
     try {
-      const sql = `update message set is_read = 1 and last_register_id = ? and last_register_date = ? where message_seq = ?`;
+      const sql = `update message set is_read = 1 , last_register_id = ? , last_register_date = ? where message_seq = ?`;
 
       await dbpool.execute(sql, [user_seq, new Date(), message_seq]);
 
@@ -1570,10 +1570,10 @@ async function updateDefaultAddressBook(req, res, next) {
     try {
       await dbpool.beginTransaction();
 
-      const sql = `update user_address_book set is_default = 0 and last_register_id = ? and last_register_date = ? where user_seq = ?`;
+      const sql = `update user_address_book set is_default = 0 , last_register_id = ? , last_register_date = ? where user_seq = ?`;
       await dbpool.execute(sql, [user_seq, new Date(), user_seq]);
 
-      const sql2 = `update user_address_book set is_default = 1 and last_register_id = ? and last_register_date = ? where user_seq = ? and address_seq = ?`;
+      const sql2 = `update user_address_book set is_default = 1 , last_register_id = ? , last_register_date = ? where user_seq = ? and address_seq = ?`;
       await dbpool.execute(sql2, [user_seq, new Date(), user_seq, address_seq]);
 
       await dbpool.commit();
@@ -1708,7 +1708,7 @@ async function createPremium(req, res, next) {
     });
   } else {
     try {
-      const sql = `update user set is_premium = 1 and last_register_id = ? and last_register_date = ? where user_seq = ?`;
+      const sql = `update user set is_premium = 1 , last_register_id = ? , last_register_date = ? where user_seq = ?`;
       await dbpool.execute(sql, [admin, new Date(), user_seq]);
 
       res.status(200).json({
@@ -1733,7 +1733,7 @@ async function deletePremium(req, res, next) {
     });
   } else {
     try {
-      const sql = `update user set is_premium = 0 and last_register_id = ? and last_register_date = ? where user_seq = ?`;
+      const sql = `update user set is_premium = 0 , last_register_id = ? , last_register_date = ? where user_seq = ?`;
       await dbpool.execute(sql, [admin, new Date(), user_seq]);
 
       res.status(200).json({
