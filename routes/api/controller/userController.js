@@ -1414,19 +1414,39 @@ async function createAddressBook(req, res, next) {
   } else {
     try {
       const sql = `insert into user_address_book (user_seq, name, receiver, address, phonenumber, is_default, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      const default_sql = "update user_address_book set is_default = 0 where user_seq = ?";
 
-      await dbpool.execute(sql, [
-        user_seq,
-        name,
-        receiver,
-        address,
-        phonenumber,
-        is_default,
-        user_seq,
-        new Date(),
-        user_seq,
-        new Date(),
-      ]);
+      if (is_default === 1) {
+        await dbpool.beginTransaction();
+
+        await dbpool.execute(default_sql, user_seq);
+        await dbpool.execute(sql, [
+          user_seq,
+          name,
+          receiver,
+          address,
+          phonenumber,
+          is_default,
+          user_seq,
+          new Date(),
+          user_seq,
+          new Date(),
+        ]);
+        await dbpool.commit();
+      } else {
+        await dbpool.execute(sql, [
+          user_seq,
+          name,
+          receiver,
+          address,
+          phonenumber,
+          is_default,
+          user_seq,
+          new Date(),
+          user_seq,
+          new Date(),
+        ]);
+      }
 
       res.status(200).json({
         message: "주소록 등록 성공",
