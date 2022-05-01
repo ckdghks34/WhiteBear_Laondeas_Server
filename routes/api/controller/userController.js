@@ -256,12 +256,11 @@ async function updatePassword(req, res, next) {
     });
   } else {
     try {
-      const sql =
-        "update user set password = ?, last_register_id = ?, last_register_date = ? where user_seq = ?";
+      const sql = "update user set password = ?, last_register_date = ? where user_seq = ?";
 
       const new_password = bcrypt.hashSync(password, 10);
 
-      await dbpool.execute(sql, [new_password, user_seq, new Date(), user_seq]);
+      await dbpool.execute(sql, [new_password, new Date(), user_seq]);
 
       res.status(200).json({
         message: "비밀번호 수정 성공",
@@ -556,11 +555,11 @@ async function accrual(req, res, next) {
   } else {
     try {
       const sql = `insert into accrual_detail(user_seq,accrual_point,accrual_point_date, first_register_id, first_register_date) values(?,?,?,?,?)`;
-      const point_accrual_sql = `update user set point = point + ?, last_register_id = ?, last_register_date = ? where user_seq = ?`;
+      const point_accrual_sql = `update user set point = point + ?, last_register_date = ? where user_seq = ?`;
 
       await dbpool.beginTransaction();
       await dbpool.execute(sql, [user_seq, accrual_point, new Date(), admin, new Date()]);
-      await dbpool.execute(point_accrual_sql, [accrual_point, user_seq, new Date(), user_seq]);
+      await dbpool.execute(point_accrual_sql, [accrual_point, new Date(), user_seq]);
       await dbpool.commit();
 
       res.status(200).json({
@@ -616,7 +615,7 @@ async function withdrawal(req, res, next) {
   } else {
     try {
       const sql = `insert into withdrawal_detail(user_seq,withdrawal_amount,withdrawal_date, first_register_id, first_register_date,last_register_id,last_register_date) values(?,?,?,?,?,?,?)`;
-      const point_modify_sql = `update user set point = point - ? , last_register_id = ? , last_register_date = ? where user_seq = ? and point >= ?`;
+      const point_modify_sql = `update user set point = point - ? , last_register_date = ? where user_seq = ? and point >= ?`;
 
       await dbpool.beginTransaction();
 
@@ -632,7 +631,6 @@ async function withdrawal(req, res, next) {
 
       await dbpool.execute(point_modify_sql, [
         withdrawal_point,
-        user_seq,
         new Date(),
         user_seq,
         withdrawal_point,
@@ -1728,8 +1726,8 @@ async function createPremium(req, res, next) {
     });
   } else {
     try {
-      const sql = `update user set is_premium = 1 , last_register_id = ? , last_register_date = ? where user_seq = ?`;
-      await dbpool.execute(sql, [admin, new Date(), user_seq]);
+      const sql = `update user set is_premium = 1 , last_register_date = ? where user_seq = ?`;
+      await dbpool.execute(sql, [new Date(), user_seq]);
 
       res.status(200).json({
         message: "프리미엄 회원 등록 성공",
@@ -1753,8 +1751,8 @@ async function deletePremium(req, res, next) {
     });
   } else {
     try {
-      const sql = `update user set is_premium = 0 , last_register_id = ? , last_register_date = ? where user_seq = ?`;
-      await dbpool.execute(sql, [admin, new Date(), user_seq]);
+      const sql = `update user set is_premium = 0 , last_register_date = ? where user_seq = ?`;
+      await dbpool.execute(sql, [new Date(), user_seq]);
 
       res.status(200).json({
         message: "프리미엄 회원 해제 성공",
