@@ -9,11 +9,16 @@ const dbpool = await pool;
 async function getAllUser(req, res, next) {
   try {
     const sql = `select * from user`;
+    const userimgsql = `select * from user_file where user_seq = ?`;
 
-    const results = await dbpool.query(sql);
+    let results = await dbpool.query(sql);
 
     for (let i = 0; i < results[0].length; i++) {
       results[0][i].password = undefined;
+
+      const imgresult = await dbpool.query(userimgsql, results[0][i].user_seq);
+
+      if (imgresult[0].length !== 0) results[0][i]["profile_img"] = imgresult[0][i].path;
     }
 
     res.status(200).json({
@@ -40,15 +45,22 @@ async function getUser(req, res, next) {
   } else {
     try {
       const sql = `select * from user where user_seq = ?`;
+      const userimgsql = `select * from user_file where user_seq = ?`;
 
       const results = await dbpool.query(sql, user_seq);
+
+      const userimgResult = await dbpool.query(userimgsql, user_seq);
+
+      let user = results[0][0];
 
       if (results[0].length == 0) {
         res.status(401).json({
           message: "존재하지 않는 유저입니다.",
         });
       } else {
-        results[0][0].password = undefined;
+        user.password = undefined;
+        if (userimgResult[0].length !== 0) user["profile_img"] = userimgResult[0][0].path;
+
         res.status(200).json({
           message: "유저 정보 조회 성공",
           user: results[0][0],
