@@ -1414,7 +1414,7 @@ async function updatePenalty(req, res, next) {
 
 // 주소록 등록
 async function createAddressBook(req, res, next) {
-  const { user_seq, address_seq, name, receiver, address, phonenumber, is_default } = req.body;
+  const { user_seq, name, receiver, address, phonenumber, is_default } = req.body;
 
   if (user_seq === undefined || address_seq === undefined) {
     res.status(401).json({
@@ -1422,7 +1422,7 @@ async function createAddressBook(req, res, next) {
     });
   } else {
     try {
-      const sql = `insert into address_book (user_seq, address_seq, name, receiver, address, phonenumber, is_default, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      const sql = `insert into address_book (user_seq, name, receiver, address, phonenumber, is_default, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
       await dbpool.execute(sql, [
         user_seq,
