@@ -8,6 +8,6 @@ const s3 = new AWS.S3({
   region: "ap-northeast-2",
 });
 
-const bucket = process.env.BUCKET;
-
-export { s3, bucket };
+const Bucket = process.env.BUCKET;
+console.log(Bucket);
+export { s3, Bucket };
