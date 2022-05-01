@@ -1416,7 +1416,7 @@ async function updatePenalty(req, res, next) {
 async function createAddressBook(req, res, next) {
   const { user_seq, name, receiver, address, phonenumber, is_default } = req.body;
 
-  if (user_seq === undefined || address_seq === undefined) {
+  if (user_seq === undefined) {
     res.status(401).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
@@ -1426,7 +1426,6 @@ async function createAddressBook(req, res, next) {
 
       await dbpool.execute(sql, [
         user_seq,
-        address_seq,
         name,
         receiver,
         address,
