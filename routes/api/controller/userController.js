@@ -83,7 +83,7 @@ async function updateUser(req, res, next) {
     try {
       const sql = `update user set name = ?, gender = ?, birth = ?, nickname = ?, phonenumber = ? where user_seq = ?`;
 
-      await dbpool.execute(sql, [name, gender, birth, nickname, email, phonenumber, user_seq]);
+      await dbpool.execute(sql, [name, gender, birth, nickname, phonenumber, user_seq]);
 
       res.status(200).json({
         message: "기본 회원 정보 수정 성공",
