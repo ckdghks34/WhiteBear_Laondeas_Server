@@ -259,7 +259,7 @@ async function updatePassword(req, res, next) {
       const sql =
         "update user set password = ? and last_register_id = ? and last_register_date = ? where user_seq = ?";
 
-      password = bcrypt.hashSync(password, process.env.salt);
+      password = bcrypt.hashSync(password, 10);
 
       await dbpool.execute(sql, [password, user_seq, new Date(), user_seq]);
 
