@@ -299,13 +299,13 @@ async function addCode(req, res, next) {
 // Token 로그인
 async function tokenLogin(req, res, next) {
   if (req.headers.authorization && req.headers.refresh) {
-    const authToken = req.headers.authorization;
+    const authToken = req.headers.authorization.split("Bearer ")[1];
     const refreshToken = req.headers.refresh;
 
     const authResult = await verify(authToken);
     const decoded = jwt.decode(authToken);
 
-    if ((decoded = null)) {
+    if (decoded === null) {
       res.status(401).json({
         message: "invalid token",
         expire: "undefined",
@@ -331,10 +331,10 @@ async function tokenLogin(req, res, next) {
       await dbpool.execute(tokensql, [
         user.user_seq,
         user.id,
-        accessToken,
-        refreshToken,
-        accessToken,
-        refreshToken,
+        newAccessToken,
+        newRefreshToken,
+        newAccessToken,
+        newRefreshToken,
       ]);
       const results = await dbpool.query(usersql, user.user_seq);
       const loginuser = results[0][0];
