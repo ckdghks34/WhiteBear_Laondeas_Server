@@ -1,7 +1,10 @@
 import bcrypt from "bcrypt";
 import pool from "./../../../config/dbpool.js";
 import dotenv from "dotenv";
-import * as jwt from "./../../../util/jwt-util.js";
+import { sign, verify, refresh, refreshVerify } from "./../../../util/jwt-util.js";
+import jwt from "jsonwebtoken";
+import { dnsPrefetchControl } from "helmet";
+
 dotenv.config();
 
 const dbpool = await pool;
@@ -101,8 +104,8 @@ async function login(req, res, next) {
               let user = { user_seq: loginUser.user_seq, id: loginUser.id };
 
               // accessToken, refreshToken 발급
-              const accessToken = await jwt.sign(user);
-              const refreshToken = await jwt.refresh();
+              const accessToken = await sign(user);
+              const refreshToken = await refresh();
 
               // accessToken, refreshToken 데이터베이스 저장
               let tokensql = `insert into token values(?,?,?,?) on duplicate key update accesstoken = ?, refreshtoken = ?`;
@@ -293,4 +296,66 @@ async function addCode(req, res, next) {
   }
 }
 
-export { signup, login, deleteUser, checkID, getCodetable, addCode, logout };
+// Token 로그인
+async function tokenLogin(req, res, next) {
+  if (req.headers.authorization && req.headers.refresh) {
+    const authToken = req.headers.authorization;
+    const refreshToken = req.headers.refresh;
+
+    const authResult = await verify(authToken);
+    const decoded = jwt.decode(authToken);
+
+    if ((decoded = null)) {
+      res.status(401).json({
+        message: "invalid token",
+        expire: "undefined",
+        verification: false,
+      });
+    }
+
+    let user = { user_seq: decoded.seq, id: decoded.id };
+
+    const refreshResult = await refreshVerify(refreshToken, decoded.seq, decoded.id);
+
+    if (authResult.verification || refreshResult.verification) {
+      // 새로운 accessToken, refreshToken 발급
+      const newAccessToken = await sign(user);
+      const newRefreshToken = await refresh(user);
+
+      // 새로운 accessToken, refreshToken 데이터베이스 저장
+      let tokensql = `insert into token values(?,?,?,?) on duplicate key update accesstoken = ?, refreshtoken = ?`;
+      let usersql = `select user_seq, id, name, nickname, phonenumber, gender, birth, email, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_path, profile_type, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal, first_register_date, last_register_date from user where user_seq = ?`;
+
+      await dbpool.beginTransaction();
+
+      await dbpool.execute(tokensql, [
+        user.user_seq,
+        user.id,
+        accessToken,
+        refreshToken,
+        accessToken,
+        refreshToken,
+      ]);
+      const results = await dbpool.query(usersql, user.user_seq);
+      const loginuser = results[0][0];
+
+      await dbpool.commit();
+
+      res.status(200).json({
+        message: "로그인 성공",
+        user: loginuser,
+        data: {
+          accessToken: newAccessToken,
+          refreshToken: newRefreshToken,
+        },
+      });
+    } else {
+      res.status(401).json({
+        message: "all of tokens is expired",
+        expire: true,
+        verification: false,
+      });
+    }
+  }
+}
+export { signup, login, deleteUser, checkID, getCodetable, addCode, logout, tokenLogin };

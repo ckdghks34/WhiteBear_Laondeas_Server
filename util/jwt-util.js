@@ -47,8 +47,6 @@ async function refresh() {
 }
 async function refreshVerify(token, user_seq, user_id) {
   // refresh token 검증
-  /* redis 모듈은 기본적으로 promise를 반환하지 않으므로,
-       promisify를 이용하여 promise를 반환하게 해줍니다.*/
   const sql = `select * from token where user_seq = ?`;
 
   try {
