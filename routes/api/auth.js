@@ -20,12 +20,18 @@ router.delete("/", authController.deleteUser);
 // router.get("/find/pw", authController.findPW);
 
 // 로그아웃
-// router.get("/logout", authController.logout);
+router.get("/logout", authController.logout);
 
 // 동일 아이디 여부
 router.get("/checkID", authController.checkID);
 
 // access token 재발급
 router.get("/refresh", refresh.refresh);
+
+// 코드 목록 가져오기
+router.get("/code", authController.getCodetable);
+
+// 코드 등록 하기
+router.post("/code", authController.addCode);
 
 export default router;
