@@ -7,12 +7,15 @@ let pagelimit = 20;
 // 전체 캠페인 가져오기
 async function getAllCampaign(req, res, next) {
   try {
-    const sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, view_count, first_register_id, first_register_date ,ifnull(cc.count,0) as applicant_count 
+    const sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, view_count, first_register_id, first_register_date ,ifnull(cc.count,0) as applicant_count 
     from campaign as c 
       left join (select campaign_seq,count(*) as count 
         from campaign_application group by campaign_seq) as cc 
       on c.campaign_seq = cc.campaign_seq`;
     const qna_sql = `select * from campaign_qna`;
+    const img_sql = `select * from campaign_file where campaign_seq = ?`;
+    const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext
+    from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
     const results = await dbpool.query(sql);
     let campaign = results[0];
@@ -20,12 +23,17 @@ async function getAllCampaign(req, res, next) {
     for (let i = 0; i < results[0].length; i++) {
       let campaign_seq = results[0][i].campaign_seq;
 
-      const qna_results = await dbpool.execute(qna_sql, [campaign_seq]);
+      const img_results = await dbpool.query(img_sql, [campaign_seq]);
+      const applicatn_sql = await dbpool.query(applicant_sql, [campaign_seq]);
+      const qna_results = await dbpool.query(qna_sql, [campaign_seq]);
 
       // 캠페인 QnA 추가
-      campaign["qna"] = qna_results[0];
+      campaign[i]["qna"] = qna_results[0];
       // 캠페인 키워드 파싱 후 추가
-      campaign.keyword = results[0][i].keyword.split(",");
+      campaign[i].keyword = results[0][i].keyword.split(",");
+      // 캠페인 이미지 파일 추가
+      campaign[i]["campaign_file"] = img_results[0];
+      campaign[i]["applicant"] = applicatn_sql[0];
     }
 
     res.status(200).json({
@@ -52,21 +60,26 @@ async function getCampaign(req, res, next) {
     });
   } else {
     try {
-      const sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, view_count, first_register_id, first_register_date ,ifnull(cc.count,0) as applicant_count from campaign as c left join (select campaign_seq,count(*) as count from campaign_application group by campaign_seq) as cc on c.campaign_seq = cc.campaign_seq where c.campaign_seq = ?`;
+      const sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, view_count, first_register_id, first_register_date ,ifnull(cc.count,0) as applicant_count from campaign as c left join (select campaign_seq,count(*) as count from campaign_application group by campaign_seq) as cc on c.campaign_seq = cc.campaign_seq where c.campaign_seq = ?`;
       const qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+      const img_sql = `select * from campaign_file where campaign_seq = ?`;
+      const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
       const results = await dbpool.query(sql, [campaign_seq]);
-
       const qna_results = await dbpool.query(qna_sql, [campaign_seq]);
-      let campaign = results[0][0];
-      let keyword = campaign.keyword.split(",");
+      const img_results = await dbpool.query(img_sql, [campaign_seq]);
+      const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
 
+      let campaign = results[0][0];
+
+      campaign["campaign_file"] = img_results[0];
       campaign["qna"] = qna_results[0];
       campaign.keyword = results[0][0].keyword.split(",");
+      campaign["applicant"] = applicant_results[0];
 
       res.status(200).json({
         message: "특정 캠페인 가져오기 성공",
-        campaign: results[0][0],
+        campaign: campaign,
       });
     } catch (err) {
       console.log(err);
@@ -94,10 +107,13 @@ async function createCampaign(req, res, next) {
     misson,
     reward,
     accrual_point,
-    additional_information,
+    campaign_guide,
     recruit_start_date,
     recruit_end_date,
     reviewer_announcement_date,
+    review_start_date,
+    review_end_date,
+    campaign_end_date,
     agreement_portrait,
     agreement_provide_info,
     user_seq,
@@ -118,10 +134,13 @@ async function createCampaign(req, res, next) {
     misson === undefined ||
     reward === undefined ||
     accrual_point === undefined ||
-    additional_information === undefined ||
+    campaign_guide === undefined ||
     recruit_start_date === undefined ||
     recruit_end_date === undefined ||
     reviewer_announcement_date === undefined ||
+    review_start_date === undefined ||
+    review_end_date === undefined ||
+    campaign_end_date === undefined ||
     agreement_portrait === undefined ||
     agreement_provide_info === undefined ||
     user_seq === undefined
@@ -131,8 +150,8 @@ async function createCampaign(req, res, next) {
     });
   } else {
     try {
-      const campaign_sql = `insert into campaign (advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, view_count, first_register_id, first_register_date, last_register_id, last_register_date) values 
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      const campaign_sql = `insert into campaign (advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date,review_start_date, review_end_date, campaign_end_date, agreement_portrait, agreement_provide_info, campaign_state, view_count, first_register_id, first_register_date, last_register_id, last_register_date) values 
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
       const qna_sql = `insert into campaign_qna (question, answer, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?)`;
 
       await dbpool.beginTransaction();
@@ -151,10 +170,13 @@ async function createCampaign(req, res, next) {
         misson,
         reward,
         accrual_point,
-        additional_information,
+        campaign_guide,
         recruit_start_date,
         recruit_end_date,
         reviewer_announcement_date,
+        review_start_date,
+        review_end_date,
+        campaign_end_date,
         agreement_portrait,
         agreement_provide_info,
         1,
@@ -164,6 +186,7 @@ async function createCampaign(req, res, next) {
         user_seq,
         new Date(),
       ]);
+
       if (qna !== undefined) {
         const campaign_seq =
           (await dbpool.execute("select Max(campaign_seq) as campaign_seq from campaign"))[0][0]
@@ -213,9 +236,12 @@ async function updateCampaign(req, res, next) {
     misson,
     reward,
     accrual_point,
-    additional_infomation,
+    campaign_guide,
     recruit_start_date,
     recruit_end_date,
+    review_start_date,
+    review_end_date,
+    campaign_end_date,
     reviewer_announcement_date,
     agreement_portrait,
     agreement_provide_info,
@@ -238,60 +264,66 @@ async function updateCampaign(req, res, next) {
     misson === undefined ||
     reward === undefined ||
     accrual_point === undefined ||
-    additional_infomation === undefined ||
+    campaign_guide === undefined ||
     recruit_start_date === undefined ||
     recruit_end_date === undefined ||
     reviewer_announcement_date === undefined ||
     agreement_portrait === undefined ||
     agreement_provide_info === undefined ||
-    user_seq === undefined ||
-    qna === undefined
+    user_seq === undefined
   ) {
     res.status(400).json({
       message: "잘못된 요청입니다. 필수 데이터가 없습니다.",
     });
   } else {
     try {
-      const campaign_sql = `update campaign set advertiser = ?, is_premium = ?, title = ?, category = ?, product = ?, channel = ? , area = ?, keyword = ?, headcount = ?, siteURL = ?, misson = ?, reward = ?, accrual_point = ?, additional_infomation = ?, recruit_start_date = ?, recruit_end_date = ?, reviewer_announcement_date = ?, agreement_portrait = ?, agreement_provide_info = ?, last_register_id = ?, last_register_date = ? where campaign_seq = ?`;
+      const campaign_sql = `update campaign set advertiser = ?, is_premium = ?, title = ?, category = ?, product = ?, channel = ? , area = ?, keyword = ?, headcount = ?, siteURL = ?, misson = ?, reward = ?, accrual_point = ?, campaign_guide = ?, recruit_start_date = ?, recruit_end_date = ?, reviewer_announcement_date = ?, review_start_date = ? , review_end_date = ? , campaign_end_date = ?, agreement_portrait = ?, agreement_provide_info = ?, last_register_id = ?, last_register_date = ? where campaign_seq = ?`;
 
       const qna_sql = `insert into campaign_qna (campaign_seq, question, answer, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?)`;
 
       await dbpool.beginTransaction();
 
       await dbpool.execute(campaign_sql, [
-        campaign_seq,
         advertiser,
         is_premium,
         title,
-        type,
+        category,
+        product,
+        channel,
+        area,
+        keyword,
         headcount,
-        siteURL,
         misson,
         reward,
         accrual_point,
-        additional_infomation,
+        campaign_guide,
         recruit_start_date,
         recruit_end_date,
         reviewer_announcement_date,
+        review_start_date,
+        review_end_date,
+        campaign_end_date,
         agreement_portrait,
         agreement_provide_info,
-        1,
         user_seq,
         new Date(),
+        campaign_seq,
       ]);
 
-      await dbpool.execute(`delete from campaign_qna where campaign_seq = ?`, [campaign_seq]);
+      if (qna !== undefined) {
+        await dbpool.execute(`delete from campaign_qna where campaign_seq = ?`, [campaign_seq]);
 
-      for (let i = 0; i < qna.length; i++) {
-        await dbpool.execute(qna_sql, [
-          campaign_seq,
-          qna[i].question,
-          qna[i].answer,
-          user_seq,
-          new Date(),
-          user_seq,
-          new Date(),
-        ]);
+        for (let i = 0; i < qna.length; i++) {
+          await dbpool.execute(qna_sql, [
+            campaign_seq,
+            qna[i].question,
+            qna[i].answer,
+            user_seq,
+            new Date(),
+            user_seq,
+            new Date(),
+          ]);
+        }
       }
 
       await dbpool.commit();
@@ -426,7 +458,7 @@ async function getAllCampaignBylastest(req, res, next) {
   try {
     const { page } = req.query;
     const offset = (page - 1) * pagelimit;
-    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                           left join
                           (select campaign_seq,count(*) as count
@@ -468,7 +500,7 @@ async function getAllCampaignByPopular(req, res, next) {
     const { page } = req.query;
     const offset = (page - 1) * pagelimit;
 
-    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                           left join
                           (select campaign_seq,count(*) as count
@@ -508,7 +540,7 @@ async function getAllCampaignBySelection(req, res, next) {
   try {
     const { page } = req.query;
     const offset = (page - 1) * pagelimit;
-    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                           left join
                             (select campaign_seq,count(*) as count
@@ -548,7 +580,7 @@ async function getCampaignByProgress(req, res, next) {
   try {
     const { page } = req.query;
     const offset = (page - 1) * pagelimit;
-    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count 
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count 
                           from campaign as c
                             left join
                             (select campaign_seq,count(*) as count
@@ -589,7 +621,7 @@ async function getCampaignByProgressBylastest(req, res, next) {
   try {
     const { page } = req.query;
     const offset = (page - 1) * pagelimit;
-    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                           left join
                             (select campaign_seq,count(*) as count
@@ -630,7 +662,7 @@ async function getCampaignByProgressByPopular(req, res, next) {
   try {
     const { page } = req.query;
     const offset = (page - 1) * pagelimit;
-    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -671,7 +703,7 @@ async function getCampaignByProgressBySelection(req, res, next) {
   try {
     const { page } = req.query;
     const offset = (page - 1) * pagelimit;
-    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -712,7 +744,7 @@ async function getCampaignByType(req, res, next) {
   try {
     const { page, category } = req.query;
     const offset = (page - 1) * pagelimit;
-    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -752,7 +784,7 @@ async function getCampaignByTypeBylastest(req, res, next) {
   try {
     const { page, category } = req.query;
     const offset = (page - 1) * pagelimit;
-    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -792,7 +824,7 @@ async function getCampaignByTypeByPopular(req, res, next) {
   try {
     const { page, category } = req.query;
     const offset = (page - 1) * pagelimit;
-    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -832,7 +864,7 @@ async function getCampaignByTypeBySelection(req, res, next) {
   try {
     const { page, category } = req.query;
     const offset = (page - 1) * pagelimit;
-    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -879,7 +911,7 @@ async function getCampaignByFiltering(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -964,7 +996,7 @@ async function getCampaignByFilteringBylastest(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1048,7 +1080,7 @@ async function getCampaignByFilteringByPopular(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1132,7 +1164,7 @@ async function getCampaignByFilteringBySelection(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1216,7 +1248,7 @@ async function getPremiumCampaign(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1264,7 +1296,7 @@ async function getPremiumCampaignBylastest(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1312,7 +1344,7 @@ async function getPremiumCampaignByPopular(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1360,7 +1392,7 @@ async function getPremiumCampaignBySelection(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1408,7 +1440,7 @@ async function getCampaignByChannel(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1456,7 +1488,7 @@ async function getCampaignByChannelBylastest(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1504,7 +1536,7 @@ async function getCampaignByChannelByPopular(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1552,7 +1584,7 @@ async function getCampaignByChannelBySelection(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1605,11 +1637,11 @@ async function getCampaignByRelation(req, res, next) {
       from campaign_application
       where campaign_seq = 1;
       
-      select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count from campaign as c join (select campaign_seq,count(*) as count from campaign_application group by campaign_seq) as cc on c.campaign_seq = cc.campaign_seq order by applicant_count desc limit 1 offset 1;
+      select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count from campaign as c join (select campaign_seq,count(*) as count from campaign_application group by campaign_seq) as cc on c.campaign_seq = cc.campaign_seq order by applicant_count desc limit 1 offset 1;
       
       select fir.*
       from 
-      (select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count,view_count
+      (select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count,view_count
       from campaign as c
         join
         (select campaign_seq,count(*) as count
@@ -1644,7 +1676,7 @@ async function getCampaignBySearch(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1692,7 +1724,7 @@ async function getCampaignBySearchBylastest(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1740,7 +1772,7 @@ async function getCampaignBySearchByPopular(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1788,7 +1820,7 @@ async function getCampaignBySearchBySelection(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, additional_information, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
