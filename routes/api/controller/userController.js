@@ -502,7 +502,7 @@ async function attendanceCheck(req, res, next) {
     try {
       const sql = `insert into attendance(user_seq, content,first_register_id, first_register_date, last_register_id, last_register_date) values(?, ?, ?, ?, ?, ?)`;
 
-      await dbpool.execute(sql, [user_seq, content]);
+      await dbpool.execute(sql, [user_seq, content, user_seq, new Date(), user_seq, new Date()]);
 
       res.status(200).json({
         message: "출석 체크 성공",
@@ -519,7 +519,7 @@ async function attendanceCheck(req, res, next) {
 
 // 출석 리스트 가져오기
 async function getAttendanceList(req, res, next) {
-  const { user_seq } = req.body;
+  const { user_seq } = req.query;
 
   if (user_seq === undefined) {
     res.status(401).json({
@@ -839,13 +839,18 @@ async function getUserMessageList(req, res, next) {
     });
   } else {
     try {
-      const sql = `select message_seq,content,is_read, receiver, first_register_id, first_register_date from message where user_seq = ?`;
+      const receive_sql = `select message_seq,content,is_read, receiver, first_register_id, first_register_date from message where receiver = ?`;
+      const sned_sql = `select message_seq,content,is_read, sender, first_register_id, first_register_date from message where sender = ?`;
 
-      const results = await dbpool.query(sql, user_seq);
-
+      const receive_results = await dbpool.query(receive_sql, user_seq);
+      const send_results = await dbpool.query(sned_sql, user_seq);
+      const results = {
+        receiveList: receive_results[0],
+        sendList: send_results[0],
+      };
       res.status(200).json({
         message: "메세지 목록 조회 성공",
-        messageList: results[0],
+        messageList: results,
       });
     } catch (err) {
       console.log(err);
@@ -867,9 +872,18 @@ async function sendMessage(req, res, next) {
     });
   } else {
     try {
-      const sql = `insert into message (content,is_read,sender,receiver,first_register_id,first_register_id, last_register_id, last_register_date) values(?,?,?,?,?,?,?,?)`;
+      const sql = `insert into message (content,is_read,sender,receiver,first_register_id,first_register_date, last_register_id, last_register_date) values(?,?,?,?,?,?,?,?)`;
 
-      await dbpool.execute(sql, [content, 0, sender, receiver, sender, sender, sender, new Date()]);
+      await dbpool.execute(sql, [
+        content,
+        0,
+        sender,
+        receiver,
+        sender,
+        new Date(),
+        sender,
+        new Date(),
+      ]);
 
       res.status(200).json({
         message: "메세지 전송 성공",
