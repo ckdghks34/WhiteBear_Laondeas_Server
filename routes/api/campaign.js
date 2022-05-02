@@ -21,11 +21,11 @@ router.patch("/", /* authJWT, */ campaignController.updateCampaign);
 router.delete("/", /* authJWT, */ campaignController.deleteCampaign);
 
 // 캠페인 사진 업로드 (post)
-router.post(
-  "/image",
-  campaignUpload.array("campaign_img", 10),
-  campaignController.uploadCampaignImage
-);
+const campaign_upload = campaignUpload.fields([
+  { name: "campaign_img_detail", maxCount: 5 },
+  { name: "campaign_img_thumbnail", maxCount: 5 },
+]);
+router.post("/image", campaign_upload, campaignController.uploadCampaignImage);
 
 // 캠페인 사진 가져오기 (get)
 router.get("/image", campaignController.getCampaignImage);

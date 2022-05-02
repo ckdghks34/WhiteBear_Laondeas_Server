@@ -60,7 +60,7 @@ async function getCampaign(req, res, next) {
     });
   } else {
     try {
-      const sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, view_count, first_register_id, first_register_date ,ifnull(cc.count,0) as applicant_count from campaign as c left join (select campaign_seq,count(*) as count from campaign_application group by campaign_seq) as cc on c.campaign_seq = cc.campaign_seq where c.campaign_seq = ?`;
+      const sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, view_count, first_register_id, first_register_date ,ifnull(cc.count,0) as applicant_count from campaign as c left join (select campaign_seq,count(*) as count from campaign_application group by campaign_seq) as cc on c.campaign_seq = cc.campaign_seq where c.campaign_seq = ?`;
       const qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
@@ -376,7 +376,10 @@ async function deleteCampaign(req, res, next) {
 // 캠페인 사진 등록
 async function uploadCampaignImage(req, res, next) {
   const { campaign_seq, user_seq } = req.body;
-  const files = req.files;
+  const { campaign_img_detail, campaign_img_thumbnail } = req.files;
+  // console.log(campaign_img_detail);
+  // console.log(campaign_img_thumbnail);
+
   if (campaign_seq === undefined) {
     res.status(400).json({
       message: "잘못된 요청입니다. 캠페인 데이터가 없습니다.",
@@ -390,10 +393,10 @@ async function uploadCampaignImage(req, res, next) {
 
       await dbpool.execute(delete_sql, [campaign_seq]);
 
-      for (let i = 0; i < files.length; i++) {
-        let filename = files[i].originalname;
-        let filepath = files[i].location;
-        let ext = files[i].mimetype.split("/")[1];
+      for (let i = 0; i < campaign_img_detail.length; i++) {
+        let filename = "detail_" + campaign_img_detail[i].originalname;
+        let filepath = campaign_img_detail[i].location;
+        let ext = campaign_img_detail[i].mimetype.split("/")[1];
 
         console.log(filename, filepath, ext, campaign_seq, user_seq);
 
@@ -408,6 +411,26 @@ async function uploadCampaignImage(req, res, next) {
           new Date(),
         ]);
       }
+
+      for (let i = 0; i < campaign_img_thumbnail.length; i++) {
+        let filename = "thumbnail_" + campaign_img_thumbnail[i].originalname;
+        let filepath = campaign_img_thumbnail[i].location;
+        let ext = campaign_img_thumbnail[i].mimetype.split("/")[1];
+
+        console.log(filename, filepath, ext, campaign_seq, user_seq);
+
+        await dbpool.execute(sql, [
+          campaign_seq,
+          filename,
+          filepath,
+          ext,
+          user_seq,
+          new Date(),
+          user_seq,
+          new Date(),
+        ]);
+      }
+
       await dbpool.commit();
 
       res.status(200).json({
@@ -458,7 +481,7 @@ async function getAllCampaignBylastest(req, res, next) {
   try {
     const { page } = req.query;
     const offset = (page - 1) * pagelimit;
-    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                           left join
                           (select campaign_seq,count(*) as count
@@ -467,17 +490,24 @@ async function getAllCampaignBylastest(req, res, next) {
                           order by recruit_start_date desc limit ? offset ?`;
 
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+    const img_sql = `select * from campaign_file where campaign_seq = ?`;
+    const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-    let campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
-    const campaign = campaign_results[0];
+    const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+
+    let campaign = campaign_results[0];
     // campaign + qna / applicant
     for (let i = 0; i < campaign_results[0].length; i++) {
       let campaign_seq = campaign_results[0][i].campaign_seq;
 
       const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+      const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+      const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-      campaign["qna"] = campaign_qna_results[0];
-      campaign.keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["qna"] = campaign_qna_results[0];
+      campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["campaign_file"] = img_results[0];
+      campaign[i]["applicant"] = applicant_results[0];
     }
 
     res.status(200).json({
@@ -500,7 +530,7 @@ async function getAllCampaignByPopular(req, res, next) {
     const { page } = req.query;
     const offset = (page - 1) * pagelimit;
 
-    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                           left join
                           (select campaign_seq,count(*) as count
@@ -508,23 +538,30 @@ async function getAllCampaignByPopular(req, res, next) {
                           on c.campaign_seq = cc.campaign_seq
                           order by applicant_count desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+    const img_sql = `select * from campaign_file where campaign_seq = ?`;
+    const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-    let campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+    const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
-    // campaign + qna
+    let campaign = campaign_results[0];
+
     for (let i = 0; i < campaign_results[0].length; i++) {
       let campaign_seq = campaign_results[0][i].campaign_seq;
 
       const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+      const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+      const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-      campaign_results["qna"] = campaign_qna_results[0];
-      campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["qna"] = campaign_qna_results[0];
+      campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["campaign_file"] = img_results[0];
+      campaign[i]["applicant"] = applicant_results[0];
     }
 
     res.status(200).json({
       message: "캠페인 조회 성공",
-      campaigns: campaign_results[0],
-      totalCount: campaign_results[0].length,
+      campaigns: campaign,
+      totalCount: campaign.length,
     });
   } catch (err) {
     console.log(err);
@@ -540,7 +577,7 @@ async function getAllCampaignBySelection(req, res, next) {
   try {
     const { page } = req.query;
     const offset = (page - 1) * pagelimit;
-    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                           left join
                             (select campaign_seq,count(*) as count
@@ -548,23 +585,31 @@ async function getAllCampaignBySelection(req, res, next) {
                           on c.campaign_seq = cc.campaign_seq
                           order by recruit_end_date desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+    const img_sql = `select * from campaign_file where campaign_seq = ?`;
+    const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-    let campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+    const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+
+    let campaign = campaign_results[0];
 
     // campaign + qna / applicant
     for (let i = 0; i < campaign_results[0].length; i++) {
       let campaign_seq = campaign_results[0][i].campaign_seq;
 
       const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+      const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+      const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-      campaign_results["qna"] = campaign_qna_results[0];
-      campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["qna"] = campaign_qna_results[0];
+      campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["campaign_file"] = img_results[0];
+      campaign[i]["applicant"] = applicant_results[0];
     }
 
     res.status(200).json({
       message: "캠페인 조회 성공",
-      campaigs: campaign_results[0],
-      totalCount: campaign_results[0].length,
+      campaigns: campaign,
+      totalCount: campaign.length,
     });
   } catch (err) {
     console.log(err);
@@ -580,7 +625,7 @@ async function getCampaignByProgress(req, res, next) {
   try {
     const { page } = req.query;
     const offset = (page - 1) * pagelimit;
-    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count 
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count 
                           from campaign as c
                             left join
                             (select campaign_seq,count(*) as count
@@ -589,23 +634,31 @@ async function getCampaignByProgress(req, res, next) {
                             where recruit_start_date <= now() and recruit_end_date >= now()
                             order by recruit_end_date desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+    const img_sql = `select * from campaign_file where campaign_seq = ?`;
+    const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-    let campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+    const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+
+    let campaign = campaign_results[0];
 
     // campaign + qna / applicant
     for (let i = 0; i < campaign_results[0].length; i++) {
       let campaign_seq = campaign_results[0][i].campaign_seq;
 
       const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+      const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+      const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-      campaign_results["qna"] = campaign_qna_results[0];
-      campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["qna"] = campaign_qna_results[0];
+      campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["campaign_file"] = img_results[0];
+      campaign[i]["applicant"] = applicant_results[0];
     }
 
     res.status(200).json({
       message: "캠페인 조회 성공",
-      campaigns: campaign_results[0],
-      totalCount: campaign_results[0].length,
+      campaigns: campaign,
+      totalCount: campaign.length,
     });
   } catch (err) {
     console.log(err);
@@ -621,7 +674,7 @@ async function getCampaignByProgressBylastest(req, res, next) {
   try {
     const { page } = req.query;
     const offset = (page - 1) * pagelimit;
-    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                           left join
                             (select campaign_seq,count(*) as count
@@ -630,23 +683,31 @@ async function getCampaignByProgressBylastest(req, res, next) {
                             where recruit_start_date <= now() and recruit_end_date >= now()
                             order by recruit_start_date desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+    const img_sql = `select * from campaign_file where campaign_seq = ?`;
+    const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-    let campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+    const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+
+    let campaign = campaign_results[0];
 
     // campaign + qna / applicant
     for (let i = 0; i < campaign_results[0].length; i++) {
       let campaign_seq = campaign_results[0][i].campaign_seq;
 
       const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+      const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+      const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-      campaign_results["qna"] = campaign_qna_results[0];
-      campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["qna"] = campaign_qna_results[0];
+      campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["campaign_file"] = img_results[0];
+      campaign[i]["applicant"] = applicant_results[0];
     }
 
     res.status(200).json({
       message: "캠페인 조회 성공",
-      campaigns: campaign_results[0],
-      totalCount: campaign_results[0].length,
+      campaigns: campaign,
+      totalCount: campaign.length,
     });
   } catch (err) {
     console.log(err);
@@ -662,7 +723,7 @@ async function getCampaignByProgressByPopular(req, res, next) {
   try {
     const { page } = req.query;
     const offset = (page - 1) * pagelimit;
-    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -671,23 +732,31 @@ async function getCampaignByProgressByPopular(req, res, next) {
                             where recruit_start_date <= now() and recruit_end_date >= now()
                             order by applicant_count desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+    const img_sql = `select * from campaign_file where campaign_seq = ?`;
+    const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-    let campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+    const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+
+    let campaign = campaign_results[0];
 
     // campaign + qna / applicant
     for (let i = 0; i < campaign_results[0].length; i++) {
       let campaign_seq = campaign_results[0][i].campaign_seq;
 
       const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+      const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+      const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-      campaign_results["qna"] = campaign_qna_results[0];
-      campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["qna"] = campaign_qna_results[0];
+      campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["campaign_file"] = img_results[0];
+      campaign[i]["applicant"] = applicant_results[0];
     }
 
     res.status(200).json({
       message: "캠페인 조회 성공",
-      campaigns: campaign_results[0],
-      totalCount: campaign_results[0].length,
+      campaigns: campaign,
+      totalCount: campaign.length,
     });
   } catch (err) {
     console.log(err);
@@ -703,7 +772,7 @@ async function getCampaignByProgressBySelection(req, res, next) {
   try {
     const { page } = req.query;
     const offset = (page - 1) * pagelimit;
-    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -712,23 +781,31 @@ async function getCampaignByProgressBySelection(req, res, next) {
                             where recruit_start_date <= now() and recruit_end_date >= now()
                             order by recruit_end_date desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+    const img_sql = `select * from campaign_file where campaign_seq = ?`;
+    const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-    let campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+    const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+
+    let campaign = campaign_results[0];
 
     // campaign + qna / applicant
     for (let i = 0; i < campaign_results[0].length; i++) {
       let campaign_seq = campaign_results[0][i].campaign_seq;
 
       const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+      const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+      const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-      campaign_results["qna"] = campaign_qna_results[0];
-      campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["qna"] = campaign_qna_results[0];
+      campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["campaign_file"] = img_results[0];
+      campaign[i]["applicant"] = applicant_results[0];
     }
 
     res.status(200).json({
       message: "캠페인 조회 성공",
-      campaigns: campaign_results[0],
-      totalCount: campaign_results[0].length,
+      campaigns: campaign,
+      totalCount: campaign.length,
     });
   } catch (err) {
     console.log(err);
@@ -744,7 +821,7 @@ async function getCampaignByType(req, res, next) {
   try {
     const { page, category } = req.query;
     const offset = (page - 1) * pagelimit;
-    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -752,23 +829,31 @@ async function getCampaignByType(req, res, next) {
                             on c.campaign_seq = cc.campaign_seq
                             where category = ? and recruit_start_date <= now() and recruit_end_date >= now()  limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+    const img_sql = `select * from campaign_file where campaign_seq = ?`;
+    const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-    let campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
+    const campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
+
+    let campaign = campaign_results[0];
 
     // campaign + qna / applicant
     for (let i = 0; i < campaign_results[0].length; i++) {
       let campaign_seq = campaign_results[0][i].campaign_seq;
 
       const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+      const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+      const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-      campaign_results["qna"] = campaign_qna_results[0];
-      campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["qna"] = campaign_qna_results[0];
+      campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["campaign_file"] = img_results[0];
+      campaign[i]["applicant"] = applicant_results[0];
     }
 
     res.status(200).json({
       message: "캠페인 조회 성공",
-      campaigns: campaign_results[0],
-      totalCount: campaign_results[0].length,
+      campaigns: campaign,
+      totalCount: campaign.length,
     });
   } catch (err) {
     console.log(err);
@@ -784,7 +869,7 @@ async function getCampaignByTypeBylastest(req, res, next) {
   try {
     const { page, category } = req.query;
     const offset = (page - 1) * pagelimit;
-    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -792,23 +877,31 @@ async function getCampaignByTypeBylastest(req, res, next) {
                             on c.campaign_seq = cc.campaign_seq
                             where category = ? and recruit_start_date <= now() and recruit_end_date >= now()  order by recruit_start_date desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+    const img_sql = `select * from campaign_file where campaign_seq = ?`;
+    const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-    let campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
+    const campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
+
+    let campaign = campaign_results[0];
 
     // campaign + qna / applicant
     for (let i = 0; i < campaign_results[0].length; i++) {
       let campaign_seq = campaign_results[0][i].campaign_seq;
 
       const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+      const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+      const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-      campaign_results["qna"] = campaign_qna_results[0];
-      campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["qna"] = campaign_qna_results[0];
+      campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["campaign_file"] = img_results[0];
+      campaign[i]["applicant"] = applicant_results[0];
     }
 
     res.status(200).json({
       message: "캠페인 조회 성공",
-      campaigns: campaign_results[0],
-      totalCount: campaign_results[0].length,
+      campaigns: campaign,
+      totalCount: campaign.length,
     });
   } catch (err) {
     console.log(err);
@@ -824,7 +917,7 @@ async function getCampaignByTypeByPopular(req, res, next) {
   try {
     const { page, category } = req.query;
     const offset = (page - 1) * pagelimit;
-    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -832,23 +925,31 @@ async function getCampaignByTypeByPopular(req, res, next) {
                             on c.campaign_seq = cc.campaign_seq
                             where category = ? and recruit_start_date <= now() and recruit_end_date >= now()  order by applicant_count desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+    const img_sql = `select * from campaign_file where campaign_seq = ?`;
+    const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-    let campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
+    const campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
+
+    let campaign = campaign_results[0];
 
     // campaign + qna / applicant
     for (let i = 0; i < campaign_results[0].length; i++) {
       let campaign_seq = campaign_results[0][i].campaign_seq;
 
       const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+      const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+      const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-      campaign_results["qna"] = campaign_qna_results[0];
-      campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["qna"] = campaign_qna_results[0];
+      campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["campaign_file"] = img_results[0];
+      campaign[i]["applicant"] = applicant_results[0];
     }
 
     res.status(200).json({
       message: "캠페인 조회 성공",
-      campaigns: campaign_results[0],
-      totalCount: campaign_results[0].length,
+      campaigns: campaign,
+      totalCount: campaign.length,
     });
   } catch (err) {
     console.log(err);
@@ -864,7 +965,7 @@ async function getCampaignByTypeBySelection(req, res, next) {
   try {
     const { page, category } = req.query;
     const offset = (page - 1) * pagelimit;
-    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -872,23 +973,31 @@ async function getCampaignByTypeBySelection(req, res, next) {
                             on c.campaign_seq = cc.campaign_seq
                             where category = ? and recruit_start_date <= now() and recruit_end_date >= now()  order by recruit_end_date desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+    const img_sql = `select * from campaign_file where campaign_seq = ?`;
+    const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-    let campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
+    const campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
+
+    let campaign = campaign_results[0];
 
     // campaign + qna / applicant
     for (let i = 0; i < campaign_results[0].length; i++) {
       let campaign_seq = campaign_results[0][i].campaign_seq;
 
       const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+      const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+      const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-      campaign_results["qna"] = campaign_qna_results[0];
-      campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["qna"] = campaign_qna_results[0];
+      campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["campaign_file"] = img_results[0];
+      campaign[i]["applicant"] = applicant_results[0];
     }
 
     res.status(200).json({
       message: "캠페인 조회 성공",
-      campaigns: campaign_results[0],
-      totalCount: campaign_results[0].length,
+      campaigns: campaign,
+      totalCount: campaign.length,
     });
   } catch (err) {
     console.log(err);
@@ -911,7 +1020,7 @@ async function getCampaignByFiltering(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -919,6 +1028,8 @@ async function getCampaignByFiltering(req, res, next) {
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now()`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+      const img_sql = `select * from campaign_file where campaign_seq = ?`;
+      const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
       let sql_param = [];
 
@@ -957,22 +1068,28 @@ async function getCampaignByFiltering(req, res, next) {
       sql_param.push(pagelimit);
       sql_param.push(offset);
 
-      let campaign_results = await dbpool.query(campaign_sql, sql_param);
+      const campaign_results = await dbpool.query(campaign_sql, sql_param);
+
+      let campaign = campaign_results[0];
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
         let campaign_seq = campaign_results[0][i].campaign_seq;
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+        const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+        const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-        campaign_results["qna"] = campaign_qna_results[0];
-        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["qna"] = campaign_qna_results[0];
+        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["campaign_file"] = img_results[0];
+        campaign[i]["applicant"] = applicant_results[0];
       }
 
       res.status(200).json({
         message: "캠페인 조회 성공",
-        campaigns: campaign_results[0],
-        totalCount: campaign_results[0].length,
+        campaigns: campaign,
+        totalCount: campaign.length,
       });
     }
   } catch (err) {
@@ -996,7 +1113,7 @@ async function getCampaignByFilteringBylastest(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1004,6 +1121,8 @@ async function getCampaignByFilteringBylastest(req, res, next) {
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now()`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+      const img_sql = `select * from campaign_file where campaign_seq = ?`;
+      const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
       let sql_param = [];
       if (category !== undefined) {
@@ -1041,22 +1160,28 @@ async function getCampaignByFilteringBylastest(req, res, next) {
       sql_param.push(pagelimit);
       sql_param.push(offset);
 
-      let campaign_results = await dbpool.query(campaign_sql, sql_param);
+      const campaign_results = await dbpool.query(campaign_sql, sql_param);
+
+      let campaign = campaign_results[0];
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
         let campaign_seq = campaign_results[0][i].campaign_seq;
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+        const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+        const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-        campaign_results["qna"] = campaign_qna_results[0];
-        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["qna"] = campaign_qna_results[0];
+        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["campaign_file"] = img_results[0];
+        campaign[i]["applicant"] = applicant_results[0];
       }
 
       res.status(200).json({
         message: "캠페인 조회 성공",
-        campaigns: campaign_results[0],
-        totalCount: campaign_results[0].length,
+        campaigns: campaign,
+        totalCount: campaign.length,
       });
     }
   } catch (err) {
@@ -1080,7 +1205,7 @@ async function getCampaignByFilteringByPopular(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1088,6 +1213,8 @@ async function getCampaignByFilteringByPopular(req, res, next) {
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now()`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+      const img_sql = `select * from campaign_file where campaign_seq = ?`;
+      const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
       let sql_param = [];
       if (category !== undefined) {
@@ -1125,22 +1252,28 @@ async function getCampaignByFilteringByPopular(req, res, next) {
       sql_param.push(pagelimit);
       sql_param.push(offset);
 
-      let campaign_results = await dbpool.query(campaign_sql, sql_param);
+      const campaign_results = await dbpool.query(campaign_sql, sql_param);
+
+      let campaign = campaign_results[0];
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
         let campaign_seq = campaign_results[0][i].campaign_seq;
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+        const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+        const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-        campaign_results["qna"] = campaign_qna_results[0];
-        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["qna"] = campaign_qna_results[0];
+        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["campaign_file"] = img_results[0];
+        campaign[i]["applicant"] = applicant_results[0];
       }
 
       res.status(200).json({
         message: "캠페인 조회 성공",
-        campaigns: campaign_results[0],
-        totalCount: campaign_results[0].length,
+        campaigns: campaign,
+        totalCount: campaign.length,
       });
     }
   } catch (err) {
@@ -1164,7 +1297,7 @@ async function getCampaignByFilteringBySelection(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1172,6 +1305,8 @@ async function getCampaignByFilteringBySelection(req, res, next) {
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now()`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+      const img_sql = `select * from campaign_file where campaign_seq = ?`;
+      const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
       let sql_param = [];
       if (category !== undefined) {
@@ -1209,22 +1344,28 @@ async function getCampaignByFilteringBySelection(req, res, next) {
       sql_param.push(pagelimit);
       sql_param.push(offset);
 
-      let campaign_results = await dbpool.query(campaign_sql, sql_param);
+      const campaign_results = await dbpool.query(campaign_sql, sql_param);
+
+      let campaign = campaign_results[0];
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
         let campaign_seq = campaign_results[0][i].campaign_seq;
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+        const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+        const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-        campaign_results["qna"] = campaign_qna_results[0];
-        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["qna"] = campaign_qna_results[0];
+        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["campaign_file"] = img_results[0];
+        campaign[i]["applicant"] = applicant_results[0];
       }
 
       res.status(200).json({
         message: "캠페인 조회 성공",
-        campaigns: campaign_results[0],
-        totalCount: campaign_results[0].length,
+        campaigns: campaign,
+        totalCount: campaign.length,
       });
     }
   } catch (err) {
@@ -1248,7 +1389,7 @@ async function getPremiumCampaign(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1256,23 +1397,31 @@ async function getPremiumCampaign(req, res, next) {
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1 order by recruit_end_date desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+      const img_sql = `select * from campaign_file where campaign_seq = ?`;
+      const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-      let campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+      const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+
+      let campaign = campaign_results[0];
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
         let campaign_seq = campaign_results[0][i].campaign_seq;
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+        const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+        const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-        campaign_results["qna"] = campaign_qna_results[0];
-        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["qna"] = campaign_qna_results[0];
+        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["campaign_file"] = img_results[0];
+        campaign[i]["applicant"] = applicant_results[0];
       }
 
       res.status(200).json({
         message: "캠페인 조회 성공",
-        campaigns: campaign_results[0],
-        totalCount: campaign_results[0].length,
+        campaigns: campaign,
+        totalCount: campaign.length,
       });
     }
   } catch (err) {
@@ -1296,7 +1445,7 @@ async function getPremiumCampaignBylastest(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1304,23 +1453,31 @@ async function getPremiumCampaignBylastest(req, res, next) {
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1 order by recruit_start_date desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+      const img_sql = `select * from campaign_file where campaign_seq = ?`;
+      const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-      let campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+      const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+
+      let campaign = campaign_results[0];
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
         let campaign_seq = campaign_results[0][i].campaign_seq;
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+        const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+        const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-        campaign_results["qna"] = campaign_qna_results[0];
-        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["qna"] = campaign_qna_results[0];
+        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["campaign_file"] = img_results[0];
+        campaign[i]["applicant"] = applicant_results[0];
       }
 
       res.status(200).json({
         message: "캠페인 조회 성공",
-        campaigns: campaign_results[0],
-        totalCount: campaign_results[0].length,
+        campaigns: campaign,
+        totalCount: campaign.length,
       });
     }
   } catch (err) {
@@ -1344,7 +1501,7 @@ async function getPremiumCampaignByPopular(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1352,23 +1509,31 @@ async function getPremiumCampaignByPopular(req, res, next) {
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1 order by applicant_count desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+      const img_sql = `select * from campaign_file where campaign_seq = ?`;
+      const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-      let campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+      const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+
+      let campaign = campaign_results[0];
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
         let campaign_seq = campaign_results[0][i].campaign_seq;
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+        const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+        const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-        campaign_results["qna"] = campaign_qna_results[0];
-        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["qna"] = campaign_qna_results[0];
+        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["campaign_file"] = img_results[0];
+        campaign[i]["applicant"] = applicant_results[0];
       }
 
       res.status(200).json({
         message: "캠페인 조회 성공",
-        campaigns: campaign_results[0],
-        totalCount: campaign_results[0].length,
+        campaigns: campaign,
+        totalCount: campaign.length,
       });
     }
   } catch (err) {
@@ -1392,7 +1557,7 @@ async function getPremiumCampaignBySelection(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1400,23 +1565,31 @@ async function getPremiumCampaignBySelection(req, res, next) {
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1 order by recruit_end_date desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+      const img_sql = `select * from campaign_file where campaign_seq = ?`;
+      const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-      let campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+      const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+
+      let campaign = campaign_results[0];
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
         let campaign_seq = campaign_results[0][i].campaign_seq;
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+        const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+        const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-        campaign_results["qna"] = campaign_qna_results[0];
-        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["qna"] = campaign_qna_results[0];
+        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["campaign_file"] = img_results[0];
+        campaign[i]["applicant"] = applicant_results[0];
       }
 
       res.status(200).json({
         message: "캠페인 조회 성공",
-        campaigns: campaign_results[0],
-        totalCount: campaign_results[0].length,
+        campaigns: campaign,
+        totalCount: campaign.length,
       });
     }
   } catch (err) {
@@ -1440,7 +1613,7 @@ async function getCampaignByChannel(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1448,23 +1621,31 @@ async function getCampaignByChannel(req, res, next) {
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and channel = ? limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+      const img_sql = `select * from campaign_file where campaign_seq = ?`;
+      const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-      let campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
+      const campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
+
+      let campaign = campaign_results[0];
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
         let campaign_seq = campaign_results[0][i].campaign_seq;
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+        const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+        const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-        campaign_results["qna"] = campaign_qna_results[0];
-        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["qna"] = campaign_qna_results[0];
+        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["campaign_file"] = img_results[0];
+        campaign[i]["applicant"] = applicant_results[0];
       }
 
       res.status(200).json({
         message: "캠페인 조회 성공",
-        campaigns: campaign_results[0],
-        totalCount: campaign_results[0].length,
+        campaigns: campaign,
+        totalCount: campaign.length,
       });
     }
   } catch (err) {
@@ -1488,7 +1669,7 @@ async function getCampaignByChannelBylastest(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1496,23 +1677,31 @@ async function getCampaignByChannelBylastest(req, res, next) {
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and channel = ? order by recruit_start_date desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+      const img_sql = `select * from campaign_file where campaign_seq = ?`;
+      const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-      let campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
+      const campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
+
+      let campaign = campaign_results[0];
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
         let campaign_seq = campaign_results[0][i].campaign_seq;
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+        const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+        const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-        campaign_results["qna"] = campaign_qna_results[0];
-        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["qna"] = campaign_qna_results[0];
+        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["campaign_file"] = img_results[0];
+        campaign[i]["applicant"] = applicant_results[0];
       }
 
       res.status(200).json({
         message: "캠페인 조회 성공",
-        campaigns: campaign_results[0],
-        totalCount: campaign_results[0].length,
+        campaigns: campaign,
+        totalCount: campaign.length,
       });
     }
   } catch (err) {
@@ -1536,7 +1725,7 @@ async function getCampaignByChannelByPopular(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1544,23 +1733,31 @@ async function getCampaignByChannelByPopular(req, res, next) {
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and channel = ? order by applicant_count desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+      const img_sql = `select * from campaign_file where campaign_seq = ?`;
+      const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-      let campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
+      const campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
+
+      let campaign = campaign_results[0];
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
         let campaign_seq = campaign_results[0][i].campaign_seq;
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+        const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+        const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-        campaign_results["qna"] = campaign_qna_results[0];
-        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["qna"] = campaign_qna_results[0];
+        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["campaign_file"] = img_results[0];
+        campaign[i]["applicant"] = applicant_results[0];
       }
 
       res.status(200).json({
         message: "캠페인 조회 성공",
-        campaigns: campaign_results[0],
-        totalCount: campaign_results[0].length,
+        campaigns: campaign,
+        totalCount: campaign.length,
       });
     }
   } catch (err) {
@@ -1584,7 +1781,7 @@ async function getCampaignByChannelBySelection(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1592,23 +1789,31 @@ async function getCampaignByChannelBySelection(req, res, next) {
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and channel = ? order by recurit_end_date desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+      const img_sql = `select * from campaign_file where campaign_seq = ?`;
+      const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-      let campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
+      const campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
+
+      let campaign = campaign_results[0];
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
         let campaign_seq = campaign_results[0][i].campaign_seq;
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+        const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+        const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
-        campaign_results["qna"] = campaign_qna_results[0];
-        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["qna"] = campaign_qna_results[0];
+        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["campaign_file"] = img_results[0];
+        campaign[i]["applicant"] = applicant_results[0];
       }
 
       res.status(200).json({
         message: "캠페인 조회 성공",
-        campaigns: campaign_results[0],
-        totalCount: campaign_results[0].length,
+        campaigns: campaign,
+        totalCount: campaign.length,
       });
     }
   } catch (err) {
@@ -1659,8 +1864,8 @@ async function getCampaignByRelation(req, res, next) {
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
 
-        campaign_results["qna"] = campaign_qna_results[0];
-        campaign_results[0][i].keyword = campaign_results[0][i].
+        campaign[i]["qna"] = campaign_qna_results[0];
+        campaign[i].keyword = campaign_results[0][i].
 }
 */
 
@@ -1676,7 +1881,7 @@ async function getCampaignBySearch(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1684,23 +1889,36 @@ async function getCampaignBySearch(req, res, next) {
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?) order by applicant_count desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+      const img_sql = `select * from campaign_file where campaign_seq = ?`;
+      const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-      let campaign_results = await dbpool.query(campaign_sql, [search, search, pagelimit, offset]);
+      const campaign_results = await dbpool.query(campaign_sql, [
+        search,
+        search,
+        pagelimit,
+        offset,
+      ]);
+
+      let campaign = campaign_results[0];
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
         let campaign_seq = campaign_results[0][i].campaign_seq;
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+        const img_results = await dbpool.query(img_sql, [campaign_seq]);
+        const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
 
-        campaign_results["qna"] = campaign_qna_results[0];
-        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["qna"] = campaign_qna_results[0];
+        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["campaign_file"] = img_results[0];
+        campaign[i]["applicant"] = applicant_results[0];
       }
 
       res.status(200).json({
         message: "캠페인 검색 성공",
-        campaigns: campaign_results[0],
-        totalCount: campaign_results[0].length,
+        campaigns: campaign,
+        totalCount: campaign.length,
       });
     }
   } catch (err) {
@@ -1724,7 +1942,7 @@ async function getCampaignBySearchBylastest(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1732,23 +1950,36 @@ async function getCampaignBySearchBylastest(req, res, next) {
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?) order by recruit_start_date desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+      const img_sql = `select * from campaign_file where campaign_seq = ?`;
+      const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-      let campaign_results = await dbpool.query(campaign_sql, [search, search, pagelimit, offset]);
+      const campaign_results = await dbpool.query(campaign_sql, [
+        search,
+        search,
+        pagelimit,
+        offset,
+      ]);
+
+      let campaign = campaign_results[0];
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
         let campaign_seq = campaign_results[0][i].campaign_seq;
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+        const img_results = await dbpool.query(img_sql, [campaign_seq]);
+        const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
 
-        campaign_results["qna"] = campaign_qna_results[0];
-        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["qna"] = campaign_qna_results[0];
+        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["campaign_file"] = img_results[0];
+        campaign[i]["applicant"] = applicant_results[0];
       }
 
       res.status(200).json({
         message: "캠페인 검색 성공",
-        campaigns: campaign_results[0],
-        totalCount: campaign_results[0].length,
+        campaigns: campaign,
+        totalCount: campaign.length,
       });
     }
   } catch (err) {
@@ -1772,7 +2003,7 @@ async function getCampaignBySearchByPopular(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1780,23 +2011,35 @@ async function getCampaignBySearchByPopular(req, res, next) {
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?) order by applicant_count desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+      const img_sql = `select * from campaign_file where campaign_seq = ?`;
+      const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-      let campaign_results = await dbpool.query(campaign_sql, [search, search, pagelimit, offset]);
+      const campaign_results = await dbpool.query(campaign_sql, [
+        search,
+        search,
+        pagelimit,
+        offset,
+      ]);
 
+      let campaign = campaign_results[0];
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
         let campaign_seq = campaign_results[0][i].campaign_seq;
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+        const img_results = await dbpool.query(img_sql, [campaign_seq]);
+        const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
 
-        campaign_results["qna"] = campaign_qna_results[0];
-        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["qna"] = campaign_qna_results[0];
+        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["campaign_file"] = img_results[0];
+        campaign[i]["applicant"] = applicant_results[0];
       }
 
       res.status(200).json({
         message: "캠페인 검색 성공",
-        campaigns: campaign_results[0],
-        totalCount: campaign_results[0].length,
+        campaigns: campaign,
+        totalCount: campaign.length,
       });
     }
   } catch (err) {
@@ -1820,7 +2063,7 @@ async function getCampaignBySearchBySelection(req, res, next) {
     } else {
       const offset = (page - 1) * pagelimit;
 
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
+      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,cc.count as applicant_count, view_count
                           from campaign as c
                            left join
                             (select campaign_seq,count(*) as count
@@ -1828,23 +2071,36 @@ async function getCampaignBySearchBySelection(req, res, next) {
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?) order by recruit_end_date desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+      const img_sql = `select * from campaign_file where campaign_seq = ?`;
+      const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-      let campaign_results = await dbpool.query(campaign_sql, [search, search, pagelimit, offset]);
+      const campaign_results = await dbpool.query(campaign_sql, [
+        search,
+        search,
+        pagelimit,
+        offset,
+      ]);
+
+      let campaign = campaign_results[0];
 
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
         let campaign_seq = campaign_results[0][i].campaign_seq;
 
         const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+        const img_results = await dbpool.query(img_sql, [campaign_seq]);
+        const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
 
-        campaign_results["qna"] = campaign_qna_results[0];
-        campaign_results[0][i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["qna"] = campaign_qna_results[0];
+        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        campaign[i]["campaign_file"] = img_results[0];
+        campaign[i]["applicant"] = applicant_results[0];
       }
 
       res.status(200).json({
         message: "캠페인 검색 성공",
-        campaigns: campaign_results[0],
-        totalCount: campaign_results[0].length,
+        campaigns: campaign,
+        totalCount: campaign.length,
       });
     }
   } catch (err) {
@@ -1903,7 +2159,7 @@ async function applyCampaign(req, res, next) {
         receiver,
         receiver_phonenumber,
         joint_blog,
-        "1",
+        0,
         user_seq,
         new Date(),
         user_seq,
@@ -1963,7 +2219,7 @@ async function getCampaignApplicant(req, res, next) {
         message: "캠페인 정보가 없습니다.",
       });
     } else {
-      const sql = `select f.*, u.id,u.name,u.phonenumber, u.gender, u.birth, is_premium, u.is_premium, u.is_advertiser
+      const sql = `select f.*, u.id,u.name,u.phonenumber, u.gender, u.birth, u.is_premium, u.is_advertiser, u.profile_name,u.profile_path,u.profile_ext
       from (select ca.campaign_seq,ca.user_seq, ca.select_reward, ca.address,ca.receiver,ca.receiver_phonenumber, ca.camera_code,joint_blog,ca.status
       from campaign_application as ca join campaign as c on ca.campaign_seq = c.campaign_seq
       where ca.campaign_seq = ?) as f join user as u on f.user_seq = u.user_seq`;
@@ -1996,7 +2252,7 @@ async function createCampaignReviewer(req, res, next) {
       });
     } else {
       const sql = `insert into reviewer (campaign_seq, user_seq, complete_mission, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?)`;
-      const status_sql = `update campaign_application set status = 2 where campaign_seq = ? and user_seq = ?`;
+      const status_sql = `update campaign_application set status = 0 where campaign_seq = ? and user_seq = ?`;
 
       await dbpool.beginTransaction();
       await dbpool.execute(sql, [campaign_seq, user_seq, 0, admin, new Date(), admin, new Date()]);
@@ -2054,7 +2310,7 @@ async function getCampaignReviewer(req, res, next) {
         message: "캠페인 정보가 없습니다.",
       });
     } else {
-      const sql = `select f.*, u.id,u.name,u.phonenumber, u.gender, u.birth, is_premium, u.is_premium, u.is_advertiser
+      const sql = `select f.*, u.id,u.name,u.phonenumber, u.gender, u.birth, is_premium, u.is_premium, u.is_advertiser, u.profile_name,u.profile_path,u.profile_ext
       from (select r.campaign_seq, r.user_seq
       from reviewer as r join campaign as c on r.campaign_seq = c.campaign_seq
       where r.campaign_seq = ?) as f join user as u on f.user_seq = u.user_seq`;
@@ -2313,7 +2569,7 @@ async function getCampaignApplicantByAdvertiser(req, res, next) {
         message: "광고주 정보가 없습니다.",
       });
     } else {
-      const sql = `select f.*, u.id,u.name,u.phonenumber, u.gender, u.birth, is_premium, u.is_premium, u.is_advertiser
+      const sql = `select f.*, u.id,u.name,u.phonenumber, u.gender, u.birth, is_premium, u.is_premium, u.is_advertiser, u.profile_name,u.profile_path,u.profile_ext
       from
       (select ca.campaign_seq,ca.user_seq, ca.select_reward, ca.camera_code,joint_blog,ca.status, ca.address,ca.receiver,ca.receiver_phonenumber,
       from campaign_application as ca join (select * from campaign where advertiser = ?) as sec on ca.campaign_seq = sec.campaign_seq) as f join user as u on f.user_seq = u.user_seq`;
@@ -2344,7 +2600,7 @@ async function getCampaignReviewerByAdvertiser(req, res, next) {
         message: "광고주 정보가 없습니다.",
       });
     } else {
-      const sql = `select f.*, u.id,u.name,u.phonenumber, u.gender, u.birth, is_premium, u.is_premium, u.is_advertiser
+      const sql = `select f.*, u.id,u.name,u.phonenumber, u.gender, u.birth, is_premium, u.is_premium, u.is_advertiser, u.profile_name,u.profile_path,u.profile_ext
       from
       (select r.campaign_seq, r.user_seq
       from reviewer as r join (select * from campaign where advertiser = ?) as sec on r.campaign_seq = sec.campaign_seq) as f join user as u on f.user_seq = u.user_seq`;
@@ -2518,6 +2774,8 @@ export {
   getPremiumCampaignBylastest,
   getPremiumCampaignByPopular,
   getPremiumCampaignBySelection,
+  missionComplete,
+  missionCancel,
   increaseCampaignViewCount,
   test,
 };
