@@ -410,7 +410,7 @@ async function uploadCampaignImage(req, res, next) {
     });
   } else {
     try {
-      const sql = `insert into campaign_file (campaign_seq, name, path, extension,key, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      const sql = `insert into campaign_file (campaign_seq, name, path, extension, filekey, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
       const delete_sql = `delete from campaign_file where campaign_seq = ?`;
 
       await dbpool.beginTransaction();
