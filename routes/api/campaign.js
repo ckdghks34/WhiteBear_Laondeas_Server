@@ -177,6 +177,13 @@ router.get(
 //   campaignController.getCampaignEvaluationByAdvertiser
 // );
 
+// 미션 완료
+router.patch("/mission/complete", /* authJWT, */ campaignController.missionComplete);
+
+// 미션 취소
+router.patch("/mission/cancel", /* authJWT, */ campaignController.missionCancel);
+
+// 조회수 증가
 router.patch("/campaign/view-count", campaignController.increaseCampaignViewCount);
 
 router.get("/test/test", campaignController.test);
