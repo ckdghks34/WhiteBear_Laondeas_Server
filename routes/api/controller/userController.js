@@ -292,14 +292,15 @@ async function createProfile(req, res, next) {
   const { user_seq, id } = req.body;
   const filename = req.file.originalname;
   const ext = req.file.mimetype.split("/")[1];
+  const key = req.file.key;
   const filepath = req.file.location;
 
   try {
     // const sql = `insert into user_file(user_seq,name,path,extension,first_register_id,first_register_date,last_register_id,last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?) on duplicate key update name = ?, path = ?, extension = ?, last_register_id = ?, last_register_date = ?`;
     const sql =
-      "update user set profile_name = ?, profile_path = ?, profile_ext = ? , last_register_date = ? where user_seq = ?";
+      "update user set profile_name = ?, profile_path = ?, profile_ext = ?, profile_key = ? , last_register_date = ? where user_seq = ?";
 
-    await dbpool.execute(sql, [filename, filepath, ext, new Date(), user_seq]);
+    await dbpool.execute(sql, [filename, filepath, ext, key, new Date(), user_seq]);
 
     res.status(200).json({
       message: "프로필 사진 등록 성공",
