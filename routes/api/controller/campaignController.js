@@ -72,15 +72,21 @@ async function getCampaign(req, res, next) {
 
       let campaign = results[0][0];
 
-      campaign["campaign_file"] = img_results[0];
-      campaign["qna"] = qna_results[0];
-      campaign.keyword = results[0][0].keyword.split(",");
-      campaign["applicant"] = applicant_results[0];
+      if (campaign) {
+        campaign["campaign_file"] = img_results[0];
+        campaign["qna"] = qna_results[0];
+        campaign.keyword = results[0][0].keyword.split(",");
+        campaign["applicant"] = applicant_results[0];
 
-      res.status(200).json({
-        message: "특정 캠페인 가져오기 성공",
-        campaign: campaign,
-      });
+        res.status(200).json({
+          message: "특정 캠페인 가져오기 성공",
+          campaign: campaign,
+        });
+      } else {
+        res.status(400).json({
+          message: "캠페인 정보가 없습니다.",
+        });
+      }
     } catch (err) {
       console.log(err);
 
