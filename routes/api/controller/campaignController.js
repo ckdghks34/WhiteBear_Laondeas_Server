@@ -2159,9 +2159,7 @@ async function applyCampaign(req, res, next) {
         message: "캠페인 신청 정보가 없습니다.",
       });
     } else {
-      console.log(other_answers);
-      const sql = `insert into campaign_application (user_seq, campaign_seq, acquaint_content, select_reward, camera_code, face_exposure, address, receiver, recevier_phonenumber,other_answers
-joint_blog, status, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      const sql = `insert into campaign_application (user_seq, campaign_seq, acquaint_content, select_reward, camera_code, face_exposure, address, receiver, receiver_phonenumber,other_answers, joint_blog, status, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
       await dbpool.query(sql, [
         user_seq,
@@ -2236,12 +2234,14 @@ async function getCampaignApplicant(req, res, next) {
       });
     } else {
       const sql = `select f.*, u.id,u.name,u.phonenumber, u.gender, u.birth, u.is_premium, u.is_advertiser, u.profile_name,u.profile_path,u.profile_ext
-      from (select ca.campaign_seq,ca.user_seq, ca.select_reward, ca.address,ca.receiver,ca.receiver_phonenumber, ca.camera_code,joint_blog,ca.status
+      from (select ca.campaign_seq,ca.user_seq, ca.select_reward, ca.address,ca.receiver,ca.receiver_phonenumber, ca.camera_code,joint_blog,ca.status, ca.other_answers
       from campaign_application as ca join campaign as c on ca.campaign_seq = c.campaign_seq
       where ca.campaign_seq = ?) as f join user as u on f.user_seq = u.user_seq`;
 
       const results = await dbpool.query(sql, [campaign_seq]);
+      let campaign_applicant = results[0];
 
+      campaign_applicant[0].other_answers = JSON.parse(campaign_applicant[0].other_answers);
       res.status(200).json({
         message: "특정 캠페인 신청자 목록 성공",
         applicants: results[0],
@@ -2603,10 +2603,11 @@ async function getCampaignApplicantByAdvertiser(req, res, next) {
     } else {
       const sql = `select f.*, u.id,u.name,u.phonenumber, u.gender, u.birth, is_premium, u.is_premium, u.is_advertiser, u.profile_name,u.profile_path,u.profile_ext
       from
-      (select ca.campaign_seq,ca.user_seq, ca.select_reward, ca.camera_code,joint_blog,ca.status, ca.address,ca.receiver,ca.receiver_phonenumber,
+      (select ca.campaign_seq,ca.user_seq, ca.select_reward, ca.camera_code, joint_blog, ca.status, ca.other_answers, ca.address,ca.receiver,ca.receiver_phonenumber,
       from campaign_application as ca join (select * from campaign where advertiser = ?) as sec on ca.campaign_seq = sec.campaign_seq) as f join user as u on f.user_seq = u.user_seq`;
 
       const result = await dbpool.execute(sql, [user_seq]);
+      let campaign_applicant = result[0];
 
       res.status(200).json({
         message: "광고주 캠페인 신청자 목록 가져오기 성공",
