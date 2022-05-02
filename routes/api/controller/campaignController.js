@@ -601,7 +601,7 @@ async function getAllCampaignBySelection(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                           on c.campaign_seq = cc.campaign_seq
-                          order by recruit_end_date desc limit ? offset ?`;
+                          order by recruit_end_date asc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
@@ -797,7 +797,7 @@ async function getCampaignByProgressBySelection(req, res, next) {
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
                             where recruit_start_date <= now() and recruit_end_date >= now()
-                            order by recruit_end_date desc limit ? offset ?`;
+                            order by recruit_end_date asc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
@@ -989,7 +989,7 @@ async function getCampaignByTypeBySelection(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where category = ? and recruit_start_date <= now() and recruit_end_date >= now()  order by recruit_end_date desc limit ? offset ?`;
+                            where category = ? and recruit_start_date <= now() and recruit_end_date >= now()  order by recruit_end_date asc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
@@ -1357,7 +1357,7 @@ async function getCampaignByFilteringBySelection(req, res, next) {
         campaign_sql += ` or is_premium = 1`;
       }
 
-      campaign_sql += `order by recruit_end_date desc limit ? offset ?`;
+      campaign_sql += `order by recruit_end_date asc limit ? offset ?`;
 
       sql_param.push(pagelimit);
       sql_param.push(offset);
@@ -1581,7 +1581,7 @@ async function getPremiumCampaignBySelection(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1 order by recruit_end_date desc limit ? offset ?`;
+                            where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1 order by recruit_end_date asc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
@@ -2087,7 +2087,7 @@ async function getCampaignBySearchBySelection(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?) order by recruit_end_date desc limit ? offset ?`;
+                            where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?) order by recruit_end_date asc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
@@ -2249,7 +2249,9 @@ async function getCampaignApplicant(req, res, next) {
       let campaign_applicant = results[0];
 
       for (let i = 0; i < campaign_applicant.length; i++)
-        campaign_applicant[i].other_answers = JSON.parse(campaign_applicant[i].other_answers);
+        if (!campaign_applicant[i].other_answers === "")
+          // JSON으로 Parse 없는 String일 경우 에러 발생
+          campaign_applicant[i].other_answers = JSON.parse(campaign_applicant[i].other_answers);
 
       res.status(200).json({
         message: "특정 캠페인 신청자 목록 성공",
