@@ -440,7 +440,7 @@ async function getMyCampaign(req, res, next) {
     });
   } else {
     try {
-      const sql = `select ca.user_seq, c.campaign_seq, c.advertiser, c.is_premium, c.title, c.type, c.headcount, c.siteURL,c.misson,c.product,c.accrual_point,c.additional_information,c.recruit_end_date,c.reviewer_announcement_date,c.campaign_seq, ca.acquaint_content, ca.select_reward, ca.status,ca.address,ca.receiver,ca.receiver_phonenumber, ca.first_register_id,ca.first_register_date
+      const sql = `select ca.user_seq, c.campaign_seq, c.advertiser, c.is_premium, c.title, c.type, c.headcount, c.siteURL,c.misson,c.product,c.accrual_point,c.original_price, c.discount_price, c.campaign_guide,c.recruit_end_date,c.reviewer_announcement_date,c.campaign_seq, ca.acquaint_content, ca.select_reward, ca.status,ca.address,ca.receiver,ca.receiver_phonenumber, ca.first_register_id,ca.first_register_date
       from campaign_application as ca join campaign as c on ca.campaign_seq = c.campaign_seq
       where ca.user_seq = ?`;
 
@@ -470,7 +470,7 @@ async function getEndCampaign(req, res, next) {
     });
   } else {
     try {
-      const sql = `select re.user_seq,re.complete_mission, c.campaign_seq, c.advertiser, c.is_premium, c.title, c.type, c.headcount, c.siteURL,c.misson,c.product,c.accrual_point,c.additional_information,c.recruit_end_date,c.reviewer_announcement_date,c.campaign_seq,re.first_register_id,re.first_register_date
+      const sql = `select re.user_seq,re.complete_mission, c.campaign_seq, c.advertiser, c.is_premium, c.title, c.type, c.headcount, c.siteURL,c.misson,c.product,c.accrual_point,c.original_price, c.discount_price, c.campaign_guide,c.recruit_end_date,c.reviewer_announcement_date,c.campaign_seq,re.first_register_id,re.first_register_date
     from reviewer as re join campaign as c on re.campaign_seq = c.campaign_seq
     where re.user_seq = ? and c.recruit_end_date < ?`;
 
