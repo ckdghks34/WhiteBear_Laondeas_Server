@@ -16,6 +16,7 @@ async function getAllCampaign(req, res, next) {
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext
     from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+    const totalCount_sql = `select count(*) as totalCount from campaign`;
 
     const results = await dbpool.query(sql);
     let campaign = results[0];
@@ -36,10 +37,12 @@ async function getAllCampaign(req, res, next) {
       campaign[i]["applicant"] = applicatn_sql[0];
     }
 
+    const totalCount_results = await dbpool.query(totalCount_sql);
+
     res.status(200).json({
       message: "캠페인 전체 가져오기 성공",
       campaigns: campaign,
-      totalcount: campaign.length,
+      totalcount: totalCount_results[0][0].length,
     });
   } catch (err) {
     console.log(err);
@@ -395,6 +398,9 @@ async function deleteCampaign(req, res, next) {
 async function uploadCampaignImage(req, res, next) {
   const { campaign_seq, user_seq } = req.body;
   const { campaign_img_detail, campaign_img_thumbnail } = req.files;
+
+  console.log(req.files);
+  console.log(req.body);
   // console.log(campaign_img_detail);
   // console.log(campaign_img_thumbnail);
 
@@ -404,7 +410,7 @@ async function uploadCampaignImage(req, res, next) {
     });
   } else {
     try {
-      const sql = `insert into campaign_file (campaign_seq, name, path, extension, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?)`;
+      const sql = `insert into campaign_file (campaign_seq, name, path, extension,key, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
       const delete_sql = `delete from campaign_file where campaign_seq = ?`;
 
       await dbpool.beginTransaction();
@@ -415,14 +421,16 @@ async function uploadCampaignImage(req, res, next) {
         let filename = "detail_" + campaign_img_detail[i].originalname;
         let filepath = campaign_img_detail[i].location;
         let ext = campaign_img_detail[i].mimetype.split("/")[1];
+        let key = campaign_img_detail[i].key;
 
-        console.log(filename, filepath, ext, campaign_seq, user_seq);
+        console.log(filename, filepath, ext, key, campaign_seq, user_seq);
 
         await dbpool.execute(sql, [
           campaign_seq,
           filename,
           filepath,
           ext,
+          key,
           user_seq,
           new Date(),
           user_seq,
@@ -434,14 +442,16 @@ async function uploadCampaignImage(req, res, next) {
         let filename = "thumbnail_" + campaign_img_thumbnail[i].originalname;
         let filepath = campaign_img_thumbnail[i].location;
         let ext = campaign_img_thumbnail[i].mimetype.split("/")[1];
+        let key = campaign_img_thumbnail[i].key;
 
-        console.log(filename, filepath, ext, campaign_seq, user_seq);
+        console.log(filename, filepath, ext, key, campaign_seq, user_seq);
 
         await dbpool.execute(sql, [
           campaign_seq,
           filename,
           filepath,
           ext,
+          key,
           user_seq,
           new Date(),
           user_seq,
@@ -510,6 +520,7 @@ async function getAllCampaignBylastest(req, res, next) {
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+    const totalCount_sql = `select count(*) as totalCount from campaign`;
 
     const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
@@ -528,10 +539,12 @@ async function getAllCampaignBylastest(req, res, next) {
       campaign[i]["applicant"] = applicant_results[0];
     }
 
+    const totalCount_results = await dbpool.query(totalCount_sql);
+
     res.status(200).json({
       message: "캠페인 조회 성공",
       campaigns: campaign,
-      totalCount: campaign.length,
+      totalCount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
     console.log(err);
@@ -558,6 +571,7 @@ async function getAllCampaignByPopular(req, res, next) {
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+    const totalCount_sql = `select count(*) as totalCount from campaign`;
 
     const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
@@ -576,10 +590,12 @@ async function getAllCampaignByPopular(req, res, next) {
       campaign[i]["applicant"] = applicant_results[0];
     }
 
+    const totalCount_results = await dbpool.query(totalCount_sql);
+
     res.status(200).json({
       message: "캠페인 조회 성공",
       campaigns: campaign,
-      totalCount: campaign.length,
+      totalCount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
     console.log(err);
@@ -605,6 +621,7 @@ async function getAllCampaignBySelection(req, res, next) {
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+    const totalCount_sql = `select count(*) as totalCount from campaign`;
 
     const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
@@ -624,10 +641,12 @@ async function getAllCampaignBySelection(req, res, next) {
       campaign[i]["applicant"] = applicant_results[0];
     }
 
+    const totalCount_results = await dbpool.query(totalCount_sql);
+
     res.status(200).json({
       message: "캠페인 조회 성공",
       campaigns: campaign,
-      totalCount: campaign.length,
+      totalCount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
     console.log(err);
@@ -654,6 +673,7 @@ async function getCampaignByProgress(req, res, next) {
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+    const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now()`;
 
     const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
@@ -673,10 +693,12 @@ async function getCampaignByProgress(req, res, next) {
       campaign[i]["applicant"] = applicant_results[0];
     }
 
+    const totalCount_results = await dbpool.query(totalCount_sql);
+
     res.status(200).json({
       message: "캠페인 조회 성공",
       campaigns: campaign,
-      totalCount: campaign.length,
+      totalCount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
     console.log(err);
@@ -703,6 +725,7 @@ async function getCampaignByProgressBylastest(req, res, next) {
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+    const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now()`;
 
     const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
@@ -722,10 +745,12 @@ async function getCampaignByProgressBylastest(req, res, next) {
       campaign[i]["applicant"] = applicant_results[0];
     }
 
+    const totalCount_results = await dbpool.query(totalCount_sql);
+
     res.status(200).json({
       message: "캠페인 조회 성공",
       campaigns: campaign,
-      totalCount: campaign.length,
+      totalCount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
     console.log(err);
@@ -752,6 +777,7 @@ async function getCampaignByProgressByPopular(req, res, next) {
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+    const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now()`;
 
     const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
@@ -771,10 +797,12 @@ async function getCampaignByProgressByPopular(req, res, next) {
       campaign[i]["applicant"] = applicant_results[0];
     }
 
+    const totalCount_results = await dbpool.query(totalCount_sql);
+
     res.status(200).json({
       message: "캠페인 조회 성공",
       campaigns: campaign,
-      totalCount: campaign.length,
+      totalCount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
     console.log(err);
@@ -801,6 +829,7 @@ async function getCampaignByProgressBySelection(req, res, next) {
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+    const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now()`;
 
     const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
@@ -820,10 +849,12 @@ async function getCampaignByProgressBySelection(req, res, next) {
       campaign[i]["applicant"] = applicant_results[0];
     }
 
+    const totalCount_results = await dbpool.query(totalCount_sql);
+
     res.status(200).json({
       message: "캠페인 조회 성공",
       campaigns: campaign,
-      totalCount: campaign.length,
+      totalCount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
     console.log(err);
@@ -849,6 +880,7 @@ async function getCampaignByType(req, res, next) {
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+    const totalCount_sql = `select count(*) as totalCount from campaign where category = ? and recruit_start_date <= now() and recruit_end_date >= now()`;
 
     const campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
 
@@ -868,10 +900,12 @@ async function getCampaignByType(req, res, next) {
       campaign[i]["applicant"] = applicant_results[0];
     }
 
+    const totalCount_results = await dbpool.query(totalCount_sql, [category]);
+
     res.status(200).json({
       message: "캠페인 조회 성공",
       campaigns: campaign,
-      totalCount: campaign.length,
+      totalCount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
     console.log(err);
@@ -897,6 +931,7 @@ async function getCampaignByTypeBylastest(req, res, next) {
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+    const totalCount_sql = `select count(*) as totalCount from campaign where category = ? and recruit_start_date <= now() and recruit_end_date >= now()`;
 
     const campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
 
@@ -916,10 +951,12 @@ async function getCampaignByTypeBylastest(req, res, next) {
       campaign[i]["applicant"] = applicant_results[0];
     }
 
+    const totalCount_results = await dbpool.query(totalCount_results, [category]);
+
     res.status(200).json({
       message: "캠페인 조회 성공",
       campaigns: campaign,
-      totalCount: campaign.length,
+      totalCount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
     console.log(err);
@@ -945,6 +982,7 @@ async function getCampaignByTypeByPopular(req, res, next) {
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+    const totalCount_sql = `select count(*) as totalCount from campaign where category = ? and recruit_start_date <= now() and recruit_end_date >= now()`;
 
     const campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
 
@@ -964,10 +1002,12 @@ async function getCampaignByTypeByPopular(req, res, next) {
       campaign[i]["applicant"] = applicant_results[0];
     }
 
+    const totalCount_results = await dbpool.query(totalCount_results, [category]);
+
     res.status(200).json({
       message: "캠페인 조회 성공",
       campaigns: campaign,
-      totalCount: campaign.length,
+      totalCount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
     console.log(err);
@@ -993,6 +1033,7 @@ async function getCampaignByTypeBySelection(req, res, next) {
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+    const totalCount_sql = `select count(*) as totalCount from campaign where category = ? and recruit_start_date <= now() and recruit_end_date >= now()`;
 
     const campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
 
@@ -1012,10 +1053,12 @@ async function getCampaignByTypeBySelection(req, res, next) {
       campaign[i]["applicant"] = applicant_results[0];
     }
 
+    const totalCount_results = await dbpool.query(totalCount_results, [category]);
+
     res.status(200).json({
       message: "캠페인 조회 성공",
       campaigns: campaign,
-      totalCount: campaign.length,
+      totalCount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
     console.log(err);
@@ -1048,40 +1091,49 @@ async function getCampaignByFiltering(req, res, next) {
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now()`;
 
       let sql_param = [];
 
       if (category !== undefined) {
         category = category.split(",");
         campaign_sql += ` or category in (?)`;
+        totalCount_sql += ` or category in (?)`;
         sql_param.push(category);
       }
 
       if (product !== undefined) {
         product = product.split(",");
         campaign_sql += ` or product in (?)`;
+        totalCount_sql += ` or product in (?)`;
         sql_param.push(product);
       }
 
       if (channel !== undefined) {
         channel = channel.split(",");
         campaign_sql += ` or channel in (?)`;
+        totalCount_sql += ` or channel in (?)`;
         sql_param.push(channel);
       }
 
       if (area !== undefined) {
         area = area.split(",");
         campaign_sql += ` or area in (?)`;
+        totalCount_sql += ` or area in (?)`;
         sql_param.push(area);
       }
 
       if (premium !== undefined) {
         campaign_sql += ` or is_premium = 0 `;
+        totalCount_sql += ` or is_premium = 0 `;
       } else {
         campaign_sql += ` or is_premium = 1 `;
+        totalCount_sql += ` or is_premium = 1 `;
       }
 
       campaign_sql += `limit ? offset ?`;
+
+      const totalCount_results = await dbpool.query(totalCount_sql, sql_param);
 
       sql_param.push(pagelimit);
       sql_param.push(offset);
@@ -1107,7 +1159,7 @@ async function getCampaignByFiltering(req, res, next) {
       res.status(200).json({
         message: "캠페인 조회 성공",
         campaigns: campaign,
-        totalCount: campaign.length,
+        totalCount: totalCount_results[0][0].totalCount,
       });
     }
   } catch (err) {
@@ -1141,39 +1193,48 @@ async function getCampaignByFilteringBylastest(req, res, next) {
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now()`;
 
       let sql_param = [];
       if (category !== undefined) {
         category = category.split(",");
         campaign_sql += ` or category in (?)`;
+        totalCount_sql += ` or category in (?)`;
         sql_param.push(category);
       }
 
       if (product !== undefined) {
         product = product.split(",");
         campaign_sql += ` or product in (?)`;
+        totalCount_sql += ` or product in (?)`;
         sql_param.push(product);
       }
 
       if (channel !== undefined) {
         channel = channel.split(",");
         campaign_sql += ` or channel in (?)`;
+        totalCount_sql += ` or channel in (?)`;
         sql_param.push(channel);
       }
 
       if (area !== undefined) {
         area = area.split(",");
         campaign_sql += ` or area in (?)`;
+        totalCount_sql += ` or area in (?)`;
         sql_param.push(area);
       }
 
       if (premium !== undefined) {
         campaign_sql += ` or is_premium = 0`;
+        totalCount_sql += ` or is_premium = 0`;
       } else {
         campaign_sql += ` or is_premium = 1`;
+        totalCount_sql += ` or is_premium = 1`;
       }
 
       campaign_sql += `order by recruit_start_date desc limit ? offset ?`;
+
+      const totalCount_results = await dbpool.query(totalCount_sql, sql_param);
 
       sql_param.push(pagelimit);
       sql_param.push(offset);
@@ -1199,7 +1260,7 @@ async function getCampaignByFilteringBylastest(req, res, next) {
       res.status(200).json({
         message: "캠페인 조회 성공",
         campaigns: campaign,
-        totalCount: campaign.length,
+        totalCount: totalCount_results[0][0].totalCount,
       });
     }
   } catch (err) {
@@ -1233,39 +1294,48 @@ async function getCampaignByFilteringByPopular(req, res, next) {
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now()`;
 
       let sql_param = [];
       if (category !== undefined) {
         category = category.split(",");
         campaign_sql += ` or category in (?)`;
+        totalCount_sql += ` or category in (?)`;
         sql_param.push(category);
       }
 
       if (product !== undefined) {
         product = product.split(",");
         campaign_sql += ` or product in (?)`;
+        totalCount_sql += ` or product in (?)`;
         sql_param.push(product);
       }
 
       if (channel !== undefined) {
         channel = channel.split(",");
         campaign_sql += ` or channel in (?)`;
+        totalCount_sql += ` or channel in (?)`;
         sql_param.push(channel);
       }
 
       if (area !== undefined) {
         area = area.split(",");
         campaign_sql += ` or area in (?)`;
+        totalCount_sql += ` or area in (?)`;
         sql_param.push(area);
       }
 
       if (premium !== undefined) {
         campaign_sql += ` or is_premium = 0`;
+        totalCount_sql += ` or is_premium = 0`;
       } else {
         campaign_sql += ` or is_premium = 1`;
+        totalCount_sql += ` or is_premium = 1`;
       }
 
       campaign_sql += `order by applicant_count desc limit ? offset ?`;
+
+      const totalCount_results = await dbpool.query(totalCount_sql, sql_param);
 
       sql_param.push(pagelimit);
       sql_param.push(offset);
@@ -1291,7 +1361,7 @@ async function getCampaignByFilteringByPopular(req, res, next) {
       res.status(200).json({
         message: "캠페인 조회 성공",
         campaigns: campaign,
-        totalCount: campaign.length,
+        totalCount: totalCount_results[0][0].totalCount,
       });
     }
   } catch (err) {
@@ -1325,29 +1395,34 @@ async function getCampaignByFilteringBySelection(req, res, next) {
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now()`;
 
       let sql_param = [];
       if (category !== undefined) {
         category = category.split(",");
         campaign_sql += ` and category in (?)`;
+        totalCount_sql += ` and category in (?)`;
         sql_param.push(category);
       }
 
       if (product !== undefined) {
         product = product.split(",");
         campaign_sql += ` or product in (?)`;
+        totalCount_sql += ` or product in (?)`;
         sql_param.push(product);
       }
 
       if (channel !== undefined) {
         channel = channel.split(",");
         campaign_sql += ` or channel in (?)`;
+        totalCount_sql += ` or channel in (?)`;
         sql_param.push(channel);
       }
 
       if (area !== undefined) {
         area = area.split(",");
         campaign_sql += ` or area in (?)`;
+        totalCount_sql += ` or area in (?)`;
         sql_param.push(area);
       }
 
@@ -1358,6 +1433,8 @@ async function getCampaignByFilteringBySelection(req, res, next) {
       }
 
       campaign_sql += `order by recruit_end_date asc limit ? offset ?`;
+
+      const totalCount_results = await dbpool.query(totalCount_sql, sql_param);
 
       sql_param.push(pagelimit);
       sql_param.push(offset);
@@ -1383,7 +1460,7 @@ async function getCampaignByFilteringBySelection(req, res, next) {
       res.status(200).json({
         message: "캠페인 조회 성공",
         campaigns: campaign,
-        totalCount: campaign.length,
+        totalCount: totalCount_results[0][0].totalCount,
       });
     }
   } catch (err) {
@@ -1417,6 +1494,7 @@ async function getPremiumCampaign(req, res, next) {
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1`;
 
       const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
@@ -1436,10 +1514,12 @@ async function getPremiumCampaign(req, res, next) {
         campaign[i]["applicant"] = applicant_results[0];
       }
 
+      const totalCount_results = await dbpool.query(totalCount_sql);
+
       res.status(200).json({
         message: "캠페인 조회 성공",
         campaigns: campaign,
-        totalCount: campaign.length,
+        totalCount: totalCount_results[0][0].totalCount,
       });
     }
   } catch (err) {
@@ -1473,6 +1553,7 @@ async function getPremiumCampaignBylastest(req, res, next) {
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1`;
 
       const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
@@ -1492,10 +1573,12 @@ async function getPremiumCampaignBylastest(req, res, next) {
         campaign[i]["applicant"] = applicant_results[0];
       }
 
+      const totalCount_results = await dbpool.query(totalCount_sql);
+
       res.status(200).json({
         message: "캠페인 조회 성공",
         campaigns: campaign,
-        totalCount: campaign.length,
+        totalCount: totalCount_results[0][0].totalCount,
       });
     }
   } catch (err) {
@@ -1529,6 +1612,7 @@ async function getPremiumCampaignByPopular(req, res, next) {
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1`;
 
       const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
@@ -1548,10 +1632,12 @@ async function getPremiumCampaignByPopular(req, res, next) {
         campaign[i]["applicant"] = applicant_results[0];
       }
 
+      const totalCount_results = await dbpool.query(totalCount_sql);
+
       res.status(200).json({
         message: "캠페인 조회 성공",
         campaigns: campaign,
-        totalCount: campaign.length,
+        totalCount: totalCount_results[0][0].totalCount,
       });
     }
   } catch (err) {
@@ -1585,6 +1671,7 @@ async function getPremiumCampaignBySelection(req, res, next) {
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1`;
 
       const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
@@ -1604,10 +1691,12 @@ async function getPremiumCampaignBySelection(req, res, next) {
         campaign[i]["applicant"] = applicant_results[0];
       }
 
+      const totalCount_results = await dbpool.query(totalCount_sql);
+
       res.status(200).json({
         message: "캠페인 조회 성공",
         campaigns: campaign,
-        totalCount: campaign.length,
+        totalCount: totalCount_results[0][0].totalCount,
       });
     }
   } catch (err) {
@@ -1641,6 +1730,7 @@ async function getCampaignByChannel(req, res, next) {
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and channel = ?`;
 
       const campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
 
@@ -1660,10 +1750,12 @@ async function getCampaignByChannel(req, res, next) {
         campaign[i]["applicant"] = applicant_results[0];
       }
 
+      const totalCount_results = await dbpool.query(totalCount_sql, [channel]);
+
       res.status(200).json({
         message: "캠페인 조회 성공",
         campaigns: campaign,
-        totalCount: campaign.length,
+        totalCount: totalCount_results[0][0].totalCount,
       });
     }
   } catch (err) {
@@ -1697,6 +1789,7 @@ async function getCampaignByChannelBylastest(req, res, next) {
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and channel = ?`;
 
       const campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
 
@@ -1716,10 +1809,12 @@ async function getCampaignByChannelBylastest(req, res, next) {
         campaign[i]["applicant"] = applicant_results[0];
       }
 
+      const totalCount_results = await dbpool.query(totalCount_sql, [channel]);
+
       res.status(200).json({
         message: "캠페인 조회 성공",
         campaigns: campaign,
-        totalCount: campaign.length,
+        totalCount: totalCount_results[0][0].totalCount,
       });
     }
   } catch (err) {
@@ -1753,6 +1848,7 @@ async function getCampaignByChannelByPopular(req, res, next) {
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and channel = ?`;
 
       const campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
 
@@ -1772,10 +1868,12 @@ async function getCampaignByChannelByPopular(req, res, next) {
         campaign[i]["applicant"] = applicant_results[0];
       }
 
+      const totalCount_results = await dbpool.query(totalCount_sql, [channel]);
+
       res.status(200).json({
         message: "캠페인 조회 성공",
         campaigns: campaign,
-        totalCount: campaign.length,
+        totalCount: totalCount_results[0][0].totalCount,
       });
     }
   } catch (err) {
@@ -1809,6 +1907,7 @@ async function getCampaignByChannelBySelection(req, res, next) {
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and channel = ?`;
 
       const campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
 
@@ -1828,10 +1927,12 @@ async function getCampaignByChannelBySelection(req, res, next) {
         campaign[i]["applicant"] = applicant_results[0];
       }
 
+      const totalCount_results = await dbpool.query(totalCount_results, [channel]);
+
       res.status(200).json({
         message: "캠페인 조회 성공",
         campaigns: campaign,
-        totalCount: campaign.length,
+        totalCount: totalCount_results[0][0].totalCount,
       });
     }
   } catch (err) {
@@ -1909,6 +2010,7 @@ async function getCampaignBySearch(req, res, next) {
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?)`;
 
       const campaign_results = await dbpool.query(campaign_sql, [
         search,
@@ -1933,10 +2035,12 @@ async function getCampaignBySearch(req, res, next) {
         campaign[i]["applicant"] = applicant_results[0];
       }
 
+      const totalCount_results = await dbpool.query(totalCount_sql, [search, search]);
+
       res.status(200).json({
         message: "캠페인 검색 성공",
         campaigns: campaign,
-        totalCount: campaign.length,
+        totalCount: totalCount_results[0][0].totalCount,
       });
     }
   } catch (err) {
@@ -1970,6 +2074,7 @@ async function getCampaignBySearchBylastest(req, res, next) {
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?)`;
 
       const campaign_results = await dbpool.query(campaign_sql, [
         search,
@@ -1994,10 +2099,12 @@ async function getCampaignBySearchBylastest(req, res, next) {
         campaign[i]["applicant"] = applicant_results[0];
       }
 
+      const totalCount_results = await dbpool.query(totalCount_sql, [search, search]);
+
       res.status(200).json({
         message: "캠페인 검색 성공",
         campaigns: campaign,
-        totalCount: campaign.length,
+        totalCount: totalCount_results[0][0].totalCount,
       });
     }
   } catch (err) {
@@ -2031,6 +2138,7 @@ async function getCampaignBySearchByPopular(req, res, next) {
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?)`;
 
       const campaign_results = await dbpool.query(campaign_sql, [
         search,
@@ -2054,10 +2162,12 @@ async function getCampaignBySearchByPopular(req, res, next) {
         campaign[i]["applicant"] = applicant_results[0];
       }
 
+      const totalCount_results = await dbpool.query(totalCount_sql, [search, search]);
+
       res.status(200).json({
         message: "캠페인 검색 성공",
         campaigns: campaign,
-        totalCount: campaign.length,
+        totalCount: totalCount_results[0][0].totalCount,
       });
     }
   } catch (err) {
@@ -2091,6 +2201,7 @@ async function getCampaignBySearchBySelection(req, res, next) {
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?)`;
 
       const campaign_results = await dbpool.query(campaign_sql, [
         search,
@@ -2115,10 +2226,12 @@ async function getCampaignBySearchBySelection(req, res, next) {
         campaign[i]["applicant"] = applicant_results[0];
       }
 
+      const totalCount_results = await dbpool.query(totalCount_sql, [search, search]);
+
       res.status(200).json({
         message: "캠페인 검색 성공",
         campaigns: campaign,
-        totalCount: campaign.length,
+        totalCount: totalCount_results[0][0].totalCount,
       });
     }
   } catch (err) {
