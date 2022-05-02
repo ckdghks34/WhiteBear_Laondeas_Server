@@ -154,8 +154,7 @@ async function createCampaign(req, res, next) {
     });
   } else {
     try {
-      const campaign_sql = `insert into campaign (advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, original_price, discount_price, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date,review_start_date, review_end_date, campaign_end_date, agreement_portrait, agreement_provide_info, campaign_state, view_count, first_register_id, first_register_date, last_register_id, last_register_date) values 
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      const campaign_sql = `insert into campaign (advertiser, is_premium, title, category, product, channel, area, keyword, headcount, siteURL, misson, reward, original_price, discount_price, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, review_start_date, review_end_date, campaign_end_date, agreement_portrait, agreement_provide_info, campaign_state, view_count, first_register_id, first_register_date, last_register_id, last_register_date) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
       const qna_sql = `insert into campaign_qna (question, answer, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?)`;
 
       await dbpool.beginTransaction();
@@ -2137,6 +2136,7 @@ async function applyCampaign(req, res, next) {
       address,
       receiver,
       receiver_phonenumber,
+      other_answers,
       face_exposure,
       joint_blog,
       camera_code,
@@ -2150,6 +2150,7 @@ async function applyCampaign(req, res, next) {
       address === undefined ||
       receiver === undefined ||
       receiver_phonenumber === undefined ||
+      other_answers === undefined ||
       face_exposure === undefined ||
       joint_blog === undefined ||
       camera_code === undefined
@@ -2158,7 +2159,9 @@ async function applyCampaign(req, res, next) {
         message: "캠페인 신청 정보가 없습니다.",
       });
     } else {
-      const sql = `insert into campaign_application (user_seq, campaign_seq, acquaint_content, select_reward, camera_code, face_exposure, address, receiver, recevier_phonenumber, joint_blog, status, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      console.log(other_answers);
+      const sql = `insert into campaign_application (user_seq, campaign_seq, acquaint_content, select_reward, camera_code, face_exposure, address, receiver, recevier_phonenumber,other_answers
+joint_blog, status, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
       await dbpool.query(sql, [
         user_seq,
@@ -2170,6 +2173,7 @@ async function applyCampaign(req, res, next) {
         address,
         receiver,
         receiver_phonenumber,
+        other_answers,
         joint_blog,
         0,
         user_seq,
