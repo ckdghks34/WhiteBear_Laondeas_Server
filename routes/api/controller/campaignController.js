@@ -302,6 +302,7 @@ async function updateCampaign(req, res, next) {
         area,
         keyword,
         headcount,
+        siteURL,
         misson,
         reward,
         original_price,
