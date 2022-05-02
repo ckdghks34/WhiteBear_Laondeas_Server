@@ -42,7 +42,7 @@ async function getAllCampaign(req, res, next) {
     res.status(200).json({
       message: "캠페인 전체 가져오기 성공",
       campaigns: campaign,
-      totalcount: totalCount_results[0][0].length,
+      totalcount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
     console.log(err);
