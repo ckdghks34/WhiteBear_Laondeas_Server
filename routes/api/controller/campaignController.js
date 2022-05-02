@@ -2241,10 +2241,12 @@ async function getCampaignApplicant(req, res, next) {
       const results = await dbpool.query(sql, [campaign_seq]);
       let campaign_applicant = results[0];
 
-      campaign_applicant[0].other_answers = JSON.parse(campaign_applicant[0].other_answers);
+      for (let i = 0; i < campaign_applicant.length; i++)
+        campaign_applicant[i].other_answers = JSON.parse(campaign_applicant[i].other_answers);
+
       res.status(200).json({
         message: "특정 캠페인 신청자 목록 성공",
-        applicants: results[0],
+        applicants: campaign_applicant,
       });
     }
   } catch (err) {
@@ -2609,9 +2611,12 @@ async function getCampaignApplicantByAdvertiser(req, res, next) {
       const result = await dbpool.execute(sql, [user_seq]);
       let campaign_applicant = result[0];
 
+      for (let i = 0; i < campaign_applicant.length; i++)
+        campaign_applicant[i].other_answers = JSON.parse(campaign_applicant[i].other_answers);
+
       res.status(200).json({
         message: "광고주 캠페인 신청자 목록 가져오기 성공",
-        data: result[0],
+        data: campaign_applicant,
       });
     }
   } catch (err) {
