@@ -30,7 +30,17 @@ const campaignUpload = multer({
         return cb(new Error("Only images are allowed"));
       }
 
-      cb(null, "campaignimage/" + Date.now() + file.originalname.split(".")[0] + "." + ext);
+      if (file.fieldname === "campaign_img_detail") {
+        cb(
+          null,
+          "campaignimage/" + "detail_" + Date.now() + file.originalname.split(".")[0] + "." + ext
+        );
+      } else {
+        cb(
+          null,
+          "campaignimage/" + "thumbnail_" + Date.now() + file.originalname.split(".")[0] + "." + ext
+        );
+      }
     },
   }),
   limits: { fileSize: 5 * 1024 * 1024 }, // 용량제한 5MB
