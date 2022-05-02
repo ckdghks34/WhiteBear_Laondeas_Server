@@ -295,22 +295,11 @@ async function createProfile(req, res, next) {
   const filepath = req.file.location;
 
   try {
-    const sql = `insert into user_file(user_seq,name,path,extension,first_register_id,first_register_date,last_register_id,last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?) on duplicate key update name = ?, path = ?, extension = ?, last_register_id = ?, last_register_date = ?`;
-    await dbpool.execute(sql, [
-      user_seq,
-      filename,
-      filepath,
-      ext,
-      user_seq,
-      new Date(),
-      user_seq,
-      new Date(),
-      filename,
-      filepath,
-      ext,
-      user_seq,
-      new Date(),
-    ]);
+    // const sql = `insert into user_file(user_seq,name,path,extension,first_register_id,first_register_date,last_register_id,last_register_date) values (?, ?, ?, ?, ?, ?, ?, ?) on duplicate key update name = ?, path = ?, extension = ?, last_register_id = ?, last_register_date = ?`;
+    const sql =
+      "update user set profile_name = ?, profile_path = ?, profile_ext = ? , last_register_date = ? where user_seq = ?";
+
+    await dbpool.execute(sql, [filename, filepath, ext, new Date(), user_seq]);
 
     res.status(200).json({
       message: "프로필 사진 등록 성공",
@@ -330,12 +319,12 @@ async function getProfile(req, res, next) {
   const { user_seq } = req.query;
 
   try {
-    const sql = `select * from user_file where user_seq = ? where representative = 1`;
+    const sql = `select profile_name,profile_path,profile_ext from user where user_seq = ?`;
     const results = await dbpool.execute(sql, [user_seq]);
 
     res.status(200).json({
       message: "프로필 사진 가져오기 성공",
-      profileImg: results[0].path,
+      profileImg: results[0][0].profile_path,
     });
   } catch (err) {
     console.log(err);
