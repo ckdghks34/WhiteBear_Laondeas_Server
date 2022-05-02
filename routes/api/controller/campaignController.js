@@ -2270,7 +2270,7 @@ async function createCampaignReviewer(req, res, next) {
       });
     } else {
       const sql = `insert into reviewer (campaign_seq, user_seq, complete_mission, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?)`;
-      const status_sql = `update campaign_application set status = 0 where campaign_seq = ? and user_seq = ?`;
+      const status_sql = `update campaign_application set status = 1 where campaign_seq = ? and user_seq = ?`;
 
       await dbpool.beginTransaction();
       await dbpool.execute(sql, [campaign_seq, user_seq, 0, admin, new Date(), admin, new Date()]);
@@ -2302,8 +2302,12 @@ async function deleteCampaignReviewer(req, res, next) {
       });
     } else {
       const sql = `delete from reviewer where campaign_seq = ? and user_seq = ?`;
+      const status_sql = `update campaign_application set status = 1 where campaign_seq = ? and user_seq = ?`;
 
-      await dbpool.query(sql, [campaign_seq, user_seq]);
+      await dbpool.beginTransaction();
+      await dbpool.execute(sql, [campaign_seq, user_seq]);
+      await dbpool.execute(status_sql, [campaign_seq, user_seq]);
+      await dbpool.commit();
 
       res.status(200).json({
         message: "리뷰어 선정 취소 성공",
