@@ -400,11 +400,6 @@ async function uploadCampaignImage(req, res, next) {
   const { campaign_seq, user_seq } = req.body;
   const { campaign_img_detail, campaign_img_thumbnail } = req.files;
 
-  console.log(req.files);
-  console.log(req.body);
-  // console.log(campaign_img_detail);
-  // console.log(campaign_img_thumbnail);
-
   if (campaign_seq === undefined) {
     res.status(400).json({
       message: "잘못된 요청입니다. 캠페인 데이터가 없습니다.",
