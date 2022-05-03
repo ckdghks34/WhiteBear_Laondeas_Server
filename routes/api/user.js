@@ -36,7 +36,7 @@ router.post("/profile", profileUpload.single("profile_img"), userController.crea
 router.get("/profile", userController.getProfile);
 
 // 프로필 사진 바꾸기
-// router.patch("/profile", userController.updateProfile);
+router.delete("/profile", userController.deleteProfile);
 
 // 관심 캠페인 가져오기
 router.get("/interest-campaign", userController.getInterestCampaign);
