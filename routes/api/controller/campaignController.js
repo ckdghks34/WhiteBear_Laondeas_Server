@@ -294,6 +294,7 @@ async function updateCampaign(req, res, next) {
       message: "잘못된 요청입니다. 필수 데이터가 없습니다.",
     });
   } else {
+    console.log(req.body);
     try {
       const campaign_sql = `update campaign set advertiser = ?, is_premium = ?, title = ?, category = ?, product = ?, channel = ? , area = ?, keyword = ?, headcount = ?, siteURL = ?, misson = ?, reward = ?, original_price = ?, discount_price = ?, accrual_point = ?, campaign_guide = ?, recruit_start_date = ?, recruit_end_date = ?, reviewer_announcement_date = ?, review_start_date = ? , review_end_date = ? , campaign_end_date = ?, agreement_portrait = ?, agreement_provide_info = ?, last_register_id = ?, last_register_date = ? where campaign_seq = ?`;
 
