@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import pool from "./../../../config/dbpool.js";
+import { s3, Bucket } from "./../../../util/s3.js";
 dotenv.config();
 
 const dbpool = await pool;
@@ -336,8 +337,49 @@ async function getProfile(req, res, next) {
   }
 }
 
-// // 프로필 사진 바꾸기
-// async function updateProfile(req, res, next) {}
+// // 프로필 사진 삭제
+async function deleteProfile(req, res, next) {
+  const { user_seq } = req.body;
+
+  const sql = `select profile_key from user where user_seq = ?`;
+
+  const results = await dbpool.query(sql, [user_seq]);
+  if (results[0][0].profile_key !== null) {
+    const params = {
+      Bucket: Bucket,
+      Key: results[0][0].profile_key,
+    };
+
+    s3.deleteObject(params, async (err, data) => {
+      if (err) {
+        console.log(err);
+
+        res.status(500).json({
+          message: "프로필 사진 삭제 실패",
+        });
+      }
+
+      const delete_sql = `update user set profile_name = null, profile_path = null, profile_ext = null, profile_key = null, last_register_date = ? where user_seq = ?`;
+      try {
+        await dbpool.execute(delete_sql, [new Date(), user_seq]);
+
+        res.status(200).json({
+          message: "프로필 사진 삭제 성공",
+        });
+      } catch (err) {
+        console.log(err);
+
+        res.status(500).json({
+          message: "프로필 정보 삭제 실패",
+        });
+      }
+    });
+  } else {
+    res.status(400).json({
+      message: "등록된 사진이 없습니다.",
+    });
+  }
+}
 
 // 관심 캠페인 가져오기
 async function getInterestCampaign(req, res, next) {
@@ -1829,7 +1871,7 @@ export {
   deletePremium,
   createProfile,
   getProfile,
-  // updateProfile,
+  deleteProfile,
   createInterestCampaign,
   deleteInterestCampaign,
   getAllMessageList,
