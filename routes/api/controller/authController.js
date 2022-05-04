@@ -48,7 +48,7 @@ async function signup(req, res, next) {
       let now = new Date().toISOString().replace(/T/, " ").replace(/\..+/, "");
       user_password = bcrypt.hashSync(user_password, 10);
       const sql = `Insert into user (id, password, name, nickname, email, phonenumber, agreement_info, agreement_email, agreement_mms, is_advertiser,first_register_date,last_register_date,is_admin) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)`;
-      await dbpool.execute(sql, [
+      const result = await dbpool.execute(sql, [
         user_id,
         user_password,
         user_name,
@@ -66,6 +66,7 @@ async function signup(req, res, next) {
 
       res.status(200).json({
         message: "회원가입 성공",
+        insertid: result[0].insertId,
       });
     } catch (err) {
       console.log(err);
