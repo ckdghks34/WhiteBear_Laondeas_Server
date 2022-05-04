@@ -31,7 +31,7 @@ async function getAllCampaign(req, res, next) {
       // 캠페인 QnA 추가
       campaign[i]["qna"] = qna_results[0];
       // 캠페인 키워드 파싱 후 추가
-      campaign[i].keyword = results[0][i].keyword.split(",");
+      // campaign[i].keyword = results[0][i].keyword.split(",");
       // 캠페인 이미지 파일 추가
       campaign[i]["campaign_file"] = img_results[0];
       campaign[i]["applicant"] = applicatn_sql[0];
@@ -168,7 +168,7 @@ async function createCampaign(req, res, next) {
 
       await dbpool.beginTransaction();
 
-      await dbpool.execute(campaign_sql, [
+      const result = await dbpool.execute(campaign_sql, [
         advertiser,
         is_premium,
         title,
@@ -222,6 +222,7 @@ async function createCampaign(req, res, next) {
 
       res.status(200).json({
         message: "캠페인 등록 성공",
+        insertid: result[0].insertId,
       });
     } catch (err) {
       console.log(err);
@@ -294,7 +295,6 @@ async function updateCampaign(req, res, next) {
       message: "잘못된 요청입니다. 필수 데이터가 없습니다.",
     });
   } else {
-    console.log(req.body);
     try {
       const campaign_sql = `update campaign set advertiser = ?, is_premium = ?, title = ?, category = ?, product = ?, channel = ? , area = ?, keyword = ?, headcount = ?, siteURL = ?, misson = ?, reward = ?, original_price = ?, discount_price = ?, accrual_point = ?, campaign_guide = ?, recruit_start_date = ?, recruit_end_date = ?, reviewer_announcement_date = ?, review_start_date = ? , review_end_date = ? , campaign_end_date = ?, agreement_portrait = ?, agreement_provide_info = ?, last_register_id = ?, last_register_date = ? where campaign_seq = ?`;
 
@@ -2537,7 +2537,7 @@ async function updateCampaignQnA(req, res, next) {
       for (let i = 0; i < qna.length; i++) {
         let question = qna[i].question;
         let answer = qna[i].answer;
-        await dbpool.execute(sql, [
+        const result = await dbpool.execute(sql, [
           question,
           answer,
           user_seq,
