@@ -1052,6 +1052,33 @@ async function readMessage(req, res, next) {
   }
 }
 
+// 유저별 메세지 전체 읽음 처리
+async function readAllMessage(req, res, next) {
+  const { user_seq } = req.query;
+
+  if (user_seq === undefined) {
+    res.status(400).json({
+      message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
+    });
+  } else {
+    try {
+      const sql = `update message set is_read = 1 where receiver = ?`;
+
+      await dbpool.execute(sql, [user_seq]);
+
+      res.status(200).json({
+        message: "메세지 전체 읽음 처리 성공",
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "메세지 확인 실패",
+      });
+    }
+  }
+}
+
 // 읽지 않은 메세지 갯수
 async function getUnreadMessageCount(req, res, next) {
   const { user_seq } = req.query;
@@ -1992,4 +2019,5 @@ export {
   getPremiumRequestDetail,
   getAdditionalInfo,
   getAllAccrualList,
+  readAllMessage,
 };
