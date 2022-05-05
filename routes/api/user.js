@@ -139,6 +139,8 @@ router.get("/message/all", userController.getAllMessageList);
 // 유저 읽지않은 메세지 갯수
 router.get("/message/unread", userController.getUnreadMessageCount);
 
+// 유저별 메세지 전체 읽음 처리
+router.patch("/message/all", userController.readAllMessage);
 /**
  * 유저 주소록
  */
