@@ -225,6 +225,7 @@ async function createCampaign(req, res, next) {
         insertid: result[0].insertId,
       });
     } catch (err) {
+      await dbpool.rollback();
       console.log(err);
 
       res.status(500).json({
@@ -354,6 +355,7 @@ async function updateCampaign(req, res, next) {
         message: "캠페인 수정 성공",
       });
     } catch (err) {
+      await dbpool.rollback();
       console.log(err);
 
       res.status(500).json({
@@ -386,6 +388,7 @@ async function deleteCampaign(req, res, next) {
         message: "캠페인 삭제 성공",
       });
     } catch (err) {
+      await dbpool.rollback();
       console.log(err);
 
       res.status(500).json({
@@ -461,6 +464,7 @@ async function uploadCampaignImage(req, res, next) {
         message: "캠페인 사진 등록 성공",
       });
     } catch (err) {
+      await dbpool.rollback();
       console.log(err);
 
       res.status(500).json({
@@ -2400,6 +2404,7 @@ async function createCampaignReviewer(req, res, next) {
       });
     }
   } catch (err) {
+    await dbpool.rollback();
     console.log(err);
 
     res.status(500).json({
@@ -2432,6 +2437,7 @@ async function deleteCampaignReviewer(req, res, next) {
       });
     }
   } catch (err) {
+    await dbpool.rollback();
     console.log(err);
 
     res.status(500).json({
@@ -2507,6 +2513,7 @@ async function createCampaignQnA(req, res, next) {
       });
     }
   } catch (err) {
+    await dbpool.rollback();
     console.log(err);
 
     res.status(500).json({
@@ -2551,6 +2558,7 @@ async function updateCampaignQnA(req, res, next) {
       });
     }
   } catch (err) {
+    await dbpool.rollback();
     console.log(err);
 
     res.status(500).json({
