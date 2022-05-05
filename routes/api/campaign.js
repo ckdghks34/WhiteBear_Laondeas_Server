@@ -5,6 +5,11 @@ import * as campaignController from "./controller/campaignController.js";
 
 const router = express.Router();
 
+const campaign_upload = campaignUpload.fields([
+  { name: "campaign_img_detail", maxCount: 5 },
+  { name: "campaign_img_thumbnail", maxCount: 5 },
+]);
+
 // 전체 캠페인 가져오기 (get)
 router.get("/all", campaignController.getAllCampaign);
 
@@ -21,10 +26,6 @@ router.patch("/", /* authJWT, */ campaignController.updateCampaign);
 router.delete("/", /* authJWT, */ campaignController.deleteCampaign);
 
 // 캠페인 사진 업로드 (post)
-const campaign_upload = campaignUpload.fields([
-  { name: "campaign_img_detail", maxCount: 5 },
-  { name: "campaign_img_thumbnail", maxCount: 5 },
-]);
 router.post("/image", campaign_upload, campaignController.uploadCampaignImage);
 
 // 캠페인 사진 가져오기 (get)
@@ -32,6 +33,20 @@ router.get("/image", campaignController.getCampaignImage);
 
 // 캠페인 사진 삭제 (delete)
 router.delete("/image", /* authJWT, */ campaignController.deleteCampaignImage);
+
+// 캠페인 썸네일 이미지 수정 (patch)
+router.patch(
+  "/image/thumbnail",
+  /* authJWT, */ campaign_upload,
+  campaignController.updateCampaignThumbnail
+);
+
+// 캠페인 상세페이지 이미지 수정
+router.patch(
+  "/image/detail",
+  /* authJWT, */ campaign_upload,
+  campaignController.updateCampaignDetail
+);
 
 // 전체 최신순 캠페인 + 페이징 (get)
 router.get("/all/lastest", campaignController.getAllCampaignBylastest);
