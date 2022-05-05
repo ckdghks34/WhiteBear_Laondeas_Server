@@ -177,6 +177,7 @@ async function updateAdditionalInfo(req, res, next) {
         message: "부가 회원 정보 수정 성공",
       });
     } catch (err) {
+      await dbpool.rollback();
       console.log(err);
 
       res.status(500).json({
@@ -383,7 +384,7 @@ async function deleteProfile(req, res, next) {
 
 // 관심 캠페인 가져오기
 async function getInterestCampaign(req, res, next) {
-  const { user_seq } = req.body;
+  const { user_seq } = req.query;
 
   if (user_seq === undefined) {
     res.status(401).json({
@@ -422,7 +423,7 @@ async function createInterestCampaign(req, res, next) {
   } else {
     try {
       const sql = `insert into interest_campaign (user_seq, campaign_seq, first_register_id, first_register_date, last_register_id, last_register_date)
-      values (?, ?, ?, ?)`;
+      values (?, ?, ?, ?, ?, ?)`;
 
       await dbpool.execute(sql, [
         user_seq,
@@ -440,7 +441,7 @@ async function createInterestCampaign(req, res, next) {
       console.log(err);
 
       res.status(500).json({
-        message: "관심 캠페인 등록 실패",
+        message: "관심 캠페인 등록 실패, 이미 관심 등록된 캠페인 입니다.  ",
       });
     }
   }
@@ -543,14 +544,43 @@ async function attendanceCheck(req, res, next) {
     });
   } else {
     try {
+      // 오늘 출석체크를 한적이 있는 지 체크하는 sql
+      const attendancecheck_sql = `select * from attendance where user_seq = ? and datediff(first_register_date,now()) = 0`;
       const sql = `insert into attendance(user_seq, content,first_register_id, first_register_date, last_register_id, last_register_date) values(?, ?, ?, ?, ?, ?)`;
+      const accrual_detail_sql = `insert into accrual_detail(user_seq, accrual_point, accrual_content, accrual_point_date, first_register_id, first_register_date, last_register_id, last_register_date) values(?, ?, ?, ?, ?, ?, ?, ?)`;
+      const accrual_sql = `update user set point = point + 100 where user_seq = ?`;
 
-      await dbpool.execute(sql, [user_seq, content, user_seq, new Date(), user_seq, new Date()]);
+      const attendancecheck_result = await dbpool.query(attendancecheck_sql, user_seq);
 
-      res.status(200).json({
-        message: "출석 체크 성공",
-      });
+      if (attendancecheck_result[0].length === 0) {
+        await dbpool.beginTransaction();
+
+        await dbpool.execute(sql, [user_seq, content, user_seq, new Date(), user_seq, new Date()]);
+        await dbpool.execute(accrual_sql, [user_seq]);
+        await dbpool.execute(accrual_detail_sql, [
+          user_seq,
+          100,
+          "출석체크",
+          new Date(),
+          user_seq,
+          new Date(),
+          user_seq,
+          new Date(),
+        ]);
+
+        await dbpool.commit();
+
+        res.status(200).json({
+          message: "출석 체크 성공",
+        });
+      } else {
+        await dbpool.rollback();
+        res.status(400).json({
+          message: "이미 출석체크를 하셨습니다.",
+        });
+      }
     } catch (err) {
+      await dbpool.rollback();
       console.log(err);
 
       res.status(500).json({
@@ -570,7 +600,8 @@ async function getAttendanceList(req, res, next) {
     });
   } else {
     try {
-      const sql = `select * from attendance where user_seq = ?`;
+      const sql = `select a.attendance_seq,u.user_seq, u.id, u.name, u.nickname, u.profile_name, u.profile_path, u.profile_ext, u.profile_key, a.content, a.first_register_id, a.first_register_date
+      from attendance as a join user as u on a.user_seq = u.user_seq where a.user_seq = ?`;
 
       const results = await dbpool.query(sql, user_seq);
 
@@ -588,9 +619,30 @@ async function getAttendanceList(req, res, next) {
   }
 }
 
+// 전체 출석 리스트 가져오기
+async function getAllAttendanceList(req, res, next) {
+  try {
+    const sql = `select a.attendance_seq,u.user_seq, u.id, u.name, u.nickname, u.profile_name, u.profile_path, u.profile_ext, u.profile_key, a.content, a.first_register_id, a.first_register_date
+    from attendance as a join user as u on a.user_seq = u.user_seq`;
+
+    const results = await dbpool.query(sql);
+
+    res.status(200).json({
+      message: "전체 출석 리스트 조회 성공",
+      attendanceList: results[0],
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "전체 출석 리스트 조회 실패",
+    });
+  }
+}
+
 // 포인트 적립
 async function accrual(req, res, next) {
-  const { user_seq, accrual_point, admin } = req.body;
+  const { user_seq, accrual_point, accrual_content, admin } = req.body;
 
   if (user_seq === undefined || accrual_point === undefined || admin === undefined) {
     res.status(401).json({
@@ -598,18 +650,28 @@ async function accrual(req, res, next) {
     });
   } else {
     try {
-      const sql = `insert into accrual_detail(user_seq,accrual_point,accrual_point_date, first_register_id, first_register_date) values(?,?,?,?,?)`;
+      const sql = `insert into accrual_detail(user_seq, accrual_point, accrual_content, accrual_point_date, first_register_id, first_register_date) values(?,?,?,?,?,?)`;
       const point_accrual_sql = `update user set point = point + ?, last_register_date = ? where user_seq = ?`;
 
       await dbpool.beginTransaction();
-      await dbpool.execute(sql, [user_seq, accrual_point, new Date(), admin, new Date()]);
+
+      await dbpool.execute(sql, [
+        user_seq,
+        accrual_point,
+        accrual_content,
+        new Date(),
+        admin,
+        new Date(),
+      ]);
       await dbpool.execute(point_accrual_sql, [accrual_point, new Date(), user_seq]);
+
       await dbpool.commit();
 
       res.status(200).json({
         message: "포인트 적립 성공",
       });
     } catch (err) {
+      await dbpool.rollback();
       console.log(err);
 
       res.status(500).json({
@@ -629,7 +691,7 @@ async function getUserAccrualList(req, res, next) {
     });
   } else {
     try {
-      const sql = `select accrual_seq,u.user_seq,u.name,u.id, accrual_point,accrual_point_date,ad.first_register_id, ad.first_register_date 
+      const sql = `select accrual_seq,u.user_seq, u.name, u.id, u.profile_name, u.profile_path, u.profile_ext, u.profile_key , accrual_point, accrual_content, accrual_point_date,ad.first_register_id, ad.first_register_date 
       from accrual_detail as ad join user as u on ad.user_seq = u.user_seq where ad.user_seq = ?`;
 
       const results = await dbpool.query(sql, user_seq);
@@ -645,6 +707,27 @@ async function getUserAccrualList(req, res, next) {
         message: "적립 내역 조회 실패",
       });
     }
+  }
+}
+
+// 전체 포인트 적립내역 가져오기
+async function getAllAccrualList(req, res, next) {
+  try {
+    const sql = `select accrual_seq,u.user_seq, u.name, u.id, u.profile_name, u.profile_path, u.profile_ext, u.profile_key , accrual_point, accrual_content, accrual_point_date,ad.first_register_id, ad.first_register_date
+    from accrual_detail as ad join user as u on ad.user_seq = u.user_seq`;
+
+    const results = await dbpool.query(sql);
+
+    res.status(200).json({
+      message: "전체 적립 내역 조회 성공",
+      accrualList: results[0],
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "적립 내역 조회 실패",
+    });
   }
 }
 
@@ -685,6 +768,7 @@ async function withdrawal(req, res, next) {
         message: "출금 신청 성공",
       });
     } catch (err) {
+      await dbpool.rollback();
       console.log(err);
 
       res.status(500).json({
@@ -786,7 +870,7 @@ async function getAllUserWithdrawalRequestList(req, res, next) {
 // 전체 유저 포인트 적립내역 가져오기
 async function getAllUserAccrualList(req, res, next) {
   try {
-    const sql = `select accrual_seq,u.user_seq,u.name,u.id, accrual_point,accrual_point_date,ad.first_register_id, ad.first_register_date 
+    const sql = `select accrual_seq,u.user_seq,u.name,u.id, accrual_point,accrual_content,accrual_point_date,ad.first_register_id, ad.first_register_date 
     from accrual_detail as ad join user as u on ad.user_seq = u.user_seq`;
 
     const results = await dbpool.query(sql);
@@ -1508,6 +1592,7 @@ async function createAddressBook(req, res, next) {
         message: "주소록 등록 성공",
       });
     } catch (err) {
+      await dbpool.rollback();
       console.log(err);
 
       res.status(500).json({
@@ -1555,22 +1640,44 @@ async function updateAddressBook(req, res, next) {
   } else {
     try {
       const sql = `update user_address_book set name = ?, receiver = ?, address = ?, phonenumber = ?, is_default = ?, last_register_id = ?, last_register_date = ? where user_seq = ? and address_seq = ?`;
-      await dbpool.execute(sql, [
-        name,
-        receiver,
-        address,
-        phonenumber,
-        is_default,
-        user_seq,
-        new Date(),
-        user_seq,
-        address_seq,
-      ]);
+      const default_sql = "update user_address_book set is_default = 0 where user_seq = ?";
+
+      if (is_default === 1) {
+        await dbpool.beginTransaction();
+
+        await dbpool.execute(default_sql, user_seq);
+        await dbpool.execute(sql, [
+          name,
+          receiver,
+          address,
+          phonenumber,
+          is_default,
+          user_seq,
+          new Date(),
+          user_seq,
+          address_seq,
+        ]);
+
+        await dbpool.commit();
+      } else {
+        await dbpool.execute(sql, [
+          name,
+          receiver,
+          address,
+          phonenumber,
+          is_default,
+          user_seq,
+          new Date(),
+          user_seq,
+          address_seq,
+        ]);
+      }
 
       res.status(200).json({
         message: "주소록 수정 성공",
       });
     } catch (err) {
+      await dbpool.rollback();
       console.log(err);
 
       res.status(500).json({
@@ -1658,6 +1765,7 @@ async function updateDefaultAddressBook(req, res, next) {
         message: "기본 배송지 변경 성공",
       });
     } catch (err) {
+      await dbpool.rollback();
       console.log(err);
 
       res.status(500).json({
@@ -1851,6 +1959,7 @@ export {
   getMyCampaign,
   attendanceCheck,
   getAttendanceList,
+  getAllAttendanceList,
   accrual,
   withdrawal,
   withdrawalRequest,
@@ -1882,4 +1991,5 @@ export {
   getUserAddressBook,
   getPremiumRequestDetail,
   getAdditionalInfo,
+  getAllAccrualList,
 };
