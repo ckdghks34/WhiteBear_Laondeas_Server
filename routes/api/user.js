@@ -85,6 +85,9 @@ router.post("/attendance", userController.attendanceCheck);
 // 출석체크 리스트 가져오기
 router.get("/attendance", userController.getAttendanceList);
 
+// 전체 출석체크 리스트 가져오기
+router.get("/attendance/all", userController.getAllAttendanceList);
+
 /**
  * 포인트 & 출금
  */
