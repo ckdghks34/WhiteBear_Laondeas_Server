@@ -78,7 +78,7 @@ async function getCampaign(req, res, next) {
       if (campaign) {
         campaign["campaign_file"] = img_results[0];
         campaign["qna"] = qna_results[0];
-        campaign.keyword = results[0][0].keyword.split(",");
+        // campaign.keyword = results[0][0].keyword.split(",");
         campaign["applicant"] = applicant_results[0];
 
         res.status(200).json({
@@ -504,6 +504,89 @@ async function getCampaignImage(req, res, next) {
   }
 }
 
+// 캠페인 썸네일 이미지 수정
+async function updateCampaignThumbnail(req, res, next) {
+  const { file_seq, campaign_seq, user_seq } = req.body;
+  const { campaign_img_thumbnail } = req.files;
+
+  if (file_seq === undefined || campaign_seq === undefined) {
+    res.status(400).json({
+      message: "잘못된 요청입니다. 필수 데이터가 없습니다.",
+    });
+  } else {
+    try {
+      const sql = `update campaign_file set name = ?, path = ?, extension = ?, filekey = ?, last_register_id = ?, last_register_date = ? where file_seq = ? and campaign_seq = ?`;
+
+      let filename = "thumbnail_" + campaign_img_thumbnail[0].originalname;
+      let filepath = campaign_img_thumbnail[0].location;
+      let ext = campaign_img_thumbnail[0].mimetype.split("/")[1];
+      let key = campaign_img_thumbnail[0].key;
+
+      await dbpool.execute(sql, [
+        filename,
+        filepath,
+        ext,
+        key,
+        user_seq,
+        new Date(),
+        file_seq,
+        campaign_seq,
+      ]);
+
+      res.status(200).json({
+        message: "캠페인 썸네일 이미지 수정 성공",
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "캠페인 썸네일 이미지 수정 실패",
+      });
+    }
+  }
+}
+// 캠페인 상세페이지 이미지 수정
+async function updateCampaignDetail(req, res, next) {
+  const { file_seq, campaign_seq, user_seq } = req.body;
+  const { campaign_img_detail } = req.files;
+
+  if (file_seq === undefined || campaign_seq === undefined) {
+    res.status(400).json({
+      message: "잘못된 요청입니다. 필수 데이터가 없습니다.",
+    });
+  } else {
+    try {
+      const sql = `update campaign_file set name = ?, path = ?, extension = ?, filekey = ?, last_register_id = ?, last_register_date = ? where file_seq = ? and campaign_seq = ?`;
+
+      let filename = "detail_" + campaign_img_detail[0].originalname;
+      let filepath = campaign_img_detail[0].location;
+      let ext = campaign_img_detail[0].mimetype.split("/")[1];
+      let key = campaign_img_detail[0].key;
+
+      await dbpool.execute(sql, [
+        filename,
+        filepath,
+        ext,
+        key,
+        user_seq,
+        new Date(),
+        file_seq,
+        campaign_seq,
+      ]);
+
+      res.status(200).json({
+        message: "캠페인 상세페이지 이미지 수정 성공",
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "캠페인 상세페이지 이미지 수정 실패",
+      });
+    }
+  }
+}
+
 // 전체 최신순 캠페인 + 페이징
 async function getAllCampaignBylastest(req, res, next) {
   try {
@@ -534,7 +617,7 @@ async function getAllCampaignBylastest(req, res, next) {
       const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
       campaign[i]["qna"] = campaign_qna_results[0];
-      campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
       campaign[i]["campaign_file"] = img_results[0];
       campaign[i]["applicant"] = applicant_results[0];
     }
@@ -585,7 +668,7 @@ async function getAllCampaignByPopular(req, res, next) {
       const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
       campaign[i]["qna"] = campaign_qna_results[0];
-      campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
       campaign[i]["campaign_file"] = img_results[0];
       campaign[i]["applicant"] = applicant_results[0];
     }
@@ -636,7 +719,7 @@ async function getAllCampaignBySelection(req, res, next) {
       const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
       campaign[i]["qna"] = campaign_qna_results[0];
-      campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
       campaign[i]["campaign_file"] = img_results[0];
       campaign[i]["applicant"] = applicant_results[0];
     }
@@ -688,7 +771,7 @@ async function getCampaignByProgress(req, res, next) {
       const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
       campaign[i]["qna"] = campaign_qna_results[0];
-      campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
       campaign[i]["campaign_file"] = img_results[0];
       campaign[i]["applicant"] = applicant_results[0];
     }
@@ -740,7 +823,7 @@ async function getCampaignByProgressBylastest(req, res, next) {
       const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
       campaign[i]["qna"] = campaign_qna_results[0];
-      campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
       campaign[i]["campaign_file"] = img_results[0];
       campaign[i]["applicant"] = applicant_results[0];
     }
@@ -792,7 +875,7 @@ async function getCampaignByProgressByPopular(req, res, next) {
       const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
       campaign[i]["qna"] = campaign_qna_results[0];
-      campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
       campaign[i]["campaign_file"] = img_results[0];
       campaign[i]["applicant"] = applicant_results[0];
     }
@@ -844,7 +927,7 @@ async function getCampaignByProgressBySelection(req, res, next) {
       const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
       campaign[i]["qna"] = campaign_qna_results[0];
-      campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
       campaign[i]["campaign_file"] = img_results[0];
       campaign[i]["applicant"] = applicant_results[0];
     }
@@ -895,7 +978,7 @@ async function getCampaignByType(req, res, next) {
       const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
       campaign[i]["qna"] = campaign_qna_results[0];
-      campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
       campaign[i]["campaign_file"] = img_results[0];
       campaign[i]["applicant"] = applicant_results[0];
     }
@@ -946,7 +1029,7 @@ async function getCampaignByTypeBylastest(req, res, next) {
       const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
       campaign[i]["qna"] = campaign_qna_results[0];
-      campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
       campaign[i]["campaign_file"] = img_results[0];
       campaign[i]["applicant"] = applicant_results[0];
     }
@@ -997,7 +1080,7 @@ async function getCampaignByTypeByPopular(req, res, next) {
       const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
       campaign[i]["qna"] = campaign_qna_results[0];
-      campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
       campaign[i]["campaign_file"] = img_results[0];
       campaign[i]["applicant"] = applicant_results[0];
     }
@@ -1048,7 +1131,7 @@ async function getCampaignByTypeBySelection(req, res, next) {
       const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
       campaign[i]["qna"] = campaign_qna_results[0];
-      campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
       campaign[i]["campaign_file"] = img_results[0];
       campaign[i]["applicant"] = applicant_results[0];
     }
@@ -1151,7 +1234,7 @@ async function getCampaignByFiltering(req, res, next) {
         const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
         campaign[i]["qna"] = campaign_qna_results[0];
-        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
         campaign[i]["campaign_file"] = img_results[0];
         campaign[i]["applicant"] = applicant_results[0];
       }
@@ -1252,7 +1335,7 @@ async function getCampaignByFilteringBylastest(req, res, next) {
         const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
         campaign[i]["qna"] = campaign_qna_results[0];
-        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
         campaign[i]["campaign_file"] = img_results[0];
         campaign[i]["applicant"] = applicant_results[0];
       }
@@ -1353,7 +1436,7 @@ async function getCampaignByFilteringByPopular(req, res, next) {
         const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
         campaign[i]["qna"] = campaign_qna_results[0];
-        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
         campaign[i]["campaign_file"] = img_results[0];
         campaign[i]["applicant"] = applicant_results[0];
       }
@@ -1452,7 +1535,7 @@ async function getCampaignByFilteringBySelection(req, res, next) {
         const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
         campaign[i]["qna"] = campaign_qna_results[0];
-        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
         campaign[i]["campaign_file"] = img_results[0];
         campaign[i]["applicant"] = applicant_results[0];
       }
@@ -1509,7 +1592,7 @@ async function getPremiumCampaign(req, res, next) {
         const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
         campaign[i]["qna"] = campaign_qna_results[0];
-        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
         campaign[i]["campaign_file"] = img_results[0];
         campaign[i]["applicant"] = applicant_results[0];
       }
@@ -1568,7 +1651,7 @@ async function getPremiumCampaignBylastest(req, res, next) {
         const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
         campaign[i]["qna"] = campaign_qna_results[0];
-        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
         campaign[i]["campaign_file"] = img_results[0];
         campaign[i]["applicant"] = applicant_results[0];
       }
@@ -1627,7 +1710,7 @@ async function getPremiumCampaignByPopular(req, res, next) {
         const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
         campaign[i]["qna"] = campaign_qna_results[0];
-        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
         campaign[i]["campaign_file"] = img_results[0];
         campaign[i]["applicant"] = applicant_results[0];
       }
@@ -1686,7 +1769,7 @@ async function getPremiumCampaignBySelection(req, res, next) {
         const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
         campaign[i]["qna"] = campaign_qna_results[0];
-        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
         campaign[i]["campaign_file"] = img_results[0];
         campaign[i]["applicant"] = applicant_results[0];
       }
@@ -1745,7 +1828,7 @@ async function getCampaignByChannel(req, res, next) {
         const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
         campaign[i]["qna"] = campaign_qna_results[0];
-        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
         campaign[i]["campaign_file"] = img_results[0];
         campaign[i]["applicant"] = applicant_results[0];
       }
@@ -1804,7 +1887,7 @@ async function getCampaignByChannelBylastest(req, res, next) {
         const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
         campaign[i]["qna"] = campaign_qna_results[0];
-        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
         campaign[i]["campaign_file"] = img_results[0];
         campaign[i]["applicant"] = applicant_results[0];
       }
@@ -1863,7 +1946,7 @@ async function getCampaignByChannelByPopular(req, res, next) {
         const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
         campaign[i]["qna"] = campaign_qna_results[0];
-        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
         campaign[i]["campaign_file"] = img_results[0];
         campaign[i]["applicant"] = applicant_results[0];
       }
@@ -1922,7 +2005,7 @@ async function getCampaignByChannelBySelection(req, res, next) {
         const img_results = await dbpool.query(img_sql, [campaign_seq]);
 
         campaign[i]["qna"] = campaign_qna_results[0];
-        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
         campaign[i]["campaign_file"] = img_results[0];
         campaign[i]["applicant"] = applicant_results[0];
       }
@@ -2030,7 +2113,7 @@ async function getCampaignBySearch(req, res, next) {
         const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
 
         campaign[i]["qna"] = campaign_qna_results[0];
-        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
         campaign[i]["campaign_file"] = img_results[0];
         campaign[i]["applicant"] = applicant_results[0];
       }
@@ -2094,7 +2177,7 @@ async function getCampaignBySearchBylastest(req, res, next) {
         const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
 
         campaign[i]["qna"] = campaign_qna_results[0];
-        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
         campaign[i]["campaign_file"] = img_results[0];
         campaign[i]["applicant"] = applicant_results[0];
       }
@@ -2157,7 +2240,7 @@ async function getCampaignBySearchByPopular(req, res, next) {
         const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
 
         campaign[i]["qna"] = campaign_qna_results[0];
-        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
         campaign[i]["campaign_file"] = img_results[0];
         campaign[i]["applicant"] = applicant_results[0];
       }
@@ -2221,7 +2304,7 @@ async function getCampaignBySearchBySelection(req, res, next) {
         const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
 
         campaign[i]["qna"] = campaign_qna_results[0];
-        campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+        // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
         campaign[i]["campaign_file"] = img_results[0];
         campaign[i]["applicant"] = applicant_results[0];
       }
@@ -2945,5 +3028,7 @@ export {
   missionComplete,
   missionCancel,
   increaseCampaignViewCount,
+  updateCampaignDetail,
+  updateCampaignThumbnail,
   test,
 };
