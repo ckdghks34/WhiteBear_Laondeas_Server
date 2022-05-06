@@ -392,9 +392,9 @@ async function getInterestCampaign(req, res, next) {
     });
   } else {
     try {
-      const sql = `select ic.user_seq, c.*
-      from interest_campaign as ic join campaign as c on ic.campaign_seq = c.campaign_seq
-      where user_seq = ? `;
+      const sql = `select ic.user_seq, c.*, u.id, u.name, u.nickname, u.profile_name, u.profile_path, u.profile_ext, u.profile_key
+      from (interest_campaign as ic join campaign as c on ic.campaign_seq = c.campaign_seq) join user as u on ic.user_seq = u.user_seq
+      where ic.user_seq = ?`;
 
       const results = await dbpool.query(sql, user_seq);
 
@@ -1586,7 +1586,7 @@ async function createAddressBook(req, res, next) {
       if (is_default === 1) {
         await dbpool.beginTransaction();
 
-        await dbpool.execute(default_sql, user_seq);
+        await dbpool.execute(default_sql, [user_seq]);
         await dbpool.execute(sql, [
           user_seq,
           name,
@@ -1672,7 +1672,7 @@ async function updateAddressBook(req, res, next) {
       if (is_default === 1) {
         await dbpool.beginTransaction();
 
-        await dbpool.execute(default_sql, user_seq);
+        await dbpool.execute(default_sql, [user_seq]);
         await dbpool.execute(sql, [
           name,
           receiver,
