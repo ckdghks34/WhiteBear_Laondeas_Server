@@ -4,7 +4,7 @@ import cookieParser from "cookie-parser";
 import logger from "morgan";
 import dotenv from "dotenv";
 import helmet from "helmet";
-import cors from 'cors';
+import cors from "cors";
 dotenv.config();
 
 // 라우터
@@ -15,6 +15,7 @@ import faqRouter from "./routes/api/faq.js";
 import noticeRouter from "./routes/api/notice.js";
 import advertiseRouter from "./routes/api/advertisement.js";
 import campaignRouter from "./routes/api/campaign.js";
+import commonfileRouter from "./routes/api/commonfile.js";
 
 const app = express();
 const __dirname = path.resolve();
@@ -41,6 +42,7 @@ app.use("/faq", faqRouter);
 app.use("/notice", noticeRouter);
 app.use("/advertisement", advertiseRouter);
 app.use("/campaigns", campaignRouter);
+app.use("/commonfile", commonfileRouter);
 
 // 404
 app.use(function (req, res, next) {
