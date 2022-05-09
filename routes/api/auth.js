@@ -37,4 +37,7 @@ router.post("/code", authController.addCode);
 // token 로그인
 router.post("/login/token", authController.tokenLogin);
 
+// kakao 로그인
+router.post("/login/kakao", authController.kakaoLogin);
+
 export default router;
