@@ -5,8 +5,6 @@ const dbpool = await pool;
 // 배너 등록
 async function createBanner(req, res, next) {
   const banner_img = req.files;
-  console.log(banner_img);
-  console.log(banner_img[0]);
 
   try {
     const sql = `insert into commonfile (category, name, path, extension, filekey, is_active) values ("banner", ?, ?, ?, ?, ?)`;
@@ -109,8 +107,6 @@ async function getBanner(req, res, next) {
 // 위젯 등록
 async function createWidget(req, res, next) {
   const { premier_widget_img, widget_img } = req.files;
-
-  console.log(req.files);
 
   try {
     const widget_sql = `insert into commonfile (category, name, path, extension, filekey, is_active) values ("widget", ?, ?, ?, ?, ?)`;
