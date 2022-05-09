@@ -79,7 +79,18 @@ async function getUser(req, res, next) {
 
 // 기본회원정보 수정
 async function updateUser(req, res, next) {
-  const { user_seq, name, gender, birth, nickname, email, phonenumber } = req.body;
+  const {
+    user_seq,
+    name,
+    gender,
+    birth,
+    nickname,
+    email,
+    phonenumber,
+    agreement_mms,
+    agreement_email,
+    agreement_info,
+  } = req.body;
 
   if (
     user_seq === undefined ||
@@ -94,9 +105,28 @@ async function updateUser(req, res, next) {
     });
   } else {
     try {
-      const sql = `update user set name = ?, gender = ?, birth = ?, nickname = ?, phonenumber = ? where user_seq = ?`;
+      let sql = `update user set name = ?, gender = ?, birth = ?, nickname = ?, phonenumber = ?, email = ? `;
+      let params = [name, gender, birth, nickname, phonenumber, email];
 
-      await dbpool.execute(sql, [name, gender, birth, nickname, phonenumber, user_seq]);
+      if (agreement_mms !== undefined) {
+        sql += `, agreement_mms = ? `;
+        params.push(agreement_mms);
+      }
+
+      if (agreement_email !== undefined) {
+        sql += `, agreement_email = ? `;
+        params.push(agreement_email);
+      }
+
+      if (agreement_info !== undefined) {
+        sql += `, agreement_info = ? `;
+        params.push(agreement_info);
+      }
+
+      sql += `where user_seq = ? `;
+      params.push(user_seq);
+
+      await dbpool.execute(sql, params);
 
       res.status(200).json({
         message: "기본 회원 정보 수정 성공",
