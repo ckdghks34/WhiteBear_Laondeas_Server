@@ -3,7 +3,7 @@ import pool from "./../../../config/dbpool.js";
 import dotenv from "dotenv";
 import { sign, verify, refresh, refreshVerify } from "./../../../util/jwt-util.js";
 import jwt from "jsonwebtoken";
-import { dnsPrefetchControl } from "helmet";
+import axios from "axios";
 
 dotenv.config();
 
@@ -45,9 +45,9 @@ async function signup(req, res, next) {
     });
   } else {
     try {
-      let now = new Date().toISOString().replace(/T/, " ").replace(/\..+/, "");
       user_password = bcrypt.hashSync(user_password, 10);
-      const sql = `Insert into user (id, password, name, nickname, email, phonenumber, agreement_info, agreement_email, agreement_mms, is_advertiser,first_register_date,last_register_date,is_admin) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)`;
+      const sql = `Insert into user (id, password, name, nickname, email, phonenumber, agreement_info, agreement_email, agreement_mms, is_premium, is_advertiser, point, accumulated_point, first_register_date, last_register_date, is_admin) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+
       const result = await dbpool.execute(sql, [
         user_id,
         user_password,
@@ -58,9 +58,12 @@ async function signup(req, res, next) {
         agreement_info,
         agreement_email,
         agreement_mms,
+        0,
         is_advertiser,
-        now,
-        now,
+        0,
+        0,
+        new Date(),
+        new Date(),
         is_admin,
       ]);
 
@@ -357,6 +360,134 @@ async function tokenLogin(req, res, next) {
         verification: false,
       });
     }
+  } else {
+    res.status(401).json({
+      message: "token is not exist",
+      expire: "undefined",
+      verification: false,
+    });
   }
 }
-export { signup, login, deleteUser, checkID, getCodetable, addCode, logout, tokenLogin };
+
+// 카카오 로그인
+async function kakaoLogin(req, res, next) {
+  if (req.headers.authorization) {
+    const kakaoAuthToken = req.headers.authorization.split("Bearer ")[1];
+    try {
+      const info = await axios.post(
+        "https://kapi.kakao.com/v2/user/me",
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${kakaoAuthToken}`,
+            "Content-type": "application/x-www-form-urlencoded;charset=utf-8",
+          },
+        }
+      );
+      const kakaoUser = info.data;
+      const sql = `SELECT * FROM user WHERE id = ?`;
+      const results = await dbpool.query(sql, info.data.id);
+
+      // 사용자가 없을 경우
+      if (results[0].length === 0) {
+        let password = bcrypt.hashSync(kakaoUser.kakao_account.email, 10);
+        const sql = `Insert into user (id, password, name, nickname, email, phonenumber, agreement_info, agreement_email, agreement_mms, is_premium, is_advertiser, point, accumulated_point, first_register_date, last_register_date, is_admin) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+
+        const result = await dbpool.execute(sql, [
+          kakaoUser.id,
+          password,
+          kakaoUser.kakao_account.email,
+          kakaoUser.kakao_account.email,
+          kakaoUser.kakao_account.email,
+          "01000000000",
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          new Date(),
+          new Date(),
+          0,
+        ]);
+        const user = { user_seq: result[0].insertId, id: kakaoUser.id };
+
+        const newAccessToken = await sign(user);
+        const newRefreshToken = await refresh(user);
+
+        let tokensql = `insert into token values(?,?,?,?) on duplicate key update accesstoken = ?, refreshtoken = ?`;
+
+        await dbpool.execute(tokensql, [
+          user.user_seq,
+          user.id,
+          newAccessToken,
+          newRefreshToken,
+          newAccessToken,
+          newRefreshToken,
+        ]);
+
+        const loginUser = await dbpool.query(sql, user.user_seq);
+
+        res.status(200).json({
+          message: "로그인 성공",
+          user: loginUser[0][0],
+          data: {
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken,
+          },
+        });
+      } else {
+        // 사용자가 있을 경우
+        const user = { user_seq: results[0][0].user_seq, id: results[0][0].id };
+
+        const newAccessToken = await sign(user);
+        const newRefreshToken = await refresh(user);
+
+        // 새로운 accessToken, refreshToken 데이터베이스 저장
+        let tokensql = `insert into token values(?,?,?,?) on duplicate key update accesstoken = ?, refreshtoken = ?`;
+
+        await dbpool.execute(tokensql, [
+          user.user_seq,
+          user.id,
+          newAccessToken,
+          newRefreshToken,
+          newAccessToken,
+          newRefreshToken,
+        ]);
+
+        res.status(200).json({
+          message: "로그인 성공",
+          user: results[0][0],
+          data: {
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken,
+          },
+        });
+      }
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "카카오 로그인 실패",
+      });
+    }
+  } else {
+    res.status(401).json({
+      message: "token is not exist",
+      expire: "undefined",
+      verification: false,
+    });
+  }
+}
+export {
+  signup,
+  login,
+  deleteUser,
+  checkID,
+  getCodetable,
+  addCode,
+  logout,
+  tokenLogin,
+  kakaoLogin,
+};
