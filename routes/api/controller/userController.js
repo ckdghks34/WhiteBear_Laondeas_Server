@@ -476,7 +476,7 @@ async function deleteInterestCampaign(req, res, next) {
 
 // 나의 캠페인 가져오기
 async function getMyCampaign(req, res, next) {
-  const { user_seq } = req.body;
+  const { user_seq } = req.query;
 
   if (user_seq === undefined) {
     res.status(401).json({
@@ -484,9 +484,10 @@ async function getMyCampaign(req, res, next) {
     });
   } else {
     try {
-      const sql = `select ca.user_seq, c.campaign_seq, c.advertiser, c.is_premium, c.title, c.type, c.headcount, c.siteURL,c.misson,c.product,c.accrual_point,c.original_price, c.discount_price, c.campaign_guide,c.recruit_end_date,c.reviewer_announcement_date,c.campaign_seq, ca.acquaint_content, ca.select_reward, ca.status,ca.address,ca.receiver,ca.receiver_phonenumber, ca.first_register_id,ca.first_register_date
-      from campaign_application as ca join campaign as c on ca.campaign_seq = c.campaign_seq
-      where ca.user_seq = ?`;
+      const sql = `select  ca.user_seq, ca.campaign_seq, ca.acquaint_content, ca.select_reward, ca.camera_code, ca.face_exposure, ca.address, ca.receiver, ca.receiver_phonenumber, ca.joint_blog, ca.other_answers, ca.status, c.advertiser, c.is_premium, c.title, c.category, c.product, c.channel, c.area, c.keyword, c.headcount, c.siteURL, c.misson, c.reward, c.original_price, c.discount_price, c.accrual_point, c.campaign_guide, c.recruit_start_date, c.recruit_end_date, c.reviewer_announcement_date, c.review_start_date, c.review_end_date, c.campaign_end_date, c.agreement_portrait, c.agreement_provide_info, c.campaign_state, c.view_count
+      from (select *
+      from campaign_application
+      where user_seq = ?) as ca join campaign as c on ca.campaign_seq = c.campaign_seq`;
 
       const results = await dbpool.query(sql, user_seq);
 
@@ -514,11 +515,13 @@ async function getEndCampaign(req, res, next) {
     });
   } else {
     try {
-      const sql = `select re.user_seq,re.complete_mission, c.campaign_seq, c.advertiser, c.is_premium, c.title, c.type, c.headcount, c.siteURL,c.misson,c.product,c.accrual_point,c.original_price, c.discount_price, c.campaign_guide,c.recruit_end_date,c.reviewer_announcement_date,c.campaign_seq,re.first_register_id,re.first_register_date
-    from reviewer as re join campaign as c on re.campaign_seq = c.campaign_seq
-    where re.user_seq = ? and c.recruit_end_date < ?`;
+      const sql = `select  ca.user_seq, ca.campaign_seq, ca.acquaint_content, ca.select_reward, ca.camera_code, ca.face_exposure, ca.address, ca.receiver, ca.receiver_phonenumber, ca.joint_blog, ca.other_answers, ca.status, c.advertiser, c.is_premium, c.title, c.category, c.product, c.channel, c.area, c.keyword, c.headcount, c.siteURL, c.misson, c.reward, c.original_price, c.discount_price, c.accrual_point, c.campaign_guide, c.recruit_start_date, c.recruit_end_date, c.reviewer_announcement_date, c.review_start_date, c.review_end_date, c.campaign_end_date, c.agreement_portrait, c.agreement_provide_info, c.campaign_state, c.view_count
+      from (select *
+      from campaign_application
+      where user_seq = ?) as ca join campaign as c on ca.campaign_seq = c.campaign_seq
+      where c.recruit_end_date < ?`;
 
-      const results = await dbpool.query(sql, user_seq, new Date());
+      const results = await dbpool.query(sql, [user_seq, new Date()]);
 
       res.status(200).json({
         message: "종료된 캠페인 조회 성공",
