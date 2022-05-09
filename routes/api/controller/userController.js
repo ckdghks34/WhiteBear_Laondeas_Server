@@ -395,12 +395,22 @@ async function getInterestCampaign(req, res, next) {
       const sql = `select ic.user_seq, c.*, u.id, u.name, u.nickname, u.profile_name, u.profile_path, u.profile_ext, u.profile_key
       from (interest_campaign as ic join campaign as c on ic.campaign_seq = c.campaign_seq) join user as u on ic.user_seq = u.user_seq
       where ic.user_seq = ?`;
-
+      const campaignImg_sql = `select * from campaign_file where campaign_seq = ?`;
       const results = await dbpool.query(sql, user_seq);
+
+      const interestCampaign = results[0];
+
+      for (let i = 0; i < interestCampaign.length; i++) {
+        const campaign_seq = interestCampaign[i].campaign_seq;
+
+        const campaignImg = await dbpool.query(campaignImg_sql, [campaign_seq]);
+
+        interestCampaign[i]["campaign_file"] = campaignImg[0];
+      }
 
       res.status(200).json({
         message: "관심 캠페인 조회 성공",
-        interestCampaign: results[0],
+        interestCampaign: interestCampaign,
       });
     } catch (err) {
       console.log(err);
@@ -488,12 +498,21 @@ async function getMyCampaign(req, res, next) {
       from (select *
       from campaign_application
       where user_seq = ?) as ca join campaign as c on ca.campaign_seq = c.campaign_seq`;
-
+      const campaignImg_sql = `select * from campaign_file where campaign_seq = ?`;
       const results = await dbpool.query(sql, user_seq);
+
+      const myCampaign = results[0];
+      for (let i = 0; i < myCampaign.length; i++) {
+        const campaign_seq = myCampaign[i].campaign_seq;
+
+        const campaignImg = await dbpool.query(campaignImg_sql, campaign_seq);
+
+        myCampaign[i]["campaign_file"] = campaignImg[0];
+      }
 
       res.status(200).json({
         message: "나의 캠페인 조회 성공",
-        myCampaign: results[0],
+        myCampaign: myCampaign,
       });
     } catch (err) {
       console.log(err);
@@ -520,12 +539,23 @@ async function getEndCampaign(req, res, next) {
       from campaign_application
       where user_seq = ?) as ca join campaign as c on ca.campaign_seq = c.campaign_seq
       where c.recruit_end_date < ?`;
+      const campaignImg_sql = `select * from campaign_file where campaign_seq = ?`;
 
       const results = await dbpool.query(sql, [user_seq, new Date()]);
 
+      const endCampaign = results[0];
+
+      for (let i = 0; i < endCampaign.length; i++) {
+        const campaign_seq = endCampaign[i].campaign_seq;
+
+        const campaignImg = await dbpool.query(campaignImg_sql, campaign_seq);
+
+        endCampaign[i]["campaign_file"] = campaignImg[0];
+      }
+
       res.status(200).json({
         message: "종료된 캠페인 조회 성공",
-        endcampaign: results[0],
+        endCampaign: endCampaign,
       });
     } catch (err) {
       console.log(err);
@@ -1262,7 +1292,7 @@ async function updateAnswer(req, res, next) {
 async function getQNAList(req, res, next) {
   try {
     const sql = `select q.qna_seq, q.author, q.category, q.title, q.content, q.first_register_id, q.first_register_date, a.answer_seq ,a.author as answer_author, a.title as answer_title, a.content as answer_content, a.first_register_date as answer_first_register, a.first_register_date as answer_first_register_date
-  from question as q left outer join answer as a on q.qna_seq = a.qna_seq`;
+  from question as q left join answer as a on q.qna_seq = a.qna_seq`;
 
     const results = await dbpool.query(sql);
 
@@ -1350,7 +1380,7 @@ async function getUserQNA(req, res, next) {
       const sql = `select q.qna_seq, q.author, q.category, q.title, q.content, q.first_register_id, q.first_register_date, a.answer_seq ,a.author as answer_author, a.title as answer_title, a.content as answer_content, a.first_register_date as answer_first_register, a.first_register_date as answer_first_register_date
       from (select *
       from question
-      where author = ?) as q join answer as a on q.qna_seq = a.qna_seq`;
+      where author = ?) as q left join answer as a on q.qna_seq = a.qna_seq`;
 
       let results = await dbpool.query(sql, user_seq);
 
