@@ -21,7 +21,15 @@ async function createAdvertise(req, res, next) {
       const sql =
         "Insert into advertisement (company_name, contact, area, isagency, agreement_info, first_register_date, last_register_date) values (?, ?, ?, ?, ?, ?, ?)";
 
-      const results = await dbpool.execute(sql, []);
+      const results = await dbpool.execute(sql, [
+        company_name,
+        contact,
+        area,
+        isagency,
+        agreement_info,
+        new Date(),
+        new Date(),
+      ]);
 
       res.status(200).json({
         message: "광고 신청 등록 성공",
