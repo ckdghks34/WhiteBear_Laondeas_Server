@@ -5,6 +5,7 @@ import logger from "morgan";
 import dotenv from "dotenv";
 import helmet from "helmet";
 import cors from "cors";
+import https from "https";
 dotenv.config();
 
 // 라우터
@@ -56,6 +57,19 @@ app.use(function (err, req, res, next) {
   res.render("error");
 });
 
+// http
 app.listen(process.env.SERVER_PORT, () => {
   console.log("server is running...");
+});
+
+// https
+const options = {
+  key: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/privkey.pem"),
+  cert: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/fullchain.pem"),
+  ca: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/chain.pem"),
+};
+var httpsserver = https.createServer(options, app);
+
+httpsserver.listen(process.env.HTTPS_SERVER_PORT, () => {
+  console.log("https server is running...");
 });
