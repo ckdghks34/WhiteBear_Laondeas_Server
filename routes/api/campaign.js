@@ -118,7 +118,7 @@ router.get("/channel/popular", campaignController.getCampaignByChannelByPopular)
 router.get("/channel/selection", campaignController.getCampaignByChannelBySelection);
 
 // 연관 캠페인 + 페이징 (get)
-// router.get("/relation", campaignController.getCampaignByRelation);
+router.get("/relation", campaignController.getCampaignByRelation);
 
 // 캠페인 검색 + 페이징 (get)
 router.get("/search", campaignController.getCampaignBySearch);
