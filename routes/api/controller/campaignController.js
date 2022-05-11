@@ -757,12 +757,12 @@ async function getCampaignByProgress(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where recruit_start_date <= now() and recruit_end_date >= now()
+                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0
                             order by recruit_end_date desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-    const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now()`;
+    const totalCount_sql = `select count(*) as totalCount from campaign where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
 
     const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
@@ -809,12 +809,12 @@ async function getCampaignByProgressBylastest(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where recruit_start_date <= now() and recruit_end_date >= now()
+                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0
                             order by recruit_start_date desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-    const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now()`;
+    const totalCount_sql = `select count(*) as totalCount from campaign where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
 
     const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
@@ -861,12 +861,12 @@ async function getCampaignByProgressByPopular(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where recruit_start_date <= now() and recruit_end_date >= now()
+                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0
                             order by applicant_count desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-    const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now()`;
+    const totalCount_sql = `select count(*) as totalCount from campaign where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
 
     const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
@@ -913,12 +913,12 @@ async function getCampaignByProgressBySelection(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where recruit_start_date <= now() and recruit_end_date >= now()
+                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0
                             order by recruit_end_date asc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-    const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now()`;
+    const totalCount_sql = `select count(*) as totalCount from campaign where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
 
     const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
@@ -965,11 +965,11 @@ async function getCampaignByType(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where category = ? and recruit_start_date <= now() and recruit_end_date >= now()  limit ? offset ?`;
+                            where category = ? and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0  limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-    const totalCount_sql = `select count(*) as totalCount from campaign where category = ? and recruit_start_date <= now() and recruit_end_date >= now()`;
+    const totalCount_sql = `select count(*) as totalCount from campaign where category = ? and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
 
     const campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
 
@@ -1016,11 +1016,11 @@ async function getCampaignByTypeBylastest(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where category = ? and recruit_start_date <= now() and recruit_end_date >= now()  order by recruit_start_date desc limit ? offset ?`;
+                            where category = ? and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0  order by recruit_start_date desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-    const totalCount_sql = `select count(*) as totalCount from campaign where category = ? and recruit_start_date <= now() and recruit_end_date >= now()`;
+    const totalCount_sql = `select count(*) as totalCount from campaign where category = ? and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
 
     const campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
 
@@ -1067,11 +1067,11 @@ async function getCampaignByTypeByPopular(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where category = ? and recruit_start_date <= now() and recruit_end_date >= now()  order by applicant_count desc limit ? offset ?`;
+                            where category = ? and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0  order by applicant_count desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-    const totalCount_sql = `select count(*) as totalCount from campaign where category = ? and recruit_start_date <= now() and recruit_end_date >= now()`;
+    const totalCount_sql = `select count(*) as totalCount from campaign where category = ? and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
 
     const campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
 
@@ -1118,11 +1118,11 @@ async function getCampaignByTypeBySelection(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where category = ? and recruit_start_date <= now() and recruit_end_date >= now()  order by recruit_end_date asc limit ? offset ?`;
+                            where category = ? and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0  order by recruit_end_date asc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-    const totalCount_sql = `select count(*) as totalCount from campaign where category = ? and recruit_start_date <= now() and recruit_end_date >= now()`;
+    const totalCount_sql = `select count(*) as totalCount from campaign where category = ? and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
 
     const campaign_results = await dbpool.query(campaign_sql, [category, pagelimit, offset]);
 
@@ -1176,11 +1176,11 @@ async function getCampaignByFiltering(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where recruit_start_date <= now() and recruit_end_date >= now()`;
+                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now()`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
 
       let sql_param = [];
 
@@ -1278,11 +1278,11 @@ async function getCampaignByFilteringBylastest(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where recruit_start_date <= now() and recruit_end_date >= now()`;
+                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now()`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
 
       let sql_param = [];
       if (category !== undefined) {
@@ -1379,11 +1379,11 @@ async function getCampaignByFilteringByPopular(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where recruit_start_date <= now() and recruit_end_date >= now()`;
+                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now()`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
 
       let sql_param = [];
       if (category !== undefined) {
@@ -1480,11 +1480,11 @@ async function getCampaignByFilteringBySelection(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where recruit_start_date <= now() and recruit_end_date >= now()`;
+                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now()`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
 
       let sql_param = [];
       if (category !== undefined) {
@@ -1579,11 +1579,11 @@ async function getPremiumCampaign(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1 order by recruit_end_date desc limit ? offset ?`;
+                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and is_premium = 1 order by recruit_end_date desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and is_premium = 1`;
 
       const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
@@ -1638,11 +1638,11 @@ async function getPremiumCampaignBylastest(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1 order by recruit_start_date desc limit ? offset ?`;
+                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and is_premium = 1 order by recruit_start_date desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and is_premium = 1`;
 
       const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
@@ -1697,11 +1697,11 @@ async function getPremiumCampaignByPopular(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1 order by applicant_count desc limit ? offset ?`;
+                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and is_premium = 1 order by applicant_count desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and is_premium = 1`;
 
       const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
@@ -1756,11 +1756,11 @@ async function getPremiumCampaignBySelection(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1 order by recruit_end_date asc limit ? offset ?`;
+                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and is_premium = 1 order by recruit_end_date asc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and is_premium = 1`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and is_premium = 1`;
 
       const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
 
@@ -1815,11 +1815,11 @@ async function getCampaignByChannel(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where recruit_start_date <= now() and recruit_end_date >= now() and channel = ? limit ? offset ?`;
+                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and channel = ? limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and channel = ?`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and channel = ?`;
 
       const campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
 
@@ -1874,11 +1874,11 @@ async function getCampaignByChannelBylastest(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where recruit_start_date <= now() and recruit_end_date >= now() and channel = ? order by recruit_start_date desc limit ? offset ?`;
+                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and channel = ? order by recruit_start_date desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and channel = ?`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and channel = ?`;
 
       const campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
 
@@ -1933,11 +1933,11 @@ async function getCampaignByChannelByPopular(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where recruit_start_date <= now() and recruit_end_date >= now() and channel = ? order by applicant_count desc limit ? offset ?`;
+                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and channel = ? order by applicant_count desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and channel = ?`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and channel = ?`;
 
       const campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
 
@@ -1992,11 +1992,11 @@ async function getCampaignByChannelBySelection(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where recruit_start_date <= now() and recruit_end_date >= now() and channel = ? order by recurit_end_date desc limit ? offset ?`;
+                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and channel = ? order by recurit_end_date desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and channel = ?`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and channel = ?`;
 
       const campaign_results = await dbpool.query(campaign_sql, [channel, pagelimit, offset]);
 
@@ -2049,7 +2049,7 @@ async function getCampaignByRelation(req, res, next) {
         (select campaign_seq,count(*) as count
           from campaign_application group by campaign_seq) as cc
         on c.campaign_seq = cc.campaign_seq
-        where recruit_start_date <= now() and recruit_end_date >= now() and c.product = ? limit 10`;
+        where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and c.product = ? limit 10`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
@@ -2103,11 +2103,11 @@ async function getCampaignBySearch(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?) order by applicant_count desc limit ? offset ?`;
+                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and (title regexp ? or keyword regexp ?) order by applicant_count desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?)`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and (title regexp ? or keyword regexp ?)`;
 
       const campaign_results = await dbpool.query(campaign_sql, [
         search,
@@ -2167,11 +2167,11 @@ async function getCampaignBySearchBylastest(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?) order by recruit_start_date desc limit ? offset ?`;
+                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and (title regexp ? or keyword regexp ?) order by recruit_start_date desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?)`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and (title regexp ? or keyword regexp ?)`;
 
       const campaign_results = await dbpool.query(campaign_sql, [
         search,
@@ -2231,11 +2231,11 @@ async function getCampaignBySearchByPopular(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?) order by applicant_count desc limit ? offset ?`;
+                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and (title regexp ? or keyword regexp ?) order by applicant_count desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?)`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and (title regexp ? or keyword regexp ?)`;
 
       const campaign_results = await dbpool.query(campaign_sql, [
         search,
@@ -2294,11 +2294,11 @@ async function getCampaignBySearchBySelection(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?) order by recruit_end_date asc limit ? offset ?`;
+                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and (title regexp ? or keyword regexp ?) order by recruit_end_date asc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.*, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
-      const totalCount_sql = `select count(*) as totalCount from campaign where recruit_start_date <= now() and recruit_end_date >= now() and (title regexp ? or keyword regexp ?)`;
+      const totalCount_sql = `select count(*) as totalCount from campaign where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and (title regexp ? or keyword regexp ?)`;
 
       const campaign_results = await dbpool.query(campaign_sql, [
         search,
