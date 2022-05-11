@@ -111,6 +111,12 @@ async function getBanner(req, res, next) {
 
 // 위젯 등록
 async function createWidget(req, res, next) {
+  if (req.files === undefined) {
+    res.status(401).json({
+      message: "위젯 등록 실패, 파일이 업로드 되지않았습니다.",
+    });
+  }
+
   const { premier_widget_img, widget_img } = req.files;
 
   try {
