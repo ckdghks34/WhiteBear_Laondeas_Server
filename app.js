@@ -6,6 +6,8 @@ import dotenv from "dotenv";
 import helmet from "helmet";
 import cors from "cors";
 import https from "https";
+import fs from "fs";
+
 dotenv.config();
 
 // 라우터
