@@ -7,7 +7,7 @@ async function createBanner(req, res, next) {
   const banner_img = req.files;
 
   if (banner_img === undefined) {
-    res.status(401).json({
+    res.status(500).json({
       message: "배너 등록 실패, 파일이 업로드 되지않았습니다.",
     });
   }
@@ -40,7 +40,7 @@ async function activateBanner(req, res, next) {
   const { file_seq } = req.body;
 
   if (file_seq === undefined) {
-    res.status(401).json({
+    res.status(500).json({
       message: "배너 활성화 실패, 필수 항목이 없습니다.",
     });
   } else {
@@ -67,7 +67,7 @@ async function deactivateBanner(req, res, next) {
   const { file_seq } = req.body;
 
   if (file_seq === undefined) {
-    res.status(401).json({
+    res.status(500).json({
       message: "배너 비활성화 실패, 필수 항목이 없습니다.",
     });
   } else {
@@ -112,7 +112,7 @@ async function getBanner(req, res, next) {
 // 위젯 등록
 async function createWidget(req, res, next) {
   if (req.files === undefined) {
-    res.status(401).json({
+    res.status(500).json({
       message: "위젯 등록 실패, 파일이 업로드 되지않았습니다.",
     });
   }
@@ -178,7 +178,7 @@ async function deleteWidget(req, res, next) {
   const { file_seq } = req.body;
 
   if (file_seq === undefined) {
-    res.status(401).json({
+    res.status(500).json({
       message: "위젯 삭제 실패, 필수 항목이 없습니다.",
     });
   } else {
