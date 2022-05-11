@@ -73,5 +73,5 @@ const options = {
 var httpsserver = https.createServer(options, app);
 
 httpsserver.listen(process.env.HTTPS_SERVER_PORT, () => {
-  console.log("https server is running...");
+  console.log(`https server(${process.env.HTTPS_SERVER_PORT}) is running...`);
 });
