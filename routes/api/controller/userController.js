@@ -253,15 +253,15 @@ async function getAdditionalInfo(req, res, next) {
       const area_result = await dbpool.query(area_sql, [user_seq]);
       const channel_result = await dbpool.query(channel_sql, [user_seq]);
 
-      let additionalInfo = [];
-
+      let additionalInfo = {};
       additionalInfo["interest"] = interest_result[0];
       additionalInfo["area"] = area_result[0];
       additionalInfo["channel"] = channel_result[0];
 
+      console.log(additionalInfo);
       res.status(200).json({
         message: "부가 회원 정보 가져오기 성공",
-        additionalInfo: additionalInfo,
+        additionalInfo,
       });
     } catch (err) {
       console.log(err);
