@@ -170,7 +170,7 @@ async function updateAdditionalInfo(req, res, next) {
           const sql = `insert into user_interest(user_interest_code, user_seq, first_register_id, first_register_date, last_register_id, last_register_date) values(?, ?, ?, ?, ?, ?)`;
 
           await dbpool.execute(sql, [
-            interest[i],
+            user_interest[i],
             user_seq,
             user_seq,
             new Date(),
@@ -189,7 +189,7 @@ async function updateAdditionalInfo(req, res, next) {
           const sql = `insert into user_area(user_area_code, user_seq, first_register_id, first_register_date, last_register_id, last_register_date) values(?, ?, ?, ?, ?, ?)`;
 
           await dbpool.execute(sql, [
-            area[i],
+            user_area[i],
             user_seq,
             user_seq,
             new Date(),
@@ -208,7 +208,7 @@ async function updateAdditionalInfo(req, res, next) {
           const sql = `insert into user_channel(user_channel_code, user_seq, first_register_id, first_register_date, last_register_id, last_register_date) values(?, ?, ?, ?, ?, ?)`;
 
           await dbpool.execute(sql, [
-            channel[i],
+            user_channel[i],
             user_seq,
             user_seq,
             new Date(),
