@@ -6,6 +6,11 @@ const dbpool = await pool;
 async function createBanner(req, res, next) {
   const banner_img = req.files;
 
+  if (banner_img === undefined) {
+    res.status(401).json({
+      message: "배너 등록 실패, 파일이 업로드 되지않았습니다.",
+    });
+  }
   try {
     const sql = `insert into commonfile (category, name, path, extension, filekey, is_active) values ("banner", ?, ?, ?, ?, ?)`;
 
