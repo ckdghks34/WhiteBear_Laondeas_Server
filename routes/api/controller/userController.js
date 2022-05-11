@@ -166,16 +166,18 @@ async function updateAdditionalInfo(req, res, next) {
       await dbpool.execute(delete_sql, [user_seq]);
 
       for (let i = 0; i < user_interest.length; i++) {
-        const sql = `insert into user_interest(user_interest_code, user_seq, first_register_id, first_register_date, last_register_id, last_register_date) values(?, ?, ?, ?, ?, ?)`;
+        if (user_interest[i] !== "") {
+          const sql = `insert into user_interest(user_interest_code, user_seq, first_register_id, first_register_date, last_register_id, last_register_date) values(?, ?, ?, ?, ?, ?)`;
 
-        await dbpool.execute(sql, [
-          interest[i],
-          user_seq,
-          user_seq,
-          new Date(),
-          user_seq,
-          new Date(),
-        ]);
+          await dbpool.execute(sql, [
+            interest[i],
+            user_seq,
+            user_seq,
+            new Date(),
+            user_seq,
+            new Date(),
+          ]);
+        }
       }
 
       // 지역 정보 수정
@@ -183,9 +185,18 @@ async function updateAdditionalInfo(req, res, next) {
       await dbpool.execute(delete_sql, [user_seq]);
 
       for (let i = 0; i < user_area.length; i++) {
-        const sql = `insert into user_area(user_area_code, user_seq, first_register_id, first_register_date, last_register_id, last_register_date) values(?, ?, ?, ?, ?, ?)`;
+        if (user_area[i] !== "") {
+          const sql = `insert into user_area(user_area_code, user_seq, first_register_id, first_register_date, last_register_id, last_register_date) values(?, ?, ?, ?, ?, ?)`;
 
-        await dbpool.execute(sql, [area[i], user_seq, user_seq, new Date(), user_seq, new Date()]);
+          await dbpool.execute(sql, [
+            area[i],
+            user_seq,
+            user_seq,
+            new Date(),
+            user_seq,
+            new Date(),
+          ]);
+        }
       }
 
       // 채널 정보 수정
@@ -193,16 +204,18 @@ async function updateAdditionalInfo(req, res, next) {
       await dbpool.execute(delete_sql, [user_seq]);
 
       for (let i = 0; i < user_channel.length; i++) {
-        const sql = `insert into user_channel(user_channel_code, user_seq, first_register_id, first_register_date, last_register_id, last_register_date) values(?, ?, ?, ?, ?, ?)`;
+        if (user_channel[i] !== "") {
+          const sql = `insert into user_channel(user_channel_code, user_seq, first_register_id, first_register_date, last_register_id, last_register_date) values(?, ?, ?, ?, ?, ?)`;
 
-        await dbpool.execute(sql, [
-          channel[i],
-          user_seq,
-          user_seq,
-          new Date(),
-          user_seq,
-          new Date(),
-        ]);
+          await dbpool.execute(sql, [
+            channel[i],
+            user_seq,
+            user_seq,
+            new Date(),
+            user_seq,
+            new Date(),
+          ]);
+        }
       }
       dbpool.commit();
 
