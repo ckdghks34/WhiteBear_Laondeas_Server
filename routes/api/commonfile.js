@@ -10,7 +10,7 @@ const widget_upload = widgetUpload.fields([
 ]);
 
 // 배너 등록 (post)
-router.post("/banner", bannerUpload.array("banner_img"), commonfileController.createBanner);
+router.post("/banner", bannerUpload.array("banner_img", 5), commonfileController.createBanner);
 
 // 배너 활성화
 router.patch("/banner", commonfileController.activateBanner);
@@ -22,14 +22,7 @@ router.patch("/banner/deactivate", commonfileController.deactivateBanner);
 router.get("/banner", commonfileController.getBanner);
 
 // 위젯 등록
-router.post(
-  "/widget",
-  widgetUpload.fields([
-    { name: "premier_widget_img", maxCount: 1 },
-    { name: "widget_img", maxCount: 1 },
-  ]),
-  commonfileController.createWidget
-);
+router.post("/widget", widget_upload, commonfileController.createWidget);
 
 // 위젯 삭제
 router.delete("/widget", commonfileController.deleteWidget);
