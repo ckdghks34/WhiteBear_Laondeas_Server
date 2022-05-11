@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
+import { json } from "express";
 import pool from "./../../../config/dbpool.js";
 import { s3, Bucket } from "./../../../util/s3.js";
 dotenv.config();
@@ -144,13 +145,15 @@ async function updateUser(req, res, next) {
 // 부가 정보 수정
 async function updateAdditionalInfo(req, res, next) {
   const { user_seq, interest, area, channel } = req.body;
+  const user_interest = interest.split(",");
+  const user_area = area.split(",");
+  const user_channel = channel.split(",");
 
   if (
     user_seq === undefined ||
-    blog === undefined ||
-    instagram === undefined ||
-    influencer === undefined ||
-    youtube === undefined
+    interest === undefined ||
+    area === undefined ||
+    channel === undefined
   ) {
     res.status(401).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
@@ -162,12 +165,12 @@ async function updateAdditionalInfo(req, res, next) {
       let delete_sql = `delete from user_interest where user_seq = ?`;
       await dbpool.execute(delete_sql, [user_seq]);
 
-      for (let i = 0; i < interest.length; i++) {
+      for (let i = 0; i < user_interest.length; i++) {
         const sql = `insert into user_interest(user_interest_code, user_seq, first_register_id, first_register_date, last_register_id, last_register_date) values(?, ?, ?, ?, ?, ?)`;
 
         await dbpool.execute(sql, [
-          user_seq,
           interest[i],
+          user_seq,
           user_seq,
           new Date(),
           user_seq,
@@ -179,22 +182,22 @@ async function updateAdditionalInfo(req, res, next) {
       delete_sql = `delete from user_area where user_seq = ?`;
       await dbpool.execute(delete_sql, [user_seq]);
 
-      for (let i = 0; i < area.length; i++) {
+      for (let i = 0; i < user_area.length; i++) {
         const sql = `insert into user_area(user_area_code, user_seq, first_register_id, first_register_date, last_register_id, last_register_date) values(?, ?, ?, ?, ?, ?)`;
 
-        await dbpool.execute(sql, [user_seq, area[i], user_seq, new Date(), user_seq, new Date()]);
+        await dbpool.execute(sql, [area[i], user_seq, user_seq, new Date(), user_seq, new Date()]);
       }
 
       // 채널 정보 수정
       delete_sql = `delete from user_channel where user_seq = ?`;
       await dbpool.execute(delete_sql, [user_seq]);
 
-      for (let i = 0; i < channel.length; i++) {
+      for (let i = 0; i < user_channel.length; i++) {
         const sql = `insert into user_channel(user_channel_code, user_seq, first_register_id, first_register_date, last_register_id, last_register_date) values(?, ?, ?, ?, ?, ?)`;
 
         await dbpool.execute(sql, [
-          user_seq,
           channel[i],
+          user_seq,
           user_seq,
           new Date(),
           user_seq,
