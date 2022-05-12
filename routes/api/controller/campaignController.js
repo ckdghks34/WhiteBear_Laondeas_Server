@@ -2891,39 +2891,12 @@ async function getCampaignReviewerByAdvertiser(req, res, next) {
 
 // }
 
-// 캠페인 총 갯수
-async function test(req, res, next) {
-  let { region, category, product } = req.query;
-
-  // region = region.split(",");
-  // category = category.split(",");
-  // product = product.split(",");
-
-  console.log(region);
-  console.log(category);
-  console.log(product);
-
-  // console.log(region[0]);
-  // console.log(category[0]);
-
-  // const a = `asdfasdf;`;
-  // const b = `zxcvzxvv`;
-  // const c = `qweqweqr`;
-  // const d = a + b + c;
-  // console.log(d);
-
-  res.json({
-    success: true,
-    message: "캠페인 총 갯수 조회 성공",
-  });
-}
-
 // 미션 완료
 async function missionComplete(req, res, next) {
   try {
     const { user_seq, campaign_seq } = req.body;
 
-    const sql = `update campaign_application set status = 1 where user_seq = ? and campaign_seq = ?`;
+    const sql = `update campaign_application set status = 2 where user_seq = ? and campaign_seq = ?`;
 
     await dbpool.execute(sql, [user_seq, campaign_seq]);
 
@@ -2944,7 +2917,7 @@ async function missionCancel(req, res, next) {
   try {
     const { user_seq, campaign_seq } = req.body;
 
-    const sql = `update campaign_application set status = 0 where user_seq = ? and campaign_seq = ?`;
+    const sql = `update campaign_application set status = 1 where user_seq = ? and campaign_seq = ?`;
 
     await dbpool.execute(sql, [user_seq, campaign_seq]);
 
@@ -2984,6 +2957,70 @@ async function increaseCampaignViewCount(req, res, next) {
     res.status(500).json({
       message: "캠페인 조회수 증가 실패",
     });
+  }
+}
+
+// xlsx download
+async function xlsxDownload(req, res, next) {}
+
+// 테스트
+async function test(req, res, next) {
+  try {
+    /**
+     * 1. 캠페인별 신청자 목록 가져오기
+     * 2. 신청자 정보 가져오기
+     * 3. 신청자 목록 정보로 데이터 파싱(남여 수 + 평균 / 지역 분포 수 + 평균)
+     * 4. 신청자 블로그 조회수 데이터 파싱(최근 5일 방문자 + 평균)
+     * 5. xlsx 파일 작성 및 저장 + 반환
+     *
+     */
+    /**
+     * xlsx 파일 생성 및 작성
+     */
+    // json 데이터 이용
+    // const jsonData = [
+    //   { name: "kim", age: 23 },
+    //   { name: "park", age: 24 },
+    // ];
+    // const __dirname = path.resolve();
+    // console.log(path.join(__dirname, "/public", "/json_to_sheet_result.xlsx"));
+    // const workbook = xlsx.utils.book_new();
+    // const worksheet = xlsx.utils.json_to_sheet(jsonData);
+    // xlsx.utils.book_append_sheet(workbook, worksheet, "sheet1");
+    // xlsx.writeFile(workbook, path.join(__dirname, "/public", "/json_to_sheet_result.xlsx"));
+    // const file = __dirname + "/public/json_to_sheet_result.xlsx";
+    // const filename = path.basename(file);
+    // const mimetype = mime.getType(file);
+    // res.setHeader("Content-disposition", "attachment; filename=" + filename);
+    // res.setHeader("Content-type", mimetype);
+    // const filestream = fs.createReadStream(file);
+    // filestream.pipe(res);
+    /**
+     *  블로그 조회수 조회
+     * */
+    // const blog = "jungsims";
+    // await axios
+    //   .get(`https://blog.naver.com/NVisitorgp4Ajax.nhn?blogId=${blog}`)
+    //   .then(function (res, err) {
+    //     // 반환값이 XML
+    //     console.log(res.data);
+    //     /*
+    //      <?xml version="1.0" encoding="UTF-8"?>
+    //         <!-- copyright(c) 2007 All rights reserved by NHN -->
+    //         <!-- blog visitor count -->
+    //         <visitorcnts>
+    //               <visitorcnt id="20220508" cnt="105" />
+    //               <visitorcnt id="20220509" cnt="92" />
+    //               <visitorcnt id="20220510" cnt="88" />
+    //               <visitorcnt id="20220511" cnt="118" />
+    //               <visitorcnt id="20220512" cnt="84" />
+    //         </visitorcnts>
+    //     */
+    //     // XML to JSON 변환 필요
+    //     // 변환 후 방문자 목록 + 평균 -> JSON
+    //   });
+  } catch (err) {
+    console.log(err);
   }
 }
 
