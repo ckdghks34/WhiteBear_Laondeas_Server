@@ -96,16 +96,30 @@ async function getStatistics(req, res, next) {
       }
 
       // 남녀 비율
-      const gender_sql = `select if(c.gender='M','남자' , if(c.gender='F','여자','정보없음')) as 성별, count(*) as 명, count(*) / (select count(*) from campaign_application where campaign_seq=59) * 100 as 비율
-                        from campaign a , campaign_application b, user c
-                        where a.campaign_seq = b.campaign_seq and b.user_seq = c.user_seq and a.campaign_seq=59
-                        group by c.gender
+      const gender_sql = `select 
+                            t1.code_name as '성별',
+                            nvl(t2.cnt,0) as '수',
+                            nvl(t2.rate,0) as '비율'
+                          from 
+                              (select *
+                                from code_table
+                                where top_level_code = 'GENDER') t1
+                            left outer join 
+                              (select 
+                                if(c.gender is null, 'N',c.gender) as gender,
+                                count(*) as cnt,
+                                count(*) / (select count(*) from campaign_application where campaign_seq = ?) * 100 as rate
+                              from campaign a , campaign_application b, user c
+                                where a.campaign_seq = b.campaign_seq
+                                and b.user_seq = c.user_seq
+                                and a.campaign_seq = ?
+                              group by c.gender) t2 on t1.code_value = t2.gender
+                          ORDER BY t1.code_step
                         `;
 
-      const gender_result = await dbpool.query(gender_sql, campaign_seq);
+      const gender_result = await dbpool.query(gender_sql, [campaign_seq, campaign_seq]);
 
       const statisticsByGender = gender_result[0];
-      console.log(statisticsByGender);
 
       statistics["gender"] = statisticsByGender;
 
