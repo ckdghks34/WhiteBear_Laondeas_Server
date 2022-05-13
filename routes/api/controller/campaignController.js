@@ -2522,7 +2522,7 @@ async function deleteCampaignReviewer(req, res, next) {
       });
     } else {
       const sql = `delete from reviewer where campaign_seq = ? and user_seq = ?`;
-      const status_sql = `update campaign_application set status = 1 where campaign_seq = ? and user_seq = ?`;
+      const status_sql = `update campaign_application set status = 0 where campaign_seq = ? and user_seq = ?`;
 
       await dbpool.beginTransaction();
       await dbpool.execute(sql, [campaign_seq, user_seq]);
@@ -2894,15 +2894,71 @@ async function getCampaignReviewerByAdvertiser(req, res, next) {
 // 미션 완료
 async function missionComplete(req, res, next) {
   try {
-    const { user_seq, campaign_seq } = req.body;
+    const { user_seq, campaign_seq, admin } = req.body;
 
-    const sql = `update campaign_application set status = 2 where user_seq = ? and campaign_seq = ?`;
+    if (user_seq === undefined || campaign_seq === undefined || admin === undefined) {
+      res.status(400).json({
+        message: "필수 정보가 없습니다.",
+      });
+    } else {
+      const reviwer_sql = `select * from campaign_application where user_seq = ? and campaign_seq = ?`;
 
-    await dbpool.execute(sql, [user_seq, campaign_seq]);
+      const reviewer_results = await dbpool.query(reviwer_sql, [user_seq, campaign_seq]);
+      const reviewer = reviewer_results[0][0];
 
-    res.status(200).json({
-      message: "미션 완료 성공",
-    });
+      // select값이 없으며 신청자가 아님
+      if (reviewer === undefined) {
+        return res.status(400).json({
+          message: "캠페인 신청자가 아닙니다.",
+        });
+      } else if (reviewer.status === 0) {
+        // 신청자이지만 리뷰어가 아닌경우
+        return res.status(400).json({
+          message: "해당 캠페인의 리뷰어가 아닙니다.",
+        });
+      } else if (reviewer.status === 2) {
+        // 신청자이고 리뷰어지만 미션을 이미 완료한 경우
+        return res.status(400).json({
+          message: "이미 완료된 미션입니다.",
+        });
+      }
+
+      const sql = `update campaign_application set status = 2 where user_seq = ? and campaign_seq = ?`;
+      const campaign_sql = `select * from campaign where campaign_seq = ?`;
+
+      const user_point_sql = `update user set point = point + ?, accumulated_point = accumulated_point + ? where user_seq = ?`;
+      const accrual_detail_sql = `insert into accrual_detail(user_seq, accrual_point, accrual_content, accrual_point_date, first_register_id, first_register_date, last_register_id, last_register_date) values (?,?,?,now(),?,now(),?,now())`;
+
+      // const user_result = await dbpool.execute(user_sql, [user_seq]);
+      const campaign_result = await dbpool.execute(campaign_sql, [campaign_seq]);
+
+      // const user = user_result[0][0];
+      const campaign = campaign_result[0][0];
+
+      await dbpool.beginTransaction();
+
+      await dbpool.execute(sql, [user_seq, campaign_seq]);
+
+      await dbpool.execute(user_point_sql, [
+        campaign.accrual_point,
+        campaign.accrual_point,
+        user_seq,
+      ]);
+
+      await dbpool.execute(accrual_detail_sql, [
+        user_seq,
+        campaign.accrual_point,
+        `${campaign.title} 캠페인 미션 완료!`,
+        admin,
+        admin,
+      ]);
+
+      await dbpool.commit();
+
+      res.status(200).json({
+        message: "미션 완료 성공",
+      });
+    }
   } catch (err) {
     console.log(err);
 
@@ -2917,9 +2973,57 @@ async function missionCancel(req, res, next) {
   try {
     const { user_seq, campaign_seq } = req.body;
 
+    const reviwer_sql = `select * from campaign_application where user_seq = ? and campaign_seq = ?`;
+
+    const reviewer_results = await dbpool.query(reviwer_sql, [user_seq, campaign_seq]);
+    const reviewer = reviewer_results[0][0];
+
+    // select 결과가 없으면 신청자가 아님
+    if (reviewer === undefined) {
+      return res.status(400).json({
+        message: "캠페인 신청자가 아닙니다.",
+      });
+    } else if (reviewer.status === 0) {
+      // 신청자이지만 리뷰어가 아닌경우
+      return res.status(400).json({
+        message: "해당 캠페인의 리뷰어가 아닙니다.",
+      });
+    } else if (reviewer.status === 1) {
+      // 신청자이고 리뷰어이지만 미션을 완료하지 않은 경우
+      return res.status(400).json({
+        message: "미션이 완료되지 않았습니다.",
+      });
+    }
+
     const sql = `update campaign_application set status = 1 where user_seq = ? and campaign_seq = ?`;
 
+    const campaign_sql = `select * from campaign where campaign_seq = ?`;
+    const user_point_sql = `update user set point = point - ?, accumulated_point = accumulated_point - ? where user_seq = ?`;
+
+    const accrual_detail_sql = `delete from accrual_detail where user_seq = ? and accrual_seq = ?`;
+    const detail_sql = `select * from accrual_detail where user_seq = ? and accrual_point = ? and accrual_content = ?`;
+
+    const campaign_result = await dbpool.execute(campaign_sql, [campaign_seq]);
+    const campaign = campaign_result[0][0];
+
+    const detail_sql_result = await dbpool.execute(detail_sql, [
+      user_seq,
+      campaign.accrual_point,
+      `${campaign.title} 캠페인 미션 완료!`,
+    ]);
+    const detail = detail_sql_result[0][0];
+
+    await dbpool.beginTransaction();
+
     await dbpool.execute(sql, [user_seq, campaign_seq]);
+    await dbpool.execute(user_point_sql, [
+      campaign.accrual_point,
+      campaign.accrual_point,
+      user_seq,
+    ]);
+    await dbpool.execute(accrual_detail_sql, [user_seq, detail.accrual_seq]);
+
+    await dbpool.commit();
 
     res.status(200).json({
       message: "미션 완료 취소 성공",
