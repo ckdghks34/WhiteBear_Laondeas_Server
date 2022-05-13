@@ -730,7 +730,7 @@ async function accrual(req, res, next) {
   } else {
     try {
       const sql = `insert into accrual_detail(user_seq, accrual_point, accrual_content, accrual_point_date, first_register_id, first_register_date) values(?,?,?,?,?,?)`;
-      const point_accrual_sql = `update user set point = point + ?, last_register_date = ? where user_seq = ?`;
+      const point_accrual_sql = `update user set point = point + ?, accumulated_point = accumulated_point + ?, last_register_date = ? where user_seq = ?`;
 
       await dbpool.beginTransaction();
 
@@ -742,7 +742,7 @@ async function accrual(req, res, next) {
         admin,
         new Date(),
       ]);
-      await dbpool.execute(point_accrual_sql, [accrual_point, new Date(), user_seq]);
+      await dbpool.execute(point_accrual_sql, [accrual_point, accrual_point, new Date(), user_seq]);
 
       await dbpool.commit();
 
