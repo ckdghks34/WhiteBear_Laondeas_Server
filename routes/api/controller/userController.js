@@ -627,7 +627,7 @@ async function attendanceCheck(req, res, next) {
       const attendancecheck_sql = `select * from attendance where user_seq = ? and datediff(first_register_date,now()) = 0`;
       const sql = `insert into attendance(user_seq, content,first_register_id, first_register_date, last_register_id, last_register_date) values(?, ?, ?, ?, ?, ?)`;
       const accrual_detail_sql = `insert into accrual_detail(user_seq, accrual_point, accrual_content, accrual_point_date, first_register_id, first_register_date, last_register_id, last_register_date) values(?, ?, ?, ?, ?, ?, ?, ?)`;
-      const accrual_sql = `update user set point = point + 100 where user_seq = ?`;
+      const accrual_sql = `update user set point = point + 100, accumulated_point = accumulated_point + 100 where user_seq = ?`;
 
       const attendancecheck_result = await dbpool.query(attendancecheck_sql, user_seq);
 
@@ -770,7 +770,7 @@ async function getUserAccrualList(req, res, next) {
     });
   } else {
     try {
-      const sql = `select accrual_seq,u.user_seq, u.name, u.id, u.profile_name, u.profile_path, u.profile_ext, u.profile_key , accrual_point, accrual_content, accrual_point_date,ad.first_register_id, ad.first_register_date 
+      const sql = `select accrual_seq,u.user_seq, u.name, u.id, u.profile_name, u.profile_path, u.profile_ext, u.profile_key , accrual_point, accrual_content, accrual_point_date, ad.first_register_id, ad.first_register_date 
       from accrual_detail as ad join user as u on ad.user_seq = u.user_seq where ad.user_seq = ?`;
 
       const results = await dbpool.query(sql, user_seq);
@@ -812,22 +812,64 @@ async function getAllAccrualList(req, res, next) {
 
 // 출금 등록
 async function withdrawal(req, res, next) {
-  const { user_seq, withdrawal_point, admin } = req.body;
+  const { request_seq, admin } = req.body;
 
-  if (user_seq === undefined || withdrawal_point === undefined || admin === undefined) {
+  if (request_seq === undefined || admin === undefined) {
     res.status(401).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
     try {
+      const request_sql = `select * from withdrawal_request where request_seq = ?`;
       const sql = `insert into withdrawal_detail(user_seq,withdrawal_amount,withdrawal_date, first_register_id, first_register_date,last_register_id,last_register_date) values(?,?,?,?,?,?,?)`;
-      const point_modify_sql = `update user set point = point - ? , last_register_date = ? where user_seq = ? and point >= ?`;
+      const point_modify_sql = `update user set point = point - ? , last_register_date = ? where user_seq = ?`;
+      const withdrawal_request_sql = `update withdrawal_request set is_pending = ? where request_seq = ?`;
+      const user_point_sql = `select point from user where user_seq = ?`;
+
+      const request_results = await dbpool.query(request_sql, request_seq);
+      const withdrawal_request = request_results[0][0];
+
+      // 출금 요청이 없을 때
+      if (withdrawal_request === undefined) {
+        return res.status(400).json({
+          message: "잘못된 접근입니다. 출금 요청이 존재하지 않습니다.",
+        });
+      }
+      // 유저 포인트 가져오기
+      const user_point_results = await dbpool.query(user_point_sql, withdrawal_request.user_seq);
+      const user_point = user_point_results[0][0].point;
+
+      // 이미 출금이 되었거나 출금 신청 취소된 경우
+      if (withdrawal_request.is_pending === 0 || withdrawal_request.is_pending === -1) {
+        return res.status(400).json({
+          message: "이미 처리된 출금 요청입니다.",
+        });
+      }
+
+      // 현재 포인트가 출금 포인트보다 작을 경우
+      if (user_point < withdrawal_request.withdrawal_point) {
+        try {
+          // 출금 신청을 취소 처리
+          await dbpool.execute(withdrawal_request_sql, [-1, request_seq]);
+
+          return res.status(400).json({
+            message: "출금 금액이 포인트 보다 큽니다.",
+          });
+        } catch (err) {
+          console.log(err);
+
+          return res.status(500).json({
+            message: "출금 실패",
+          });
+        }
+      }
 
       await dbpool.beginTransaction();
 
+      // 출금 내역 저장(withdrawal_detail)
       await dbpool.execute(sql, [
-        user_seq,
-        withdrawal_point,
+        withdrawal_request.user_seq,
+        withdrawal_request.withdrawal_point,
         new Date(),
         admin,
         new Date(),
@@ -835,23 +877,27 @@ async function withdrawal(req, res, next) {
         new Date(),
       ]);
 
+      // 유저 보유 포인트 수정
       await dbpool.execute(point_modify_sql, [
-        withdrawal_point,
+        withdrawal_request.withdrawal_point,
         new Date(),
-        user_seq,
-        withdrawal_point,
+        withdrawal_request.user_seq,
       ]);
+
+      // 출금 신청 완료 처리
+      await dbpool.execute(withdrawal_request_sql, [0, request_seq]);
 
       await dbpool.commit();
+
       res.status(200).json({
-        message: "출금 신청 성공",
+        message: "출금 완료 성공",
       });
     } catch (err) {
       await dbpool.rollback();
       console.log(err);
 
       res.status(500).json({
-        message: "출금 신청 실패",
+        message: "출금 완료 실패",
       });
     }
   }
@@ -872,14 +918,15 @@ async function withdrawalRequest(req, res, next) {
 
       if (results[0][0].point < withdrawal_point) {
         res.status(400).json({
-          message: "출금 금액이 잔여 포인트보다 큽니다.",
+          message: "출금 신청 금액이 잔여 포인트보다 큽니다.",
         });
       } else {
-        const sql = `insert into withdrawal_request(user_seq,withdrawal_point,first_register_id, first_register_date, last_register_id, last_register_date) values(?,?,?,?,?,?)`;
+        const sql = `insert into withdrawal_request(user_seq,withdrawal_point,is_pending,first_register_id, first_register_date, last_register_id, last_register_date) values(?,?,?,?,?,?,?)`;
 
         await dbpool.execute(sql, [
           user_seq,
           withdrawal_point,
+          1,
           user_seq,
           new Date(),
           user_seq,
