@@ -30,7 +30,11 @@ async function getStatistics(req, res, next) {
   where ca.campaign_seq = ?) as f join user as u on f.user_seq = u.user_seq`;
 
       const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
-
+      if (applicant_results[0].length === 0) {
+        return res.status(200).json({
+          message: "신청자가 없어 산출할 통계가 없습니다.",
+        });
+      }
       let statistics = {};
       statistics["applicant"] = applicant_results[0];
 
