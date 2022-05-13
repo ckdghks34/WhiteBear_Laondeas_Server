@@ -2488,6 +2488,17 @@ async function createCampaignReviewer(req, res, next) {
         message: "캠페인 정보가 없습니다.",
       });
     } else {
+      const applicant_sql = `select * from campaign_application where campaign_seq = ? and user_seq = ?`;
+
+      const applicant_results = await dbpool.query(applicant_sql, [campaign_seq, user_seq]);
+
+      const applicant = applicant_results[0][0];
+
+      if (applicant.status === 2 || applicant.status === 1) {
+        return res.status(400).json({
+          message: "이미 선정된 유저입니다.",
+        });
+      }
       const sql = `insert into reviewer (campaign_seq, user_seq, complete_mission, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?)`;
       const status_sql = `update campaign_application set status = 1 where campaign_seq = ? and user_seq = ?`;
 
@@ -2521,6 +2532,21 @@ async function deleteCampaignReviewer(req, res, next) {
         message: "리뷰어 정보가 없습니다.",
       });
     } else {
+      const applicant_sql = `select * from campaign_application where campaign_seq = ? and user_seq = ?`;
+
+      const applicant_results = await dbpool.query(applicant_sql, [campaign_seq, user_seq]);
+
+      const applicant = applicant_results[0][0];
+
+      if (applicant.status === 2) {
+        return res.status(400).json({
+          message: "미션을 완료한 리뷰어는 선정을 취소할 수 없습니다.",
+        });
+      } else if (applicant.status === 0) {
+        return res.status(400).json({
+          message: "리뷰어로 선정된 회원이 아닙니다.",
+        });
+      }
       const sql = `delete from reviewer where campaign_seq = ? and user_seq = ?`;
       const status_sql = `update campaign_application set status = 0 where campaign_seq = ? and user_seq = ?`;
 
