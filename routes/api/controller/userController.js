@@ -107,7 +107,7 @@ async function updateUser(req, res, next) {
   } else {
     try {
       let sql = `update user set name = ?, gender = ?, birth = ?, nickname = ?, phonenumber = ?, email = ? `;
-      let params = [name, gender, birth, nickname, phonenumber, email];
+      let params = [name, gender.toUpperCase(), birth, nickname, phonenumber, email];
 
       if (agreement_mms !== undefined) {
         sql += `, agreement_mms = ? `;
@@ -916,6 +916,7 @@ async function withdrawalRequest(req, res, next) {
 
       const results = await dbpool.query(point_sql, user_seq);
 
+      // 현재 포인트보다 출금 신청금액이 작을 경우
       if (results[0][0].point < withdrawal_point) {
         res.status(400).json({
           message: "출금 신청 금액이 잔여 포인트보다 큽니다.",
