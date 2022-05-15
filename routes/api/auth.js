@@ -40,4 +40,7 @@ router.post("/login/token", authController.tokenLogin);
 // kakao 로그인
 router.post("/login/kakao", authController.kakaoLogin);
 
+// 네이버 로그인
+router.post("/login/naver", authController.naverLogin);
+
 export default router;

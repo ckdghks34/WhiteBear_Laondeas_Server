@@ -399,7 +399,7 @@ async function kakaoLogin(req, res, next) {
           kakaoUser.kakao_account.email,
           kakaoUser.kakao_account.email,
           kakaoUser.kakao_account.email,
-          "01000000000",
+          "",
           0,
           0,
           0,
@@ -480,6 +480,117 @@ async function kakaoLogin(req, res, next) {
     });
   }
 }
+
+// 네이버 로그인
+async function naverLogin(req, res, next) {
+  const { id, name, email, gender, mobile, birthyear, profile_image } = req.body;
+
+  if (
+    id === undefined ||
+    name === undefined ||
+    email === undefined ||
+    gender === undefined ||
+    mobile === undefined ||
+    birthyear === undefined
+  ) {
+    res.status(401).json({
+      message: "로그인 실패, 필수 데이터가 없습니다.",
+    });
+  } else {
+    try {
+      const sql = `SELECT * FROM user WHERE id = ?`;
+      const results = await dbpool.query(sql, id);
+      let phonenumber = mobile.replace(/-/gi, "");
+      // 사용자가 없을 경우
+      if (results[0].length === 0) {
+        let password = bcrypt.hashSync(email, 10);
+        const sql = `Insert into user (id, password, name, nickname, email, phonenumber, gender, birth, agreement_info, agreement_email, agreement_mms, is_premium, is_advertiser, point, accumulated_point, first_register_date, last_register_date, is_admin) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+
+        const result = await dbpool.execute(sql, [
+          id,
+          password,
+          name,
+          name,
+          email,
+          phonenumber,
+          gender.toUpperCase(),
+          birthyear,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          new Date(),
+          new Date(),
+          0,
+        ]);
+        const user = { user_seq: result[0].insertId, id: id };
+
+        const newAccessToken = await sign(user);
+        const newRefreshToken = await refresh(user);
+
+        let tokensql = `insert into token values(?,?,?,?) on duplicate key update accesstoken = ?, refreshtoken = ?`;
+
+        await dbpool.execute(tokensql, [
+          user.user_seq,
+          user.id,
+          newAccessToken,
+          newRefreshToken,
+          newAccessToken,
+          newRefreshToken,
+        ]);
+
+        const loginUser = await dbpool.query(sql, user.user_seq);
+
+        res.status(200).json({
+          message: "로그인 성공",
+          user: loginUser[0][0],
+          data: {
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken,
+          },
+        });
+      }
+      // 사용자가 있을 경우
+      else {
+        const user = { user_seq: results[0][0].user_seq, id: results[0][0].id };
+
+        const newAccessToken = await sign(user);
+        const newRefreshToken = await refresh(user);
+
+        // 새로운 accessToken, refreshToken 데이터베이스 저장
+        let tokensql = `insert into token values(?,?,?,?) on duplicate key update accesstoken = ?, refreshtoken = ?`;
+
+        await dbpool.execute(tokensql, [
+          user.user_seq,
+          user.id,
+          newAccessToken,
+          newRefreshToken,
+          newAccessToken,
+          newRefreshToken,
+        ]);
+
+        res.status(200).json({
+          message: "로그인 성공",
+          user: results[0][0],
+          data: {
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken,
+          },
+        });
+      }
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "네이버 로그인 실패",
+      });
+    }
+  }
+}
+
 export {
   signup,
   login,
@@ -490,4 +601,5 @@ export {
   logout,
   tokenLogin,
   kakaoLogin,
+  naverLogin,
 };
