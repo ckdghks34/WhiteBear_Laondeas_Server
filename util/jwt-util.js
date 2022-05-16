@@ -42,7 +42,7 @@ async function refresh() {
   return jwt.sign({}, secret, {
     // refresh token은 payload 없이 발급
     algorithm: "HS256",
-    expiresIn: "14d",
+    expiresIn: "1d",
   });
 }
 async function refreshVerify(token, user_seq, user_id) {
