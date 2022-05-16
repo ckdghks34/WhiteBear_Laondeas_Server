@@ -2,6 +2,8 @@ import { sign, verify, refreshVerify } from "./../../util/jwt-util.js";
 import pool from "./../../config/dbpool.js";
 import jwt from "jsonwebtoken";
 
+const dbpool = await pool;
+
 async function refresh(req, res) {
   // access token과 refresh token의 존재 유무를 체크합니다.
   if (req.headers.authorization && req.headers.refresh) {
@@ -39,7 +41,7 @@ async function refresh(req, res) {
         const newAccessToken = await sign(user);
 
         try {
-          await pool.execute("update token set accesstoken = ? where user_seq = ?", [
+          await dbpool.execute("update token set accesstoken = ? where user_seq = ?", [
             newAccessToken,
             user.user_seq,
           ]);
