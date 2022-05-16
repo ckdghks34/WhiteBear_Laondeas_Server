@@ -335,6 +335,33 @@ async function updatePassword(req, res, next) {
   }
 }
 
+// 사용자 등급 수정
+async function updateUserGrade(req, res, next) {
+  const { user_seq, grade } = req.body;
+
+  if (user_seq === undefined || grade === undefined) {
+    res.status(400).json({
+      message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
+    });
+  } else {
+    try {
+      const sql = "update user set grade = ?, last_register_date = ? where user_seq = ?";
+
+      await dbpool.execute(sql, [grade, new Date(), user_seq]);
+
+      res.status(200).json({
+        message: "등급 수정 성공",
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "등급 수정 실패",
+      });
+    }
+  }
+}
+
 // 프로필 사진 등록
 async function createProfile(req, res, next) {
   const { user_seq, id } = req.body;
@@ -2133,6 +2160,7 @@ export {
   updateAdditionalInfo,
   updateSNSInfo,
   updatePassword,
+  updateUserGrade,
   createPremiumRequest,
   getPremiumRequestList,
   getPremiumUserList,
