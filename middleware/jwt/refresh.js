@@ -19,6 +19,7 @@ async function refresh(req, res) {
     // access token 디코딩하여 user의 정보를 가져옵니다.
     const decoded = jwt.decode(authToken);
 
+    console.log(decoded);
     // 디코딩 결과가 없으면 권한이 없음을 응답.
     if (decoded === null) {
       res.status(401).send({
