@@ -3,6 +3,8 @@ import pool from "../config/dbpool.js";
 
 const secret = process.env.SECRET;
 
+const dbpool = await pool;
+
 async function sign(user) {
   // access token 발급
   const payload = {
@@ -50,7 +52,8 @@ async function refreshVerify(token, user_seq, user_id) {
   const sql = `select * from token where user_seq = ?`;
 
   try {
-    const data = await pool.query(sql, [user_seq]); // refresh token 가져오기
+    const data = await dbpool.query(sql, [user_seq]); // refresh token 가져오기
+
     if (token === data[0][0].refreshtoken) {
       try {
         jwt.verify(token, secret);
@@ -63,6 +66,7 @@ async function refreshVerify(token, user_seq, user_id) {
       return { verification: false };
     }
   } catch (err) {
+    console.log(err);
     return false;
   }
 }
