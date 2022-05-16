@@ -485,7 +485,6 @@ async function kakaoLogin(req, res, next) {
 // 네이버 로그인
 async function naverLogin(req, res, next) {
   const { id, name, email, gender, mobile, birthyear, profile_image } = req.body;
-
   if (
     id === undefined ||
     name === undefined ||
@@ -498,6 +497,7 @@ async function naverLogin(req, res, next) {
       message: "로그인 실패, 필수 데이터가 없습니다.",
     });
   } else {
+    console.log(id, name, email, gender, mobile, birthyear, profile_image);
     try {
       const sql = `SELECT * FROM user WHERE id = ?`;
       const results = await dbpool.query(sql, id);
