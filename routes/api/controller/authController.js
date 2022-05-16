@@ -357,7 +357,7 @@ async function tokenLogin(req, res, next) {
       res.status(401).json({
         message: "all of tokens is expired",
         expire: true,
-        verification: false,
+        verification: true,
       });
     }
   } else {
