@@ -839,6 +839,13 @@ async function withdrawal(req, res, next) {
       const user_point_results = await dbpool.query(user_point_sql, withdrawal_request.user_seq);
       const user_point = user_point_results[0][0].point;
 
+      // 유저 포인트가 10000점 미만 or 출금 신청 금액이 10000점 미만
+      if (user_point < 10000 || withdrawal_request.withdrawal_amount < 10000) {
+        return res.status(400).json({
+          message: "잘못된 접근입니다. 최소 출금 가능 포인트는 10000점 입니다.",
+        });
+      }
+
       // 이미 출금이 되었거나 출금 신청 취소된 경우
       if (withdrawal_request.is_pending === 0 || withdrawal_request.is_pending === -1) {
         return res.status(400).json({
@@ -915,6 +922,12 @@ async function withdrawalRequest(req, res, next) {
       const point_sql = `select point from user where user_seq = ?`;
 
       const results = await dbpool.query(point_sql, user_seq);
+
+      if (results[0][0].point < 10000 || withdrawal_point < 10000) {
+        return res.status(400).json({
+          message: "잘못된 접근입니다. 최소 출금 가능 포인트는 10000점 입니다.",
+        });
+      }
 
       // 현재 포인트보다 출금 신청금액이 작을 경우
       if (results[0][0].point < withdrawal_point) {
@@ -1959,8 +1972,8 @@ async function createPremiumRequest(req, res, next) {
 // 프리미엄 신청 목록
 async function getPremiumRequestList(req, res, next) {
   try {
-    const sql = `select pa.premium_seq,pa.user_seq,u.name,u.phonenumber,u.birth,u.gender, u.influencer,u.blog,u.instagram, u.youtube, u.address_seq, u.address, pa.agreement_content
-    from premium_application as pa join (select us.user_seq,us.name,us.phonenumber,us.birth,us.gender,us.influencer,us.blog,us.instagram, us.youtube, uab.address_seq, uab.address
+    const sql = `select pa.premium_seq,pa.user_seq,u.name,u.phonenumber,u.birth,u.gender, u.grade, u.influencer,u.blog,u.instagram, u.youtube, u.address_seq, u.address, pa.agreement_content
+    from premium_application as pa join (select us.user_seq,us.name,us.phonenumber,us.birth,us.gender,us.grade,us.influencer,us.blog,us.instagram, us.youtube, uab.address_seq, uab.address
     from user as us join user_address_book as uab on us.user_seq = uab.user_seq
     where uab.is_default = 1) as u on pa.user_seq = u.user_seq`;
     const results = await dbpool.query(sql);
@@ -1988,8 +2001,8 @@ async function getPremiumRequestDetail(req, res, next) {
     });
   } else {
     try {
-      const sql = `select pa.premium_seq,pa.user_seq,u.name,u.phonenumber,u.birth,u.gender, u.influencer,u.blog,u.instagram, u.youtube, u.address_seq, u.address, pa.agreement_content
-      from premium_application as pa join (select us.user_seq,us.name,us.phonenumber,us.birth,us.gender,us.influencer,us.blog,us.instagram, us.youtube, uab.address_seq, uab.address
+      const sql = `select pa.premium_seq,pa.user_seq,u.name,u.phonenumber,u.birth,u.gender,u.grade, u.influencer,u.blog,u.instagram, u.youtube, u.address_seq, u.address, pa.agreement_content
+      from premium_application as pa join (select us.user_seq,us.name,us.phonenumber,us.birth,us.gender,us.grade,us.influencer,us.blog,us.instagram, us.youtube, uab.address_seq, uab.address
       from user as us join user_address_book as uab on us.user_seq = uab.user_seq
       where uab.is_default = 1) as u on pa.user_seq = u.user_seq
       where pa.premium_seq = ?`;
