@@ -29,8 +29,9 @@ async function refresh(req, res) {
     if (authResult.verification === false) {
       // 1. access token이 만료되고, refresh token도 만료 된 경우 => 새로 로그인 해야함.
       if (refreshResult.verification === false) {
-        res.status(401).send({
-          verification: false,
+        res.status(401).json({
+          verification: true,
+          expire: true,
           message: "No authorized!",
         });
       } else {
@@ -43,7 +44,7 @@ async function refresh(req, res) {
             user.user_seq,
           ]);
 
-          res.status(200).send({
+          res.status(200).json({
             // 새로 발급한 access token과 원래 있던 refresh token 모두 클라이언트에게 반환합니다.
             verification: true,
             data: {
@@ -54,7 +55,7 @@ async function refresh(req, res) {
         } catch (err) {
           console.log(err);
 
-          res.status(500).send({
+          res.status(500).json({
             verification: false,
             message: "Internal Server Error",
           });
@@ -64,7 +65,7 @@ async function refresh(req, res) {
       // 3. access token이 만료되지 않은경우 => refresh 할 필요가 없습니다.
       res.status(400).send({
         verification: false,
-        message: "Acess token is not expired!",
+        message: "Access token is not expired!",
       });
     }
   } else {
