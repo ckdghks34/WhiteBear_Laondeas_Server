@@ -29,6 +29,9 @@ router.patch("/sns", userController.updateSNSInfo);
 // 비밀번호 수정
 router.patch("/password", userController.updatePassword);
 
+// 사용자 등급 조정
+router.patch("/grade", userController.updateUserGrade);
+
 // 프로필 사진 등록
 router.post("/profile", profileUpload.single("profile_img"), userController.createProfile);
 
@@ -141,6 +144,7 @@ router.get("/message/unread", userController.getUnreadMessageCount);
 
 // 유저별 메세지 전체 읽음 처리
 router.patch("/message/all", userController.readAllMessage);
+
 /**
  * 유저 주소록
  */
