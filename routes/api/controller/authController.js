@@ -86,7 +86,6 @@ async function login(req, res, next) {
   const { user_id, user_password } = req.body;
 
   if (user_id !== undefined && user_password !== undefined) {
-    console.log(user_id, user_password);
     try {
       const sql = `SELECT * FROM user WHERE id = ?`;
       const results = await dbpool.query(sql, user_id);
