@@ -46,7 +46,7 @@ async function signup(req, res, next) {
   } else {
     try {
       user_password = bcrypt.hashSync(user_password, 10);
-      const sql = `Insert into user (id, password, name, nickname, email, phonenumber, agreement_info, agreement_email, agreement_mms, is_premium, is_advertiser, point, accumulated_point, first_register_date, last_register_date, is_admin) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+      const sql = `Insert into user (id, password, name, nickname, email, phonenumber,grade, agreement_info, agreement_email, agreement_mms, is_premium, is_advertiser, point, accumulated_point, first_register_date, last_register_date, is_admin) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
       const result = await dbpool.execute(sql, [
         user_id,
@@ -55,6 +55,7 @@ async function signup(req, res, next) {
         user_nickname,
         user_email,
         user_phonenumber,
+        1,
         agreement_info,
         agreement_email,
         agreement_mms,
@@ -327,7 +328,7 @@ async function tokenLogin(req, res, next) {
 
       // 새로운 accessToken, refreshToken 데이터베이스 저장
       let tokensql = `insert into token values(?,?,?,?) on duplicate key update accesstoken = ?, refreshtoken = ?`;
-      let usersql = `select user_seq, id, name, nickname, phonenumber, gender, birth, email, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_path, profile_type, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal, first_register_date, last_register_date from user where user_seq = ?`;
+      let usersql = `select * from user where user_seq = ?`;
 
       await dbpool.beginTransaction();
 
@@ -390,7 +391,7 @@ async function kakaoLogin(req, res, next) {
       // 사용자가 없을 경우
       if (results[0].length === 0) {
         let password = bcrypt.hashSync(kakaoUser.kakao_account.email, 10);
-        const sql = `Insert into user (id, password, name, nickname, email, phonenumber, agreement_info, agreement_email, agreement_mms, is_premium, is_advertiser, point, accumulated_point, first_register_date, last_register_date, is_admin) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+        const sql = `Insert into user (id, password, name, nickname, email, phonenumber, grade, agreement_info, agreement_email, agreement_mms, is_premium, is_advertiser, point, accumulated_point, first_register_date, last_register_date, is_admin) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
         const result = await dbpool.execute(sql, [
           kakaoUser.id,
@@ -399,6 +400,7 @@ async function kakaoLogin(req, res, next) {
           kakaoUser.kakao_account.email,
           kakaoUser.kakao_account.email,
           "",
+          1,
           0,
           0,
           0,
@@ -506,7 +508,7 @@ async function naverLogin(req, res, next) {
 
         let result;
         if (profile_image === undefined) {
-          const sql = `Insert into user (id, password, name, nickname, email, phonenumber, gender, birth, agreement_info, agreement_email, agreement_mms, is_premium, is_advertiser, point, accumulated_point, first_register_date, last_register_date, is_admin) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+          const sql = `Insert into user (id, password, name, nickname, email, phonenumber, gender, birth, grade, agreement_info, agreement_email, agreement_mms, is_premium, is_advertiser, point, accumulated_point, first_register_date, last_register_date, is_admin) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
           result = await dbpool.execute(sql, [
             id,
@@ -517,6 +519,7 @@ async function naverLogin(req, res, next) {
             phonenumber,
             gender.toUpperCase(),
             birthyear,
+            1,
             0,
             0,
             0,
@@ -533,7 +536,7 @@ async function naverLogin(req, res, next) {
           const profile_name = profile_split[profile_split.length - 1];
           const profile_ext = profile_name.split(".")[1];
 
-          const sql = `Insert into user (id, password, name, nickname, email, phonenumber, gender, birth, profile_name, profile_path, profile_ext, profile_key, agreement_info, agreement_email, agreement_mms, is_premium, is_advertiser, point, accumulated_point, first_register_date, last_register_date, is_admin) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+          const sql = `Insert into user (id, password, name, nickname, email, phonenumber, gender, birth, grade, profile_name, profile_path, profile_ext, profile_key, agreement_info, agreement_email, agreement_mms, is_premium, is_advertiser, point, accumulated_point, first_register_date, last_register_date, is_admin) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
           result = await dbpool.execute(sql, [
             id,
@@ -544,6 +547,7 @@ async function naverLogin(req, res, next) {
             phonenumber,
             gender.toUpperCase(),
             birthyear,
+            1,
             profile_name,
             profile_image,
             profile_ext,
