@@ -2957,7 +2957,7 @@ async function missionComplete(req, res, next) {
       const accrual_detail_sql = `insert into accrual_detail(user_seq, accrual_point, accrual_content, accrual_point_date, first_register_id, first_register_date, last_register_id, last_register_date) values (?,?,?,now(),?,now(),?,now())`;
 
       // 회원 등급 조정
-      const grade_count_sql = `select * from campaign_application where user_seq = ? and status = 2`;
+      const grade_count_sql = `select count(*) as count from campaign_application where user_seq = ? and status = 2`;
       const grade_count_results = await dbpool.query(grade_count_sql, [user_seq]);
 
       // const user_result = await dbpool.execute(user_sql, [user_seq]);
@@ -2985,17 +2985,17 @@ async function missionComplete(req, res, next) {
       ]);
 
       // 30건 이상 완료 한경우 (등급 조정 : 4 (Master))
-      if (grade_count_results[0].length >= 30) {
+      if (grade_count_results[0][0].count >= 30) {
         const grade_sql = `update user set grade = 4 where user_seq = ?`;
         await dbpool.execute(grade_sql, [user_seq]);
       }
       // 15건 이상 완료 한경우 (등급 조정 : 3 (Senior))
-      else if (grade_count_results[0].length >= 15) {
+      else if (grade_count_results[0][0].count >= 15) {
         const grade_sql = `update user set grade = 3 where user_seq = ?`;
         await dbpool.execute(grade_sql, [user_seq]);
       }
       // 5건 이상 완료 한경우 (등급 조정 : 2 (Junior))
-      else if (grade_count_results[0].length >= 5) {
+      else if (grade_count_results[0][0].count >= 5) {
         const grade_sql = `update user set grade = 2 where user_seq = ?`;
         await dbpool.execute(grade_sql, [user_seq]);
       }
@@ -3051,7 +3051,7 @@ async function missionCancel(req, res, next) {
     const detail_sql = `select * from accrual_detail where user_seq = ? and accrual_point = ? and accrual_content = ?`;
 
     // 회원 등급 조정
-    const grade_count_sql = `select * from campaign_application where user_seq = ? and status = 2`;
+    const grade_count_sql = `select count(*) as count from campaign_application where user_seq = ? and status = 2`;
     const grade_count_results = await dbpool.query(grade_count_sql, [user_seq]);
 
     const campaign_result = await dbpool.execute(campaign_sql, [campaign_seq]);
@@ -3076,17 +3076,17 @@ async function missionCancel(req, res, next) {
     await dbpool.execute(accrual_detail_sql, [user_seq, detail.accrual_seq]);
 
     // 30건 이상 완료 한경우 (등급 조정 : 4 (Master))
-    if (grade_count_results[0].length >= 30) {
+    if (grade_count_results[0][0].count >= 30) {
       const grade_sql = `update user set grade = 4 where user_seq = ?`;
       await dbpool.execute(grade_sql, [user_seq]);
     }
     // 15건 이상 완료 한경우 (등급 조정 : 3 (Senior))
-    else if (grade_count_results[0].length >= 15) {
+    else if (grade_count_results[0][0].count >= 15) {
       const grade_sql = `update user set grade = 3 where user_seq = ?`;
       await dbpool.execute(grade_sql, [user_seq]);
     }
     // 5건 이상 완료 한경우 (등급 조정 : 2 (Junior))
-    else if (grade_count_results[0].length >= 5) {
+    else if (grade_count_results[0][0].count >= 5) {
       const grade_sql = `update user set grade = 2 where user_seq = ?`;
       await dbpool.execute(grade_sql, [user_seq]);
     }
@@ -3191,6 +3191,14 @@ async function test(req, res, next) {
     //     // XML to JSON 변환 필요
     //     // 변환 후 방문자 목록 + 평균 -> JSON
     //   });
+
+    const { user_seq } = req.query;
+    // 회원 등급 조정
+    console.log(user_seq);
+    const grade_count_sql = `select count(*) as count from campaign_application where user_seq = ? and status = 2`;
+    const grade_count_results = await dbpool.query(grade_count_sql, [user_seq]);
+
+    console.log(grade_count_results[0][0].count);
   } catch (err) {
     console.log(err);
   }
