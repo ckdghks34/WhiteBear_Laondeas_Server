@@ -19,8 +19,8 @@ async function authJWT(req, res, next) {
       // 검증에 실패하거나 토큰이 만료되었다면 클라이언트에게 메세지를 담아서 응답합니다.
       if (result.error.name === errorTokenExpired) {
         res.status(401).send({
-          verification: false,
-          expire: false,
+          verification: true,
+          expire: true,
           message: result.message, // jwt가 만료되었다면 메세지는 'jwt expired'입니다.
         });
       } else if (result.error.name === errorJsonWebToken) {
