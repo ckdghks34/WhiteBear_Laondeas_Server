@@ -1321,7 +1321,6 @@ async function createAnswer(req, res, next) {
 // 문의 수정
 async function updateQuestion(req, res, next) {
   const { qna_seq, title, content, user_seq } = req.body;
-  console.log(qna_seq, title, content, user_seq);
   if (
     qna_seq === undefined ||
     title === undefined ||
