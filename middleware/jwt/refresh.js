@@ -10,6 +10,10 @@ async function refresh(req, res) {
     const authToken = req.headers.authorization.split("Bearer ")[1];
     const refreshToken = req.headers.refresh;
 
+    console.log("authToken");
+    console.log(authToken);
+    console.log("refreshToken");
+    console.log(refreshToken);
     // access token 검증 -> expired여야 함.
     const authResult = await verify(authToken);
     // access token 디코딩하여 user의 정보를 가져옵니다.
