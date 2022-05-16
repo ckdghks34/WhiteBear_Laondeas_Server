@@ -13,7 +13,7 @@ async function createAdvertise(req, res, next) {
     isagency === undefined ||
     agreement_info === undefined
   ) {
-    res.status(401).json({
+    res.status(400).json({
       message: "광고 신청 등록 실패, 필수 항목이 없습니다.",
     });
   } else {

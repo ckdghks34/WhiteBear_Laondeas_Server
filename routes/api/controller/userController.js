@@ -41,7 +41,7 @@ async function getUser(req, res, next) {
   const { user_seq } = req.query;
 
   if (user_seq === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "유저 정보 조회 실패 , 필수 데이터가 없습니다.",
     });
   } else {
@@ -56,7 +56,7 @@ async function getUser(req, res, next) {
       let user = results[0][0];
 
       if (results[0].length == 0) {
-        res.status(401).json({
+        res.status(400).json({
           message: "존재하지 않는 유저입니다.",
         });
       } else {
@@ -101,7 +101,7 @@ async function updateUser(req, res, next) {
     nickname === undefined ||
     phonenumber === undefined
   ) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -155,7 +155,7 @@ async function updateAdditionalInfo(req, res, next) {
     area === undefined ||
     channel === undefined
   ) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -238,7 +238,7 @@ async function getAdditionalInfo(req, res, next) {
   const { user_seq } = req.query;
 
   if (user_seq === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -284,7 +284,7 @@ async function updateSNSInfo(req, res, next) {
     influencer === undefined ||
     youtube === undefined
   ) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -311,7 +311,7 @@ async function updatePassword(req, res, next) {
   const { user_seq, password } = req.body;
 
   if (user_seq === undefined || password === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -433,7 +433,7 @@ async function getInterestCampaign(req, res, next) {
   const { user_seq } = req.query;
 
   if (user_seq === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -473,7 +473,7 @@ async function createInterestCampaign(req, res, next) {
   const { user_seq, campaign_seq } = req.body;
 
   if (user_seq === undefined || campaign_seq === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -508,7 +508,7 @@ async function deleteInterestCampaign(req, res, next) {
   const { user_seq, campaign_seq } = req.body;
 
   if (user_seq === undefined || campaign_seq === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -535,7 +535,7 @@ async function getMyCampaign(req, res, next) {
   const { user_seq } = req.query;
 
   if (user_seq === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -575,7 +575,7 @@ async function getEndCampaign(req, res, next) {
   const { user_seq } = req.query;
 
   if (user_seq === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -618,7 +618,7 @@ async function attendanceCheck(req, res, next) {
   const { user_seq, content } = req.body;
 
   if (user_seq === undefined || content === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -674,7 +674,7 @@ async function getAttendanceList(req, res, next) {
   const { user_seq } = req.query;
 
   if (user_seq === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -724,7 +724,7 @@ async function accrual(req, res, next) {
   const { user_seq, accrual_point, accrual_content, admin } = req.body;
 
   if (user_seq === undefined || accrual_point === undefined || admin === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -815,7 +815,7 @@ async function withdrawal(req, res, next) {
   const { request_seq, admin } = req.body;
 
   if (request_seq === undefined || admin === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -914,7 +914,7 @@ async function withdrawalRequest(req, res, next) {
   const { user_seq, withdrawal_point } = req.body;
 
   if (user_seq === undefined || withdrawal_point === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -966,7 +966,7 @@ async function getWithdrawalRequestList(req, res, next) {
   const { user_seq } = req.query;
 
   if (user_seq === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -1407,7 +1407,7 @@ async function getQNAList(req, res, next) {
     console.log(question_results[0]);
 
     if (question_results[0].length == 0) {
-      res.status(401).json({
+      res.status(400).json({
         message: "등록된 문의 사항이 없습니다.",
       });
     } else {
@@ -1443,7 +1443,7 @@ async function getQNA(req, res, next) {
   const { qna_seq } = req.query;
 
   if (questtion_seq === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -1455,7 +1455,7 @@ async function getQNA(req, res, next) {
       const answer = await dbpool.query(answer_sql, qna_seq);
 
       if (question[0].length == 0) {
-        res.status(401).json({
+        res.status(400).json({
           message: "존재하지 않는 문의입니다.",
         });
       } else {
@@ -1480,7 +1480,7 @@ async function getUserQNA(req, res, next) {
   const { user_seq } = req.query;
 
   if (user_seq === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -1490,7 +1490,7 @@ async function getUserQNA(req, res, next) {
       let question_results = await dbpool.query(question_sql, user_seq);
 
       if (question_results[0].length == 0) {
-        res.status(401).json({
+        res.status(400).json({
           message: "등록된 문의 사항이 없습니다.",
         });
       } else {
@@ -1553,7 +1553,7 @@ async function getPenaltyList(req, res, next) {
   const { user_seq } = req.query;
 
   if (user_seq === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다.",
     });
   } else {
@@ -1708,7 +1708,7 @@ async function createAddressBook(req, res, next) {
   const { user_seq, name, receiver, address, phonenumber, is_default } = req.body;
 
   if (user_seq === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -1767,7 +1767,7 @@ async function deleteAddressBook(req, res, next) {
   const { user_seq, address_seq } = req.body;
 
   if (user_seq === undefined || address_seq === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -1794,7 +1794,7 @@ async function updateAddressBook(req, res, next) {
   const { user_seq, address_seq, name, receiver, address, phonenumber, is_default } = req.body;
 
   if (user_seq === undefined || address_seq === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -1852,7 +1852,7 @@ async function getAddressBook(req, res, next) {
   const { user_seq } = req.query;
 
   if (user_seq === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -1879,7 +1879,7 @@ async function getUserAddressBook(req, res, next) {
   const { user_seq } = req.query;
 
   if (user_seq === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -1906,7 +1906,7 @@ async function updateDefaultAddressBook(req, res, next) {
   const { user_seq, address_seq } = req.body;
 
   if (user_seq === undefined || address_seq === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -1940,7 +1940,7 @@ async function createPremiumRequest(req, res, next) {
   const { user_seq, agreement_content } = req.body;
 
   if (user_seq === undefined || agreement_content === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -1996,7 +1996,7 @@ async function getPremiumRequestDetail(req, res, next) {
   const { premium_seq } = req.query;
 
   if (premium_seq === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -2047,7 +2047,7 @@ async function createPremium(req, res, next) {
   const { user_seq, admin } = req.body;
 
   if (user_seq === undefined || admin === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
@@ -2072,7 +2072,7 @@ async function createPremium(req, res, next) {
 async function deletePremium(req, res, next) {
   const { user_seq } = req.body;
   if (user_seq === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
   } else {
