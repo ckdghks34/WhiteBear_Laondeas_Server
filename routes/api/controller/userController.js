@@ -1385,29 +1385,31 @@ async function updateAnswer(req, res, next) {
 // 전체 문의 답변 리스트 가져오기
 async function getQNAList(req, res, next) {
   try {
-    const sql = `select q.qna_seq, q.author, q.category, q.title, q.content, q.first_register_id, q.first_register_date, a.answer_seq ,a.author as answer_author, a.title as answer_title, a.content as answer_content, a.first_register_date as answer_first_register, a.first_register_date as answer_first_register_date
-  from question as q left join answer as a on q.qna_seq = a.qna_seq`;
+    //   const sql = `select q.qna_seq, q.author, q.category, q.title, q.content, q.first_register_id, q.first_register_date, a.answer_seq ,a.author as answer_author, a.title as answer_title, a.content as answer_content, a.first_register_date as answer_first_register, a.first_register_date as answer_first_register_date
+    // from question as q left join answer as a on q.qna_seq = a.qna_seq`;
+    const question_sql = `select * from question`;
+    const answer_sql = `select * from answer where qna_seq = ?`;
 
-    const results = await dbpool.query(sql);
+    const question_results = await dbpool.query(question_sql);
 
-    if (results[0].length == 0) {
+    console.log(question_results[0]);
+
+    if (question_results[0].length == 0) {
       res.status(401).json({
         message: "등록된 문의 사항이 없습니다.",
       });
     } else {
       let result = [];
+      for (let i = 0; i < question_results[0].length; ++i) {
+        let qna = { question: question_results[0][i] };
+        let answer = [];
 
-      for (let i = 0; i < results[0].length; i++) {
-        let question = {};
-        let answer = {};
+        const answer_result = await dbpool.query(answer_sql, question_results[0][i].qna_seq);
 
-        var resultkey = Object.keys(results[0][i]);
-        for (let k = 0; k < resultkey.length; k++) {
-          if (resultkey[k].split("_")[0] == "answer")
-            answer[resultkey[k]] = results[0][i][resultkey[k]];
-          else question[resultkey[k]] = results[0][i][resultkey[k]];
-        }
-        result.push({ question, answer });
+        for (let j = 0; j < answer_result[0].length; ++j) answer.push(answer_result[0][j]);
+
+        qna["answer"] = answer;
+        result.push(qna);
       }
 
       res.status(200).json({
@@ -1471,39 +1473,31 @@ async function getUserQNA(req, res, next) {
     });
   } else {
     try {
-      const sql = `select q.qna_seq, q.author, q.category, q.title, q.content, q.first_register_id, q.first_register_date, a.answer_seq ,a.author as answer_author, a.title as answer_title, a.content as answer_content, a.first_register_date as answer_first_register, a.first_register_date as answer_first_register_date
-      from (select *
-      from question
-      where author = ?) as q left join answer as a on q.qna_seq = a.qna_seq`;
+      const question_sql = `select * from question where author = ?`;
+      const answer_sql = `select * from answer where qna_seq = ?`;
+      let question_results = await dbpool.query(question_sql, user_seq);
 
-      let results = await dbpool.query(sql, user_seq);
-
-      if (results[0].length == 0) {
+      if (question_results[0].length == 0) {
         res.status(401).json({
           message: "등록된 문의 사항이 없습니다.",
         });
       } else {
         let result = [];
+        for (let i = 0; i < question_results[0].length; ++i) {
+          let qna = { question: question_results[0][i] };
+          let answer = [];
 
-        for (let i = 0; i < results[0].length; i++) {
-          let question = {};
-          let answer = {};
+          const answer_result = await dbpool.query(answer_sql, question_results[0][i].qna_seq);
 
-          var resultkey = Object.keys(results[0][i]);
-          for (let k = 0; k < resultkey.length; k++) {
-            if (resultkey[k].split("_")[0] == "answer")
-              answer[resultkey[k]] = results[0][i][resultkey[k]];
-            else question[resultkey[k]] = results[0][i][resultkey[k]];
-          }
+          for (let j = 0; j < answer_result[0].length; ++j) answer.push(answer_result[0][j]);
 
-          result.push({ question, answer });
+          qna["answer"] = answer;
+          result.push(qna);
         }
 
-        console.log(result);
-
         res.status(200).json({
-          message: "문의 정보 조회 성공",
-          qna: result,
+          message: "문의 전체 리스트 조회 성공",
+          qna_list: result,
         });
       }
     } catch (err) {
