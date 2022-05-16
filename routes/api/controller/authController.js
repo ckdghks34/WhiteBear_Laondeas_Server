@@ -40,7 +40,7 @@ async function signup(req, res, next) {
     is_advertiser === undefined ||
     is_admin === undefined
   ) {
-    res.status(401).json({
+    res.status(400).json({
       message: "회원가입 실패, 필수 항목이 없습니다.",
     });
   } else {
@@ -92,7 +92,7 @@ async function login(req, res, next) {
       const results = await dbpool.query(sql, user_id);
       // 아이디가 존재하지 않을 때
       if (results[0].length === 0) {
-        res.status(401).json({
+        res.status(400).json({
           message: "아이디가 존재하지 않습니다.",
         });
         console.log("로그인 시도 : 아이디가 존재하지 않습니다.");
@@ -134,19 +134,19 @@ async function login(req, res, next) {
             } catch (err) {
               console.log(err);
 
-              res.status(401).json({
+              res.status(400).json({
                 message: "로그인 실패",
               });
             }
           } else {
-            res.status(401).json({
+            res.status(400).json({
               message: "비밀번호가 일치하지 않습니다.",
             });
           }
         } catch (err) {
           console.log(err);
 
-          res.status(401).json({
+          res.status(400).json({
             message: "비밀번호가 일치하지 않습니다.",
           });
         }
@@ -192,7 +192,7 @@ async function deleteUser(req, res, next) {
   const { user_seq } = req.body;
 
   if (user_id === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "회원탈퇴 실패, 필수 항목이 없습니다.",
     });
   } else {
@@ -218,7 +218,7 @@ async function checkID(req, res, next) {
   const { user_id } = req.query;
 
   if (user_id === undefined) {
-    res.status(401).json({
+    res.status(400).json({
       message: "아이디 중복 체크 실패, 필수 항목이 없습니다.",
     });
   } else {
@@ -278,7 +278,7 @@ async function addCode(req, res, next) {
     top_level_code === undefined ||
     code_step === undefined
   ) {
-    res.status(401).json({
+    res.status(400).json({
       message: "코드 등록 실패, 필수 항목이 없습니다.",
     });
   }
@@ -493,7 +493,7 @@ async function naverLogin(req, res, next) {
     mobile === undefined ||
     birthyear === undefined
   ) {
-    res.status(401).json({
+    res.status(400).json({
       message: "로그인 실패, 필수 데이터가 없습니다.",
     });
   } else {

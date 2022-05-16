@@ -33,7 +33,7 @@ async function createFaq(req, res, next) {
     title === undefined ||
     content === undefined
   ) {
-    res.status(401).json({
+    res.status(400).json({
       message: "faq 등록 실패, 필수 항목이 없습니다.",
     });
   } else {

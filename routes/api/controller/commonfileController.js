@@ -40,7 +40,7 @@ async function activateBanner(req, res, next) {
   const { file_seq } = req.body;
 
   if (file_seq === undefined) {
-    res.status(500).json({
+    res.status(400).json({
       message: "배너 활성화 실패, 필수 항목이 없습니다.",
     });
   } else {
@@ -67,7 +67,7 @@ async function deactivateBanner(req, res, next) {
   const { file_seq } = req.body;
 
   if (file_seq === undefined) {
-    res.status(500).json({
+    res.status(400).json({
       message: "배너 비활성화 실패, 필수 항목이 없습니다.",
     });
   } else {
@@ -178,7 +178,7 @@ async function deleteWidget(req, res, next) {
   const { file_seq } = req.body;
 
   if (file_seq === undefined) {
-    res.status(500).json({
+    res.status(400).json({
       message: "위젯 삭제 실패, 필수 항목이 없습니다.",
     });
   } else {
