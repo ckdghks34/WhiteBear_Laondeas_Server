@@ -321,7 +321,7 @@ async function tokenLogin(req, res, next) {
 
     const refreshResult = await refreshVerify(refreshToken, decoded.seq, decoded.id);
 
-    if (authResult.verification || refreshResult.verification) {
+    if (authResult.verification || refreshResult) {
       // 새로운 accessToken, refreshToken 발급
       const newAccessToken = await sign(user);
       const newRefreshToken = await refresh(user);
