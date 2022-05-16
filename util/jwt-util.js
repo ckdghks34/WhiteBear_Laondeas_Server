@@ -50,10 +50,11 @@ async function refresh() {
 async function refreshVerify(token, user_seq, user_id) {
   // refresh token 검증
   const sql = `select * from token where user_seq = ?`;
-
+  console.log(token);
+  console.log(user_seq);
   try {
     const data = await dbpool.query(sql, [user_seq]); // refresh token 가져오기
-
+    console.log(data[0][0]);
     if (token === data[0][0].refreshtoken) {
       try {
         jwt.verify(token, secret);
