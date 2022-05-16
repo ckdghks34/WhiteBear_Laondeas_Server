@@ -29,6 +29,8 @@ async function refresh(req, res) {
     let user = { user_seq: decoded.seq, id: decoded.id };
     /* access token의 decoding 된 값에서
       유저의 id를 가져와 refresh token을 검증합니다. */
+    console.log("user");
+    console.log(user);
     const refreshResult = await refreshVerify(refreshToken, decoded.seq, decoded.id);
 
     // 재발급을 위해서는 access token이 만료되어 있어야합니다.
