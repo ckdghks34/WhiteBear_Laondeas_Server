@@ -867,7 +867,7 @@ async function withdrawal(req, res, next) {
       const user_point = user_point_results[0][0].point;
 
       // 유저 포인트가 10000점 미만 or 출금 신청 금액이 10000점 미만
-      if (user_point < 10000 || withdrawal_request.withdrawal_amount < 10000) {
+      if (user_point < 10000) {
         return res.status(400).json({
           message: "잘못된 접근입니다. 최소 출금 가능 포인트는 10000점 입니다.",
         });
@@ -950,7 +950,7 @@ async function withdrawalRequest(req, res, next) {
 
       const results = await dbpool.query(point_sql, user_seq);
 
-      if (results[0][0].point < 10000 || withdrawal_point < 10000) {
+      if (results[0][0].point < 10000) {
         return res.status(400).json({
           message: "잘못된 접근입니다. 최소 출금 가능 포인트는 10000점 입니다.",
         });
