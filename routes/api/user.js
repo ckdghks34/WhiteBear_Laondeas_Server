@@ -114,8 +114,11 @@ router.get("/point/withdrawal/user", userController.getWithdrawalRequestList);
 // 전체 유저 출금 신청 내역 가져오기
 router.get("/point/withdrawal", userController.getAllUserWithdrawalRequestList);
 
-// 출금 등록
-router.post("/withdrawal", userController.withdrawal);
+// 출금 승인
+router.patch("/withdrawal", userController.withdrawal);
+
+// 출금 승인 거절
+router.patch("/withdrawal/reject", userController.withdrawal_reject);
 
 // 유저별 출금 내역 가져오기
 router.get("/withdrawal/users", userController.getUserWithdrawalList);
