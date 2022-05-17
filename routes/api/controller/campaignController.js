@@ -3192,8 +3192,8 @@ async function test(req, res, next) {
     //     // XML to JSON 변환 필요
     //     // 변환 후 방문자 목록 + 평균 -> JSON
     //   });
-    // const { user_seq } = req.query;
     // // 회원 등급 조정
+    // const { user_seq } = req.query;
     // console.log(user_seq);
     // const grade_count_sql = `select count(*) as count from campaign_application where user_seq = ? and status = 2`;
     // const grade_count_results = await dbpool.query(grade_count_sql, [user_seq]);
