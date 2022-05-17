@@ -214,4 +214,32 @@ router.get("/qna", userController.getQNA);
 // 유저별 문의 답변 목록 가져오기
 router.get("/qna/user", userController.getUserQNA);
 
+/**
+ * 블랙리스트
+ */
+
+// 전체 블랙리스트 가져오기 (get)
+router.get("/blacklist", userController.getBlackList);
+
+// 활성화된 블랙리스트 가져오기 (get)
+router.get("/blacklist/active", userController.getBlackListActive);
+
+// 사용자 별 블랙리스트 가져오기 (get)
+router.get("/blacklist/user", userController.getBlackListByUser);
+
+// 블랙리스트 등록 (post)
+router.post("/blacklist", userController.createBlackList);
+
+//블랙리스트 삭제 (delete)
+router.delete("/blacklist", userController.deleteBlackList);
+
+// 블랙리스트 수정 (patch)
+router.patch("/blacklist", userController.updateBlackList);
+
+// 블랙리스트 활성화 (patch)
+router.patch("/blacklist/active", userController.activeBlackList);
+
+// 블랙리스트 비활성화 (patch)
+router.patch("/blacklist/inactive", userController.inactiveBlackList);
+
 export default router;

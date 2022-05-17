@@ -2120,6 +2120,238 @@ async function deletePremium(req, res, next) {
   }
 }
 
+/**
+ * 블랙리스트
+ */
+
+// 전체 블랙리스트 가져오기
+async function getBlackList(req, res, next) {
+  try {
+    const sql = `SELECT b.*, u.user_seq, u.id, u.name, u.nickname, u.phonenumber, u.gender, u.birth, u.email, u.grade, u.is_premium, is_advertiser
+    FROM blacklist b join user u on b.user_seq = u.user_seq
+    order by b.user_seq`;
+
+    const results = await dbpool.query(sql);
+
+    if (results[0].length == 0) {
+      res.status(200).json({
+        message: "등록된 블랙리스트가 없습니다.",
+      });
+    } else {
+      res.status(200).json({
+        message: "블랙리스트 조회 성공",
+        blacklist: results[0],
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "블랙리스트 조회 실패",
+    });
+  }
+}
+
+// 활성화된 블랙리스트 가져오기
+async function getBlackListActive(req, res, next) {
+  try {
+    const sql = `SELECT b.*, u.user_seq, u.id, u.name, u.nickname, u.phonenumber, u.gender, u.birth, u.email, u.grade, u.is_premium, is_advertiser
+    FROM blacklist b join user u on b.user_seq = u.user_seq
+    where is_active = 1
+    order by b.user_seq`;
+
+    const results = await dbpool.query(sql);
+
+    if (results[0].length == 0) {
+      res.status(200).json({
+        message: "활성화된 블랙리스트가 없습니다.",
+      });
+    } else {
+      res.status(200).json({
+        message: "활성화된 블랙리스트 조회 성공",
+        blacklist: results[0],
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "블랙리스트 조회 실패",
+    });
+  }
+}
+
+// 사용자 별 블랙리스트 가져오기
+async function getBlackListByUser(req, res, next) {
+  const { user_seq } = req.query;
+
+  if (user_seq === undefined) {
+    res.status(400).json({
+      message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
+    });
+  } else {
+    try {
+      const sql = `SELECT b.*, u.user_seq, u.id, u.name, u.nickname, u.phonenumber, u.gender, u.birth, u.email, u.grade, u.is_premium, is_advertiser
+    FROM blacklist b join user u on b.user_seq = u.user_seq
+    where b.user_seq = ?
+    order by b.user_seq`;
+
+      const results = await dbpool.query(sql, [user_seq]);
+
+      if (results[0].length == 0) {
+        res.status(200).json({
+          message: "등록된 블랙리스트가 없습니다.",
+        });
+      } else {
+        res.status(200).json({
+          message: "블랙리스트 조회 성공",
+          blacklist: results[0],
+        });
+      }
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "블랙리스트 조회 실패",
+      });
+    }
+  }
+}
+
+// 블랙리스트 등록
+async function createBlackList(req, res, next) {
+  const { user_seq, content, admin } = req.body;
+
+  if (user_seq === undefined) {
+    res.status(400).json({
+      message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
+    });
+  } else {
+    try {
+      const sql = `insert into blacklist(user_seq, content, is_active, first_register_id, first_register_date, last_register_id, last_register_date) values(?, ?, 1, ?, now(), ?, now())`;
+
+      await dbpool.execute(sql, [user_seq, content, admin, admin]);
+
+      res.status(200).json({
+        message: "블랙리스트 등록 성공",
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "블랙리스트 등록 실패",
+      });
+    }
+  }
+}
+
+// 블랙리스트 삭제
+async function deleteBlackList(req, res, next) {
+  const { blacklist_seq } = req.body;
+
+  if (blacklist_seq === undefined) {
+    res.status(400).json({
+      message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
+    });
+  } else {
+    try {
+      const sql = `delete from blacklist where blacklist_seq = ?`;
+
+      await dbpool.execute(sql, [blacklist_seq]);
+
+      res.status(200).json({
+        message: "블랙리스트 삭제 성공",
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "블랙리스트 삭제 실패",
+      });
+    }
+  }
+}
+
+// 블랙리스트 수정
+async function updateBlackList(req, res, next) {
+  const { blacklist_seq, is_active, content, admin } = req.body;
+
+  if (blacklist_seq === undefined || content === undefined || admin === undefined) {
+    res.status(400).json({
+      message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
+    });
+  } else {
+    try {
+      const sql = `update blacklist set content = ?, is_active = ?, last_register_id = ?, last_register_date = now() where blacklist_seq = ?`;
+
+      await dbpool.execute(sql, [content, is_active, admin, blacklist_seq]);
+
+      res.status(200).json({
+        message: "블랙리스트 수정 성공",
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "블랙리스트 수정 실패",
+      });
+    }
+  }
+}
+
+// 블랙리스트 활성화
+async function activeBlackList(req, res, next) {
+  const { blacklist_seq, admin } = req.body;
+
+  if (blacklist_seq === undefined || admin === undefined) {
+    res.status(400).json({
+      message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
+    });
+  } else {
+    try {
+      const sql = `update blacklist set is_active = 1, last_register_id = ?, last_register_date = now() where blacklist_seq = ?`;
+
+      await dbpool.execute(sql, [admin, blacklist_seq]);
+
+      res.status(200).json({
+        message: "블랙리스트 활성화 성공",
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "블랙리스트 활성화 실패",
+      });
+    }
+  }
+}
+
+// 블랙리스트 비활성화
+async function inactiveBlackList(req, res, next) {
+  const { blacklist_seq, admin } = req.body;
+
+  if (blacklist_seq === undefined || admin === undefined) {
+    res.status(400).json({
+      message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
+    });
+  } else {
+    try {
+      const sql = `update blacklist set is_active = 0, last_register_id = ?, last_register_date = now() where blacklist_seq = ?`;
+
+      await dbpool.execute(sql, [admin, blacklist_seq]);
+
+      res.status(200).json({
+        message: "블랙리스트 비활성화 성공",
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "블랙리스트 비활성화 실패",
+      });
+    }
+  }
+}
 export {
   getUser,
   updateUser,
@@ -2181,4 +2413,12 @@ export {
   getAdditionalInfo,
   getAllAccrualList,
   readAllMessage,
+  getBlackList,
+  getBlackListByUser,
+  createBlackList,
+  deleteBlackList,
+  updateBlackList,
+  activeBlackList,
+  inactiveBlackList,
+  getBlackListActive,
 };
