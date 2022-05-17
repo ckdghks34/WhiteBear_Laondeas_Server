@@ -2127,7 +2127,7 @@ async function deletePremium(req, res, next) {
 // 전체 블랙리스트 가져오기
 async function getBlackList(req, res, next) {
   try {
-    const sql = `SELECT b.*, u.user_seq, u.id, u.name, u.nickname, u.phonenumber, u.gender, u.birth, u.email, u.grade, u.is_premium, is_advertiser
+    const sql = `SELECT *
     FROM blacklist b join user u on b.user_seq = u.user_seq
     order by b.user_seq`;
 
@@ -2155,7 +2155,7 @@ async function getBlackList(req, res, next) {
 // 활성화된 블랙리스트 가져오기
 async function getBlackListActive(req, res, next) {
   try {
-    const sql = `SELECT b.*, u.user_seq, u.id, u.name, u.nickname, u.phonenumber, u.gender, u.birth, u.email, u.grade, u.is_premium, is_advertiser
+    const sql = `SELECT *
     FROM blacklist b join user u on b.user_seq = u.user_seq
     where is_active = 1
     order by b.user_seq`;
@@ -2191,7 +2191,12 @@ async function getBlackListByUser(req, res, next) {
     });
   } else {
     try {
-      const sql = `SELECT b.*, u.user_seq, u.id, u.name, u.nickname, u.phonenumber, u.gender, u.birth, u.email, u.grade, u.is_premium, is_advertiser
+      //   const sql = `SELECT b.*, u.user_seq, u.id, u.name, u.nickname, u.phonenumber, u.gender, u.birth, u.email, u.grade, u.is_premium, is_advertiser
+      // FROM blacklist b join user u on b.user_seq = u.user_seq
+      // where b.user_seq = ?
+      // order by b.user_seq`;
+
+      const sql = `SELECT *
     FROM blacklist b join user u on b.user_seq = u.user_seq
     where b.user_seq = ?
     order by b.user_seq`;
