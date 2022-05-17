@@ -13,6 +13,15 @@ const campaign_upload = campaignUpload.fields([
 // 전체 캠페인 가져오기 (get)
 router.get("/all", campaignController.getAllCampaign);
 
+// 전체 최신순 캠페인 + 페이징 (get)
+router.get("/all/lastest", campaignController.getAllCampaignBylastest);
+
+// 전체 인기순 캠페인 + 페이징 (get)
+router.get("/all/popular", campaignController.getAllCampaignByPopular);
+
+// 전체 선정마감순 캠페인 + 페이징 (get)
+router.get("/all/selection", campaignController.getAllCampaignBySelection);
+
 // 특정 캠페인 가져오기 (get)
 router.get("/", campaignController.getCampaign);
 
