@@ -865,50 +865,11 @@ async function withdrawal(req, res, next) {
       const user_point_results = await dbpool.query(user_point_sql, withdrawal_request.user_seq);
       const user_point = user_point_results[0][0].point;
 
-      // 유저 포인트가 10000점 미만
-      if (user_point < 10000) {
-        // 출금 신청을 취소 처리
-        const return_point_sql = `update user set point = point + ? , last_register_date = ? where user_seq = ?`;
-        await dbpool.beginTransaction();
-
-        await dbpool.execute(withdrawal_request_sql, [-1, request_seq]);
-
-        // 포인트 복구
-        await dbpool.execute(return_point_sql, [
-          withdrawal_request.withdrawal_point,
-          withdrawal_request.first_register_date,
-          withdrawal_request.user_seq,
-        ]);
-        await dbpool.commit();
-
-        return res.status(400).json({
-          message: "최소 출금 가능 포인트는 10000점 입니다. 출금 신청이 반려되었습니다.",
-        });
-      }
-
       // 이미 출금이 되었거나 출금 신청 취소된 경우
       if (withdrawal_request.is_pending === 0 || withdrawal_request.is_pending === -1) {
         return res.status(400).json({
           message: "이미 처리된 출금 요청입니다.",
         });
-      }
-
-      // 현재 포인트가 출금 포인트보다 작을 경우
-      if (user_point < withdrawal_request.withdrawal_point) {
-        try {
-          // 출금 신청을 취소 처리
-          await dbpool.execute(withdrawal_request_sql, [-1, request_seq]);
-
-          return res.status(400).json({
-            message: "출금 금액이 포인트 보다 큽니다.",
-          });
-        } catch (err) {
-          console.log(err);
-
-          return res.status(500).json({
-            message: "출금 실패",
-          });
-        }
       }
 
       await dbpool.beginTransaction();
