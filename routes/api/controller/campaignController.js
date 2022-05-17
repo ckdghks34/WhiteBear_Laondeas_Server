@@ -1,4 +1,5 @@
 import pool from "./../../../config/dbpool.js";
+// import { sign, verify, refresh, refreshVerify } from "./../../../util/jwt-util.js";
 
 const dbpool = await pool;
 
@@ -3191,14 +3192,33 @@ async function test(req, res, next) {
     //     // XML to JSON 변환 필요
     //     // 변환 후 방문자 목록 + 평균 -> JSON
     //   });
-
-    const { user_seq } = req.query;
-    // 회원 등급 조정
-    console.log(user_seq);
-    const grade_count_sql = `select count(*) as count from campaign_application where user_seq = ? and status = 2`;
-    const grade_count_results = await dbpool.query(grade_count_sql, [user_seq]);
-
-    console.log(grade_count_results[0][0].count);
+    // const { user_seq } = req.query;
+    // // 회원 등급 조정
+    // console.log(user_seq);
+    // const grade_count_sql = `select count(*) as count from campaign_application where user_seq = ? and status = 2`;
+    // const grade_count_results = await dbpool.query(grade_count_sql, [user_seq]);
+    // console.log(grade_count_results[0][0].count);
+    //만료토큰
+    // const { user_seq, id } = req.query;
+    // const user = { user_seq, id };
+    // const accessToken = await sign(user);
+    // const refreshToken = await refresh();
+    // let tokensql = `insert into token values(?,?,?,?) on duplicate key update accesstoken = ?, refreshtoken = ?`;
+    // await dbpool.execute(tokensql, [
+    //   user_seq,
+    //   id,
+    //   accessToken,
+    //   refreshToken,
+    //   accessToken,
+    //   refreshToken,
+    // ]);
+    // res.status(200).json({
+    //   message: "로그인 성공",
+    //   data: {
+    //     accessToken,
+    //     refreshToken,
+    //   },
+    // });
   } catch (err) {
     console.log(err);
   }
