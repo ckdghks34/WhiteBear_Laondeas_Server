@@ -7,7 +7,7 @@ const config = {
   user: process.env.database_user,
   password: process.env.database_password,
   database: process.env.database_database,
-  connectionLimit: 2,
+  connectionLimit: 10,
   // keepAliveInitialDay: 10000,
   enableKeepAlive: true,
   dateStrings: "datetime",
