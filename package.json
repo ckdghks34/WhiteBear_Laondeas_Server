@@ -27,7 +27,8 @@
     "multer-s3": "^2.10.0",
     "mysql": "^2.18.1",
     "mysql2": "^2.3.3",
-    "xlsx": "^0.18.5",
+    "xlsx-js-style": "^1.2.0",
+    "xlsx-style": "^0.8.13",
     "xml-js": "^1.6.11"
   },
   "devDependencies": {
