@@ -2012,7 +2012,7 @@ async function createPremiumRequest(req, res, next) {
   } else {
     try {
       const user_sql = `select * from user where user_seq = ?`;
-      const premium_application_sql = `select * from premium_application where user_seq = ?`;
+      const premium_application_sql = `select * from premium_application where user_seq = ? and is_pending = 1`;
       const sql = `insert into premium_application(user_seq, is_pending, agreement_content, first_register_id, first_register_date, last_register_id, last_register_date) values (?, 1,?, ?, ?, ?, ?)`;
 
       const user_results = await dbpool.query(user_sql, user_seq);
