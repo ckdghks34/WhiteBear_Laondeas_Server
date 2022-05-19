@@ -273,6 +273,65 @@ async function getAdditionalInfo(req, res, next) {
   }
 }
 
+// 추가 정보 수정
+async function updateUserAdditionalInfo(req, res, next) {
+  const {
+    tops_size,
+    bottoms_size,
+    shoe_size,
+    height,
+    skin_type,
+    marital_status,
+    having_child,
+    job,
+    companion_animal,
+  } = req.body;
+
+  if (
+    tops_size === undefined ||
+    bottoms_size === undefined ||
+    shoe_size === undefined ||
+    height === undefined ||
+    skin_type === undefined ||
+    marital_status === undefined ||
+    having_child === undefined ||
+    job === undefined ||
+    companion_animal === undefined
+  ) {
+    res.status(400).json({
+      message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
+    });
+  } else {
+    const sql = `update user set tops_size = ?, bottoms_size = ?, shoe_size = ?, height = ?, skin_type = ?, marital_status = ?, having_child = ?, job = ?, companion_animal = ?, last_register_date = ? where user_seq = ?;`;
+
+    try {
+      await dbpool.execute(sql, [
+        tops_size,
+        bottoms_size,
+        shoe_size,
+        height,
+        skin_type,
+        marital_status,
+        having_child,
+        job,
+        companion_animal,
+        new Date(),
+        req.user.user_seq,
+      ]);
+
+      res.status(200).json({
+        message: "추가 정보 수정 성공",
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "추가 정보 수정 실패",
+      });
+    }
+  }
+}
+
 // URL정보 수정
 async function updateSNSInfo(req, res, next) {
   const { user_seq, blog, instagram, influencer, youtube } = req.body;
@@ -2261,7 +2320,7 @@ async function deletePremium(req, res, next) {
 // 전체 블랙리스트 가져오기
 async function getBlackList(req, res, next) {
   try {
-    const sql = `SELECT *
+    const sql = `SELECT b.blacklist_seq, b.user_seq, b.content, b.is_active, b.first_register_id, b.first_register_date, b.last_register_id, b.last_register_date, u.id, u.name, u.nickname, u.phonenumber, u.gender, u.birth, u.email, u.grade, u.is_premium, u.is_advertiser, u.agreement_info, u.agreement_email, u.agreement_mms, u.blog, u.instagram, u.influencer, u.youtube, u.point, u.accumulated_point, u.profile_name, u.profile_path, u.profile_ext, u.profile_key, u.is_admin, u.tops_size, u.bottoms_size, u.shoe_size, u.height, u.skin_type, u.marital_status, u.having_child, u.job, u.companion_animal
     FROM blacklist b join user u on b.user_seq = u.user_seq
     order by b.user_seq`;
 
@@ -2289,7 +2348,7 @@ async function getBlackList(req, res, next) {
 // 활성화된 블랙리스트 가져오기
 async function getBlackListActive(req, res, next) {
   try {
-    const sql = `SELECT *
+    const sql = `SELECT b.blacklist_seq, b.user_seq, b.content, b.is_active, b.first_register_id, b.first_register_date, b.last_register_id, b.last_register_date, u.id, u.name, u.nickname, u.phonenumber, u.gender, u.birth, u.email, u.grade, u.is_premium, u.is_advertiser, u.agreement_info, u.agreement_email, u.agreement_mms, u.blog, u.instagram, u.influencer, u.youtube, u.point, u.accumulated_point, u.profile_name, u.profile_path, u.profile_ext, u.profile_key, u.is_admin, u.tops_size, u.bottoms_size, u.shoe_size, u.height, u.skin_type, u.marital_status, u.having_child, u.job, u.companion_animal
     FROM blacklist b join user u on b.user_seq = u.user_seq
     where is_active = 1
     order by b.user_seq`;
@@ -2330,7 +2389,7 @@ async function getBlackListByUser(req, res, next) {
       // where b.user_seq = ?
       // order by b.user_seq`;
 
-      const sql = `SELECT *
+      const sql = `SELECT b.blacklist_seq, b.user_seq, b.content, b.is_active, b.first_register_id, b.first_register_date, b.last_register_id, b.last_register_date, u.id, u.name, u.nickname, u.phonenumber, u.gender, u.birth, u.email, u.grade, u.is_premium, u.is_advertiser, u.agreement_info, u.agreement_email, u.agreement_mms, u.blog, u.instagram, u.influencer, u.youtube, u.point, u.accumulated_point, u.profile_name, u.profile_path, u.profile_ext, u.profile_key, u.is_admin, u.tops_size, u.bottoms_size, u.shoe_size, u.height, u.skin_type, u.marital_status, u.having_child, u.job, u.companion_animal
     FROM blacklist b join user u on b.user_seq = u.user_seq
     where b.user_seq = ?
     order by b.user_seq`;
@@ -2361,7 +2420,7 @@ async function getBlackListByUser(req, res, next) {
 async function createBlackList(req, res, next) {
   const { user_seq, content, admin } = req.body;
 
-  if (user_seq === undefined) {
+  if (user_seq === undefined || content === undefined || admin === undefined) {
     res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
     });
@@ -2563,4 +2622,5 @@ export {
   getBlackListActive,
   approvePremium,
   rejectPremium,
+  updateUserAdditionalInfo,
 };

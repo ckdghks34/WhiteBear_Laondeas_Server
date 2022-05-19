@@ -23,6 +23,9 @@ router.patch("/additional", userController.updateAdditionalInfo);
 // 부가 정보 가져오기(관심사, 지역, 채널)
 router.get("/additional", userController.getAdditionalInfo);
 
+// 유저 추가 정보 수정(사이즈 정보, 피부정보, 라이프정보)
+router.patch("/info/additional", userController.updateUserAdditionalInfo);
+
 // SNS 정보 수정
 router.patch("/sns", userController.updateSNSInfo);
 
