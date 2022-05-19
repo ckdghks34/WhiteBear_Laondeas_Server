@@ -335,10 +335,12 @@ async function downloadStatistics(req, res, next) {
         let value = Object.values(applicantData[i]);
 
         for (let k = 0; k < value.length; ++k) {
-          wsMaxCol[k + 1].width =
-            value[k].length * 2.5 > wsMaxCol[k + 1].width
-              ? value[k].length * 2.5
-              : wsMaxCol[k + 1].width;
+          if (value[k] !== null) {
+            wsMaxCol[k + 1].width =
+              value[k].length * 2.5 > wsMaxCol[k + 1].width
+                ? value[k].length * 2.5
+                : wsMaxCol[k + 1].width;
+          }
         }
       }
 
