@@ -1465,7 +1465,7 @@ async function getQNAList(req, res, next) {
   try {
     //   const sql = `select q.qna_seq, q.author, q.category, q.title, q.content, q.first_register_id, q.first_register_date, a.answer_seq ,a.author as answer_author, a.title as answer_title, a.content as answer_content, a.first_register_date as answer_first_register, a.first_register_date as answer_first_register_date
     // from question as q left join answer as a on q.qna_seq = a.qna_seq`;
-    const question_sql = `select * from question`;
+    const question_sql = `select q.qna_seq, q.author, u.id, u.name, q.category, q.title, q.content, q.first_register_id, q.first_register_date, q.last_register_id, q.last_register_date from question as q join user as u on q.author = u.user_seq;`;
     const answer_sql = `select * from answer where qna_seq = ?`;
 
     const question_results = await dbpool.query(question_sql);
@@ -1514,7 +1514,7 @@ async function getQNA(req, res, next) {
     });
   } else {
     try {
-      const question_sql = `select * from qna where qna_seq = ?`;
+      const question_sql = `select q.qna_seq, q.author, u.id, u.name, q.category, q.title, q.content, q.first_register_id, q.first_register_date, q.last_register_id, q.last_register_date from question as q join user as u on q.author = u.user_seq where qna_seq = ?`;
       const answer_sql = `select * from answer where qna_seq = ?`;
 
       const question = await dbpool.query(question_sql, qna_seq);
@@ -1551,7 +1551,7 @@ async function getUserQNA(req, res, next) {
     });
   } else {
     try {
-      const question_sql = `select * from question where author = ?`;
+      const question_sql = `select q.qna_seq, q.author, u.id, u.name, q.category, q.title, q.content, q.first_register_id, q.first_register_date, q.last_register_id, q.last_register_date from question as q join user as u on q.author = u.user_seq where author = ?`;
       const answer_sql = `select * from answer where qna_seq = ?`;
       let question_results = await dbpool.query(question_sql, user_seq);
 
