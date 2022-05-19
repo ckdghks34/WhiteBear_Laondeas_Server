@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { sign, verify, refresh, refreshVerify } from "./../../../util/jwt-util.js";
 import jwt from "jsonwebtoken";
 import axios from "axios";
+import { sendMail } from "./../../../config/mailPoster.js";
 
 dotenv.config();
 
@@ -46,7 +47,7 @@ async function signup(req, res, next) {
   } else {
     try {
       user_password = bcrypt.hashSync(user_password, 10);
-      const sql = `Insert into user (id, password, name, nickname, email, phonenumber,grade, agreement_info, agreement_email, agreement_mms, is_premium, is_advertiser, point, accumulated_point, first_register_date, last_register_date, is_admin) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+      const sql = `Insert into user (id, password, name, nickname, email, phonenumber, grade, agreement_info, agreement_email, agreement_mms, is_premium, is_advertiser, point, accumulated_point, first_register_date, last_register_date, is_admin) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
       const result = await dbpool.execute(sql, [
         user_id,
@@ -67,6 +68,18 @@ async function signup(req, res, next) {
         new Date(),
         is_admin,
       ]);
+
+      let mail_title = "[Laondeas] 회원가입을 진심으로 축하드립니다.";
+      let mail_contents = `${user_name}님의 회원가입을 진심으로 축하합니다.
+Laondeas를 이용해주셔서 감사합니다.
+이제 이용하시는 모든 분들은 Laondeas의 서비스를 이용하실 수 있습니다. `;
+      // let mail_contents = user_name+"님의 회원가입을 진심으로 축하합니다.\nLaondeas를 이용해주셔서 감사합니다.\n이제 이용하시는 모든 분들은 Laondeas의 서비스를 이용하실 수 있습니다. ";
+
+      if (sendMail(user_email, mail_title, mail_contents)) {
+        console.error(`id : ${user_id}, email : ${user_email} 메일 발송 성공`);
+      } else {
+        console.error(`id : ${user_id}, email : ${user_email} 메일 발송 실패`);
+      }
 
       res.status(200).json({
         message: "회원가입 성공",
@@ -191,7 +204,7 @@ async function logout(req, res, next) {
 async function deleteUser(req, res, next) {
   const { user_seq } = req.body;
 
-  if (user_id === undefined) {
+  if (user_seq === undefined) {
     res.status(400).json({
       message: "회원탈퇴 실패, 필수 항목이 없습니다.",
     });
