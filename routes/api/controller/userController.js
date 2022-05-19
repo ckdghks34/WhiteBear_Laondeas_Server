@@ -2011,7 +2011,24 @@ async function createPremiumRequest(req, res, next) {
     });
   } else {
     try {
-      const sql = `insert into premium_application(user_seq, agreement_content, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?)`;
+      const user_sql = `select * from user where user_seq = ?`;
+      const premium_application_sql = `select * from premium_application where user_seq = ?`;
+      const sql = `insert into premium_application(user_seq, is_pending, agreement_content, first_register_id, first_register_date, last_register_id, last_register_date) values (?, 1,?, ?, ?, ?, ?)`;
+
+      const user_results = await dbpool.query(user_sql, user_seq);
+
+      if (user_results[0][0].is_premium === 1) {
+        return res.status(400).json({
+          message: "이미 프리미엄 회원입니다.",
+        });
+      }
+      const premium_application_results = await dbpool.query(premium_application_sql, user_seq);
+
+      if (premium_application_results[0].length > 0) {
+        return res.status(400).json({
+          message: "이미 프리미엄 신청을 하셨습니다.",
+        });
+      }
 
       await dbpool.execute(sql, [
         user_seq,
@@ -2105,6 +2122,86 @@ async function getPremiumUserList(req, res, next) {
     res.status(400).json({
       message: "프리미엄 회원 목록 조회 실패",
     });
+  }
+}
+
+// 프리미엄 회원 신청 승인
+async function approvePremium(req, res, next) {
+  const { premium_seq, user_seq, admin } = req.body;
+
+  if (premium_seq === undefined || user_seq === undefined || admin === undefined) {
+    res.status(400).json({
+      message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
+    });
+  } else {
+    try {
+      const application_sql = `select * from premium_application where premium_seq = ? and user_seq = ?`;
+
+      const application_results = await dbpool.query(application_sql, [premium_seq, user_seq]);
+
+      if (application_results[0][0].is_pending !== 1) {
+        return res.status(400).json({
+          message: "이미 처리된 신청입니다.",
+        });
+      }
+
+      const approve_sql = `update premium_application set is_pending = 0, last_register_id = ?, last_register_date = ? where premium_seq = ? and user_seq = ?`;
+      const user_sql = `update user set is_premium = 1 where user_seq = ?`;
+
+      await dbpool.beginTransaction();
+
+      await dbpool.execute(approve_sql, [admin, new Date(), premium_seq, user_seq]);
+      await dbpool.execute(user_sql, [user_seq]);
+
+      await dbpool.commit();
+
+      res.status(200).json({
+        message: "프리미엄 회원 신청 승인 성공",
+      });
+    } catch (err) {
+      await dbpool.rollback();
+      console.log(err);
+
+      res.status(500).json({
+        message: "프리미엄 회원 신청 승인 실패",
+      });
+    }
+  }
+}
+
+// 프리미엄 회원 신청 승인 거절
+async function rejectPremium(req, res, next) {
+  const { premium_seq, user_seq, admin } = req.body;
+
+  if (premium_seq === undefined || user_seq === undefined || admin === undefined) {
+    res.status(400).json({
+      message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
+    });
+  } else {
+    try {
+      const application_sql = `select * from premium_application where premium_seq = ? and user_seq = ?`;
+
+      const application_results = await dbpool.query(application_sql, [premium_seq, user_seq]);
+
+      if (application_results[0][0].is_pending !== 1) {
+        return res.status(400).json({
+          message: "이미 처리된 신청입니다.",
+        });
+      }
+      const reject_sql = `update premium_application set is_pending = -1, last_register_id = ?, last_register_date = ? where premium_seq = ? and user_seq = ?`;
+
+      await dbpool.execute(reject_sql, [admin, new Date(), premium_seq, user_seq]);
+
+      res.status(200).json({
+        message: "프리미엄 회원 신청 거절 성공",
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "프리미엄 회원 신청 거절 실패",
+      });
+    }
   }
 }
 
@@ -2466,4 +2563,6 @@ export {
   activeBlackList,
   inactiveBlackList,
   getBlackListActive,
+  approvePremium,
+  rejectPremium,
 };

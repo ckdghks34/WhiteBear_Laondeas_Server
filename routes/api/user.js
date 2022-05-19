@@ -66,6 +66,12 @@ router.post("/premium/application", userController.createPremiumRequest);
 // 프리미엄 신청 목록
 router.get("/premium/application", userController.getPremiumRequestList);
 
+// 프리미엄 회원 신청 승인 (patch)
+router.patch("/premium/application/approve", userController.approvePremium);
+
+// 프리미엄 회원 신청 승인 거절 (patch)
+router.patch("/premium/application/reject", userController.rejectPremium);
+
 // 프리미엄 회원 목록 가져오기
 router.get("/premium/user", userController.getPremiumUserList);
 
