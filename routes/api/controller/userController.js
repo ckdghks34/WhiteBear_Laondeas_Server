@@ -2055,10 +2055,9 @@ async function createPremiumRequest(req, res, next) {
 // 프리미엄 신청 목록
 async function getPremiumRequestList(req, res, next) {
   try {
-    const sql = `select pa.premium_seq,pa.user_seq,pa.is_pending, u.name,u.phonenumber,u.birth,u.gender, u.grade, u.influencer,u.blog,u.instagram, u.youtube, u.address_seq, u.address, pa.agreement_content
-    from premium_application as pa join (select us.user_seq,us.name,us.phonenumber,us.birth,us.gender,us.grade,us.influencer,us.blog,us.instagram, us.youtube, uab.address_seq, uab.address
-    from user as us join user_address_book as uab on us.user_seq = uab.user_seq
-    where uab.is_default = 1) as u on pa.user_seq = u.user_seq`;
+    const sql = `select pa.premium_seq,pa.user_seq,pa.is_pending, u.name,u.phonenumber,u.birth,u.gender, u.grade, u.influencer,u.blog,u.instagram, u.youtube, u.address_seq, u.address, pa.agreement_content 
+    from premium_application as pa left join (select us.user_seq,us.name,us.phonenumber,us.birth,us.gender,us.grade,us.influencer,us.blog,us.instagram, us.youtube, uab.address_seq, uab.address
+                      from user as us left join user_address_book as uab on us.user_seq = uab.user_seq and uab.is_default = 1) as u on pa.user_seq = u.user_seq;`;
     const results = await dbpool.query(sql);
 
     res.status(200).json({
@@ -2084,11 +2083,10 @@ async function getPremiumRequestDetail(req, res, next) {
     });
   } else {
     try {
-      const sql = `select pa.premium_seq,pa.user_seq,pa.is_pending,u.name,u.phonenumber,u.birth,u.gender,u.grade, u.influencer,u.blog,u.instagram, u.youtube, u.address_seq, u.address, pa.agreement_content
-      from premium_application as pa join (select us.user_seq,us.name,us.phonenumber,us.birth,us.gender,us.grade,us.influencer,us.blog,us.instagram, us.youtube, uab.address_seq, uab.address
-      from user as us join user_address_book as uab on us.user_seq = uab.user_seq
-      where uab.is_default = 1) as u on pa.user_seq = u.user_seq
-      where pa.premium_seq = ?`;
+      const sql = `select pa.premium_seq,pa.user_seq,pa.is_pending, u.name,u.phonenumber,u.birth,u.gender, u.grade, u.influencer,u.blog,u.instagram, u.youtube, u.address_seq, u.address, pa.agreement_content 
+      from premium_application as pa left join (select us.user_seq,us.name,us.phonenumber,us.birth,us.gender,us.grade,us.influencer,us.blog,us.instagram, us.youtube, uab.address_seq, uab.address
+                        from user as us left join user_address_book as uab on us.user_seq = uab.user_seq and uab.is_default = 1) as u on pa.user_seq = u.user_seq
+      where pa.premium_seq = ?;`;
 
       const results = await dbpool.query(sql, premium_seq);
 
