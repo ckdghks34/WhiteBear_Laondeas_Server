@@ -401,6 +401,7 @@ async function kakaoLogin(req, res, next) {
       const sql = `SELECT * FROM user WHERE id = ?`;
       const results = await dbpool.query(sql, info.data.id);
 
+      await dbpool.beginTransaction();
       // 사용자가 없을 경우
       if (results[0].length === 0) {
         let password = bcrypt.hashSync(kakaoUser.kakao_account.email, 10);
@@ -412,7 +413,7 @@ async function kakaoLogin(req, res, next) {
           kakaoUser.kakao_account.email,
           kakaoUser.kakao_account.email,
           kakaoUser.kakao_account.email,
-          "",
+          "010",
           1,
           1,
           1,
@@ -426,7 +427,6 @@ async function kakaoLogin(req, res, next) {
           0,
         ]);
         const user = { user_seq: result[0].insertId, id: kakaoUser.id };
-
         const newAccessToken = await sign(user);
         const newRefreshToken = await refresh(user);
 
@@ -441,11 +441,19 @@ async function kakaoLogin(req, res, next) {
           newRefreshToken,
         ]);
 
-        const loginUser = await dbpool.query(sql, user.user_seq);
+        const user_sql = `select * from user where user_seq = ?`;
+
+        const user_result = await dbpool.query(user_sql, user.user_seq);
+
+        const loginuser = user_result[0][0];
+
+        loginuser["password"] = undefined;
+
+        await dbpool.commit();
 
         res.status(200).json({
           message: "로그인 성공",
-          user: loginUser[0][0],
+          user: loginuser,
           data: {
             accessToken: newAccessToken,
             refreshToken: newRefreshToken,
@@ -470,6 +478,8 @@ async function kakaoLogin(req, res, next) {
           newRefreshToken,
         ]);
 
+        await dbpool.commit();
+
         res.status(200).json({
           message: "로그인 성공",
           user: results[0][0],
@@ -480,6 +490,7 @@ async function kakaoLogin(req, res, next) {
         });
       }
     } catch (err) {
+      await dbpool.rollback();
       console.log(err);
 
       res.status(500).json({
@@ -510,11 +521,13 @@ async function naverLogin(req, res, next) {
       message: "로그인 실패, 필수 데이터가 없습니다.",
     });
   } else {
-    console.log(id, name, email, gender, mobile, birthyear, profile_image);
     try {
       const sql = `SELECT * FROM user WHERE id = ?`;
       const results = await dbpool.query(sql, id);
       let phonenumber = mobile.replace(/-/gi, "");
+
+      await dbpool.beginTransaction();
+
       // 사용자가 없을 경우
       if (results[0].length === 0) {
         let password = bcrypt.hashSync(email, 10);
@@ -593,11 +606,16 @@ async function naverLogin(req, res, next) {
           newRefreshToken,
         ]);
 
-        const loginUser = await dbpool.query(sql, user.user_seq);
+        const user_results = await dbpool.query(sql, user.user_seq);
 
+        const loginuser = user_results[0][0];
+
+        loginuser["password"] = undefined;
+
+        await dbpool.commit();
         res.status(200).json({
           message: "로그인 성공",
-          user: loginUser[0][0],
+          user: loginuser,
           data: {
             accessToken: newAccessToken,
             refreshToken: newRefreshToken,
@@ -623,6 +641,8 @@ async function naverLogin(req, res, next) {
           newRefreshToken,
         ]);
 
+        await dbpool.commit();
+
         res.status(200).json({
           message: "로그인 성공",
           user: results[0][0],
@@ -633,6 +653,7 @@ async function naverLogin(req, res, next) {
         });
       }
     } catch (err) {
+      await dbpool.rollback();
       console.log(err);
 
       res.status(500).json({
