@@ -276,6 +276,7 @@ async function getAdditionalInfo(req, res, next) {
 // 추가 정보 수정
 async function updateUserAdditionalInfo(req, res, next) {
   const {
+    user_seq,
     tops_size,
     bottoms_size,
     shoe_size,
@@ -288,15 +289,16 @@ async function updateUserAdditionalInfo(req, res, next) {
   } = req.body;
 
   if (
+    (user_seq,
     tops_size === undefined ||
-    bottoms_size === undefined ||
-    shoe_size === undefined ||
-    height === undefined ||
-    skin_type === undefined ||
-    marital_status === undefined ||
-    having_child === undefined ||
-    job === undefined ||
-    companion_animal === undefined
+      bottoms_size === undefined ||
+      shoe_size === undefined ||
+      height === undefined ||
+      skin_type === undefined ||
+      marital_status === undefined ||
+      having_child === undefined ||
+      job === undefined ||
+      companion_animal === undefined)
   ) {
     res.status(400).json({
       message: "잘못된 접근입니다. 필수 데이터가 없습니다.",
@@ -316,7 +318,7 @@ async function updateUserAdditionalInfo(req, res, next) {
         job,
         companion_animal,
         new Date(),
-        req.user.user_seq,
+        user_seq,
       ]);
 
       res.status(200).json({
