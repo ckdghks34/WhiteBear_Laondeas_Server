@@ -356,7 +356,7 @@ async function tokenLogin(req, res, next) {
       const results = await dbpool.query(usersql, user.user_seq);
       const loginuser = results[0][0];
 
-      loginuser["password"] = "";
+      loginuser["password"] = undefined;
       await dbpool.commit();
 
       res.status(200).json({
