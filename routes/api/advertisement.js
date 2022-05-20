@@ -10,4 +10,10 @@ router.post("/", advertiseController.createAdvertise);
 // 광고 신청 목록 가져오기
 router.get("/", advertiseController.getAdvertiseList);
 
+// 광고 신청 승인
+router.patch("/approve", advertiseController.approveAdvertise);
+
+// 광고 신청 반려
+router.patch("/reject", advertiseController.rejectAdvertise);
+
 export default router;
