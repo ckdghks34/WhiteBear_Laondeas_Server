@@ -211,7 +211,7 @@ async function deleteUser(req, res, next) {
   } else {
     try {
       const sql = `DELETE FROM user WHERE user_seq = ?`;
-      await dbpool.execute(sql, user_seq);
+      await dbpool.execute(sql, [user_seq]);
 
       res.status(200).json({
         message: "회원탈퇴 성공",
