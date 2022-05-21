@@ -411,10 +411,10 @@ async function kakaoLogin(req, res, next) {
         const result = await dbpool.execute(sql, [
           kakaoUser.id,
           password,
+          "",
+          kakaoUser.id,
           kakaoUser.kakao_account.email,
-          kakaoUser.kakao_account.email,
-          kakaoUser.kakao_account.email,
-          "010",
+          "",
           1,
           1,
           1,
@@ -607,10 +607,10 @@ async function naverLogin(req, res, next) {
           newRefreshToken,
         ]);
 
-        const user_results = await dbpool.query(sql, user.user_seq);
+        const user_sql = `select * from user where user_seq = ?`;
+        const user_results = await dbpool.query(user_sql, user.user_seq);
 
         const loginuser = user_results[0][0];
-
         loginuser["password"] = undefined;
 
         await dbpool.commit();
