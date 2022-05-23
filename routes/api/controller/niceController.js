@@ -72,7 +72,8 @@ async function createSecretKey(req, res, next) {
 async function decryptData(req, res, next) {
   const method = req.method;
   const sEncData = method === "GET" ? req.query.EncodeData : req.body.EncodeData;
-  const redirectUrl = method === "GET" ? req.query.EncodeData : req.body.EncodeData;
+  const redirectUrl = req.session.redirectUrl;
+  console.log(redirectUrl);
 
   const niceInfo = pgInfo.nice;
   const moduleName = "CPClient_linux_x64";
