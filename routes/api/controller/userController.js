@@ -633,14 +633,16 @@ async function getMyCampaign(req, res, next) {
       where user_seq = ?) as ca join campaign as c on ca.campaign_seq = c.campaign_seq`;
       const campaignImg_sql = `select * from campaign_file where campaign_seq = ?`;
       const results = await dbpool.query(sql, user_seq);
+      const applicant_sql = `select ca.user_seq, ca.campaign_seq, ca.acquaint_content, ca.select_reward, ca.camera_code, ca.face_exposure, ca.address, ca.receiver, ca.receiver_phonenumber, ca.joint_blog, ca.other_answers, ca.status, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.grade,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
       const myCampaign = results[0];
       for (let i = 0; i < myCampaign.length; i++) {
         const campaign_seq = myCampaign[i].campaign_seq;
 
         const campaignImg = await dbpool.query(campaignImg_sql, campaign_seq);
-
+        const applicant = await dbpool.query(applicant_sql, campaign_seq);
         myCampaign[i]["campaign_file"] = campaignImg[0];
+        myCampaign[i]["applicant"] = applicant[0];
       }
 
       res.status(200).json({
