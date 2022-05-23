@@ -2037,20 +2037,31 @@ async function getCampaignByChannelBySelection(req, res, next) {
 // 연관 캠페인 + 페이징
 async function getCampaignByRelation(req, res, next) {
   try {
-    let { product } = req.query;
+    let { product, premium } = req.query;
 
-    if (product === undefined) {
+    if (product === undefined || premium === undefined) {
       res.status(400).json({
         message: "상품 정보가 없습니다.",
       });
     } else {
-      const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, address, keyword, headcount, siteURL, misson, reward, original_price, discount_price, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,ifnull(cc.count,0) as applicant_count, view_count
+      let campaign_sql;
+      if (premium === true) {
+        campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, address, keyword, headcount, siteURL, misson, reward, original_price, discount_price, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,ifnull(cc.count,0) as applicant_count, view_count
       from campaign as c
        left join
         (select campaign_seq,count(*) as count
           from campaign_application group by campaign_seq) as cc
         on c.campaign_seq = cc.campaign_seq
         where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and c.product = ? limit 10`;
+      } else {
+        campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, address, keyword, headcount, siteURL, misson, reward, original_price, discount_price, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,ifnull(cc.count,0) as applicant_count, view_count
+        from campaign as c
+         left join
+          (select campaign_seq,count(*) as count
+            from campaign_application group by campaign_seq) as cc
+          on c.campaign_seq = cc.campaign_seq
+          where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and c.product = ? and is_premium = 0 limit 10`;
+      }
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.user_seq, ca.campaign_seq, ca.acquaint_content, ca.select_reward, ca.camera_code, ca.face_exposure, ca.address, ca.receiver, ca.receiver_phonenumber, ca.joint_blog, ca.other_answers, ca.status, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.grade,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
