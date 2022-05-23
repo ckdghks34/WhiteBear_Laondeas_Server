@@ -1,7 +1,7 @@
 import path from "path";
 import exec from "child_process";
 import querystring from "querystring";
-import pgInfo from "../../../config/pginfo";
+import pgInfo from "../../../config/pginfo.js";
 
 const __dirname = path.resolve();
 
