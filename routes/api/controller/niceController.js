@@ -1,5 +1,5 @@
 import path from "path";
-import exec from "child_process/exec";
+import exec from "child_process";
 import querystring from "querystring";
 import pgInfo from "../../../config/pginfo.js";
 
@@ -32,7 +32,7 @@ async function createSecretKey(req, res, next) {
     `9:CUSTOMIZE${sCustomize.length}:${sCustomize}`;
 
   const cmd = `${modulePath} ENC ${sPlainData} ${sSitePW} ${sPlainData}`;
-  let child = exec(cmd, { encoding: "euc-kr" });
+  let child = exec.exec(cmd, { encoding: "euc-kr" });
   child.stdout.on("data", function (data) {
     sEncData += data;
   });
@@ -89,7 +89,7 @@ async function decryptData(req, res, next) {
 
   let sDecData = "";
 
-  const child = exec(cmd, { encoding: "euc-kr" });
+  const child = exec.exec(cmd, { encoding: "euc-kr" });
   child.stdout.on("data", function (data) {
     sDecData += data;
   });
