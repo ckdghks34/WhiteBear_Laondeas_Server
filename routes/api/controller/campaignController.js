@@ -2044,8 +2044,9 @@ async function getCampaignByRelation(req, res, next) {
         message: "상품 정보가 없습니다.",
       });
     } else {
-      let campaign_sql;
-      if (filter === true) {
+      let campaign_sql = "";
+
+      if (filter === "false") {
         campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, address, keyword, headcount, siteURL, misson, reward, original_price, discount_price, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,ifnull(cc.count,0) as applicant_count, view_count
       from campaign as c
        left join
@@ -2069,7 +2070,6 @@ async function getCampaignByRelation(req, res, next) {
       const campaign_results = await dbpool.query(campaign_sql, [product]);
 
       let campaign = campaign_results[0];
-      console.log(campaign);
       // campaign + qna
       for (let i = 0; i < campaign_results[0].length; i++) {
         let campaign_seq = campaign_results[0][i].campaign_seq;
