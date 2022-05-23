@@ -31,11 +31,15 @@ async function createSecretKey(req, res, next) {
     `7:ERR_URL${sErrorUrl.length}:${sErrorUrl}` +
     `9:CUSTOMIZE${sCustomize.length}:${sCustomize}`;
 
-  const cmd = `${modulePath} ENC ${sPlainData} ${sSitePW} ${sPlainData}`;
+  const cmd = `${modulePath} ENC ${sPlainData} ${sSiteCode} ${sSitePW}`;
+  console.warn(cmd);
+
   let child = exec.exec(cmd, { encoding: "euc-kr" });
   child.stdout.on("data", function (data) {
     sEncData += data;
   });
+
+  console.log(sEncData);
   child.on("close", function () {
     //처리 결과 확인
     if (sEncData == "-1") {
