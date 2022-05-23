@@ -1,6 +1,5 @@
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
-import { json } from "express";
 import pool from "./../../../config/dbpool.js";
 import { s3, Bucket } from "./../../../util/s3.js";
 dotenv.config();
