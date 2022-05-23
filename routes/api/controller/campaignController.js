@@ -2037,15 +2037,15 @@ async function getCampaignByChannelBySelection(req, res, next) {
 // 연관 캠페인 + 페이징
 async function getCampaignByRelation(req, res, next) {
   try {
-    let { product, premium } = req.query;
+    let { product, filter } = req.query;
 
-    if (product === undefined || premium === undefined) {
+    if (product === undefined || filter === undefined) {
       res.status(400).json({
         message: "상품 정보가 없습니다.",
       });
     } else {
       let campaign_sql;
-      if (premium === true) {
+      if (filter === true) {
         campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, address, keyword, headcount, siteURL, misson, reward, original_price, discount_price, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,ifnull(cc.count,0) as applicant_count, view_count
       from campaign as c
        left join
