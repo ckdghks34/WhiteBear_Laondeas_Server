@@ -1,5 +1,5 @@
 import path from "path";
-import exec from "child_process";
+import exec from "child_process/exec";
 import querystring from "querystring";
 import pgInfo from "../../../config/pginfo.js";
 
