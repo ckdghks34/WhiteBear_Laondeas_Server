@@ -16,7 +16,7 @@ async function createSecretKey(req, res, next) {
   const date = new Date();
 
   const sCPRequest = `${sSiteCode}_${date.getTime()}`;
-
+  console.log(returnUrl);
   let sEncData = "";
   let sAuthType = "M";
   let sCustomize = "";
