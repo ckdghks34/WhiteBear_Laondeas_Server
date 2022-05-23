@@ -31,7 +31,7 @@ async function createSecretKey(req, res, next) {
     `7:ERR_URL${sErrorUrl.length}:${sErrorUrl}` +
     `9:CUSTOMIZE${sCustomize.length}:${sCustomize}`;
 
-  const cmd = `${modulePath} ENC ${sPlainData} ${sSiteCode} ${sSitePW}`;
+  const cmd = `${modulePath} ENC ${sSiteCode} ${sSitePW} ${sPlainData}`;
   console.warn(cmd);
 
   let child = exec.exec(cmd, { encoding: "euc-kr" });
