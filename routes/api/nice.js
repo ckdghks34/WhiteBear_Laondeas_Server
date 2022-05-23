@@ -7,6 +7,6 @@ const router = express.Router();
 router.get("/encrypt/data", niceController.createSecretKey);
 
 // callback & redirect
-router.all("decrypt/data", niceController.decryptData);
+router.all("/decrypt/data", niceController.decryptData);
 
 export default router;
