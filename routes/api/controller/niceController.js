@@ -59,7 +59,7 @@ async function createSecretKey(req, res, next) {
     } else {
       res.status(200).json({
         message: "success",
-        data: sEncData,
+        sEncData,
       });
     }
   });
