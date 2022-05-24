@@ -1,4 +1,5 @@
 import pool from "./../../../config/dbpool.js";
+import { sendMail } from "./../../../config/mailPoster.js";
 // import { sign, verify, refresh, refreshVerify } from "./../../../util/jwt-util.js";
 
 const dbpool = await pool;
@@ -2513,11 +2514,37 @@ async function createCampaignReviewer(req, res, next) {
       }
       const sql = `insert into reviewer (campaign_seq, user_seq, complete_mission, first_register_id, first_register_date, last_register_id, last_register_date) values (?, ?, ?, ?, ?, ?, ?)`;
       const status_sql = `update campaign_application set status = 1 where campaign_seq = ? and user_seq = ?`;
+      const campaign_sql = `select * from campaign where campaign_seq = ?`;
+      const user_sql = `select * from user where user_seq = ?`;
+
+      const campaign_results = await dbpool.query(campaign_sql, [campaign_seq]);
+      const user_results = await dbpool.query(user_sql, [user_seq]);
+
+      const campaign = campaign_results[0][0];
+      const user = user_results[0][0];
 
       await dbpool.beginTransaction();
       await dbpool.execute(sql, [campaign_seq, user_seq, 0, admin, new Date(), admin, new Date()]);
       await dbpool.execute(status_sql, [campaign_seq, user_seq]);
       await dbpool.commit();
+
+      let mail_title = `[Laondeas] ${campaign.title} 캠페인 선정 안내`;
+      let mail_contents = `안녕하세요 ${user.name}님!
+
+먼저 Laondeas를 이용해주셔서 감사합니다.
+
+신청하신 ${campaign.title} 캠페인에 선정되었습니다.
+
+마이페이지를 통해서 선정된 캠페인을 확인하실 수 있습니다.
+
+감사합니다.`;
+      // let mail_contents = user_name+"님의 회원가입을 진심으로 축하합니다.\nLaondeas를 이용해주셔서 감사합니다.\n이제 이용하시는 모든 분들은 Laondeas의 서비스를 이용하실 수 있습니다. ";
+
+      if (sendMail(user.email, mail_title, mail_contents)) {
+        console.error(`id : ${user.id}, email : ${user.email} 메일 발송 성공`);
+      } else {
+        console.error(`id : ${user.id}, email : ${user.email} 메일 발송 실패`);
+      }
 
       res.status(200).json({
         message: "리뷰어 선정 등록 성공",
