@@ -98,4 +98,21 @@ const widgetUpload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 용량제한 5MB
 });
 
-export { profileUpload, campaignUpload, bannerUpload, widgetUpload };
+const popupUpload = multer({
+  storage: multerS3({
+    s3: s3,
+    bucket: Bucket,
+    contentType: multerS3.AUTO_CONTENT_TYPE,
+    key: (req, file, cb) => {
+      var ext = file.mimetype.split("/")[1];
+      if (!["png", "jpg", "jpeg", "gif", "bmp"].includes(ext)) {
+        return cb(new Error("Only images are allowed"));
+      }
+
+      cb(null, "popupImage/" + "popup_" + Date.now() + file.originalname.split(".")[0] + "." + ext);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 용량제한 5MB
+});
+
+export { profileUpload, campaignUpload, bannerUpload, widgetUpload, popupUpload };

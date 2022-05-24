@@ -220,6 +220,206 @@ async function getWidget(req, res, next) {
   }
 }
 
+// 팝업 등록
+async function createPopup(req, res, next) {
+  const { name, is_active } = req.body;
+  const popup_img = req.file;
+
+  const filename = popup_img.originalname;
+  const ext = popup_img.mimetype.split("/")[1];
+  const key = popup_img.key;
+  const filepath = popup_img.location;
+
+  if (name === undefined || is_active === undefined || popup_img === undefined) {
+    res.status(400).json({
+      message: "팝업 등록 실패, 필수 항목이 없습니다.",
+    });
+  } else {
+    try {
+      const sql = `insert into popup (name, filename, path, extension, filekey, is_active) values (?, ?, ?, ?, ?, ?)`;
+
+      await dbpool.execute(sql, [name, filename, filepath, ext, key, is_active]);
+
+      res.status(200).json({
+        message: "팝업 등록 성공",
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "팝업 등록 실패",
+      });
+    }
+  }
+}
+
+// 팝업 삭제
+async function deletePopup(req, res, next) {
+  const { popup_seq } = req.body;
+
+  if (popup_seq === undefined) {
+    res.status(400).json({
+      message: "팝업 삭제 실패, 필수 항목이 없습니다.",
+    });
+  } else {
+    try {
+      const sql = `delete from popup where popup_seq = ?`;
+
+      await dbpool.execute(sql, [popup_seq]);
+
+      res.status(200).json({
+        message: "팝업 삭제 성공",
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "팝업 삭제 실패",
+      });
+    }
+  }
+}
+
+// 팝업 활성화
+async function activatePopup(req, res, next) {
+  const { popup_seq } = req.body;
+
+  if (popup_seq === undefined) {
+    res.status(400).json({
+      message: "팝업 활성화 실패, 필수 항목이 없습니다.",
+    });
+  } else {
+    try {
+      const sql = `update popup set is_active = 1 where popup_seq = ?`;
+
+      await dbpool.execute(sql, [popup_seq]);
+
+      res.status(200).json({
+        message: "팝업 활성화 성공",
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "팝업 활성화 실패",
+      });
+    }
+  }
+}
+
+// 팝업 비활성화
+async function deactivatePopup(req, res, next) {
+  const { popup_seq } = req.body;
+
+  if (popup_seq === undefined) {
+    res.status(400).json({
+      message: "팝업 비활성화 실패, 필수 항목이 없습니다.",
+    });
+  } else {
+    try {
+      const sql = `update popup set is_active = 0 where popup_seq = ?`;
+
+      await dbpool.execute(sql, [popup_seq]);
+
+      res.status(200).json({
+        message: "팝업 비활성화 성공",
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "팝업 비활성화 실패",
+      });
+    }
+  }
+}
+
+// 특정 팝업 가져오기
+async function getPopup(req, res, next) {
+  const { popup_seq } = req.query;
+
+  if (popup_seq === undefined) {
+    res.status(400).json({
+      message: "특정 팝업 가져오기 실패, 필수 항목이 없습니다.",
+    });
+  } else {
+    try {
+      const sql = `select * from popup where popup_seq = ?`;
+
+      const results = await dbpool.query(sql, [popup_seq]);
+
+      if (results[0][0] === undefined) {
+        return res.status(500).json({
+          message: "해당 팝업이 없습니다.",
+        });
+      } else {
+        res.status(200).json({
+          message: "특정 팝업 가져오기 성공",
+          data: results[0],
+        });
+      }
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).json({
+        message: "특정 팝업 가져오기 실패",
+      });
+    }
+  }
+}
+
+// 활성화 팝업 가져오기
+async function getActivatePopup(req, res, next) {
+  try {
+    const sql = `select * from popup where is_active = 1`;
+
+    const results = await dbpool.query(sql);
+
+    if (results[0].length === 0) {
+      res.status(500).json({
+        message: "활성화된 팝업이 없습니다.",
+      });
+    } else {
+      res.status(200).json({
+        message: "활성화 팝업 가져오기 성공",
+        data: results[0],
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "활성화 팝업 가져오기 실패",
+    });
+  }
+}
+
+// 전체 팝업 가져오기
+async function getAllPopup(req, res, next) {
+  try {
+    const sql = `select * from popup`;
+
+    const results = await dbpool.query(sql);
+
+    if (results[0].length === 0) {
+      res.status(500).json({
+        message: "등록된 팝업이 없습니다.",
+      });
+    } else {
+      res.status(200).json({
+        message: "전체 팝업 가져오기 성공",
+        data: results[0],
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "전체 팝업 가져오기 실패",
+    });
+  }
+}
+
 export {
   createBanner,
   activateBanner,
@@ -228,4 +428,11 @@ export {
   createWidget,
   deleteWidget,
   getWidget,
+  createPopup,
+  deletePopup,
+  activatePopup,
+  deactivatePopup,
+  getPopup,
+  getActivatePopup,
+  getAllPopup,
 };
