@@ -7,9 +7,9 @@ const __dirname = path.resolve();
 
 async function createSecretKey(req, res, next) {
   const { returnUrl, redirectUrl } = req.query;
-
+  console.log(redirectUrl);
   req.session.redirectUrl = redirectUrl;
-
+  console.log(req.session);
   const niceInfo = pgInfo.nice;
   const moduleName = "CPClient_linux_x64";
   const modulePath = path.join(__dirname, "/middleware", "/nice", "/", moduleName);
