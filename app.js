@@ -77,13 +77,13 @@ app.listen(process.env.SERVER_PORT, () => {
 });
 
 //https
-// const options = {
-//  key: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/privkey.pem"),
-//  cert: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/fullchain.pem"),
-//  ca: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/chain.pem"),
-// };
-// var httpsserver = https.createServer(options, app);
+const options = {
+ key: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/privkey.pem"),
+ cert: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/fullchain.pem"),
+ ca: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/chain.pem"),
+};
+var httpsserver = https.createServer(options, app);
 
-// httpsserver.listen(process.env.HTTPS_SERVER_PORT, () => {
-//  console.log(`https server(${process.env.HTTPS_SERVER_PORT}) is running...`);
-// });
+httpsserver.listen(process.env.HTTPS_SERVER_PORT, () => {
+  console.log(`https server(${process.env.HTTPS_SERVER_PORT}) is running...`);
+ });
