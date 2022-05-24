@@ -144,8 +144,14 @@ async function decryptData(req, res, next) {
       responseData.mobileno = mobileno;
       responseData.mobileco = mobileco;
 
-      res.redirect(`${redirectUrl}?${querystring.stringify(responseData)}`);
+      return res.status(200).json({
+        message: "success",
+        responseData,
+      });
     }
+    res.status(500).json({
+      message: responseData.msg,
+    });
   });
 }
 
