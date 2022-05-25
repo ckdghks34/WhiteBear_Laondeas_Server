@@ -13,7 +13,13 @@ async function getAllCampaign(req, res, next) {
     from campaign as c 
       left join (select campaign_seq,count(*) as count 
         from campaign_application group by campaign_seq) as cc 
-      on c.campaign_seq = cc.campaign_seq`;
+      on c.campaign_seq = cc.campaign_seq
+	  order by
+      case 
+      when timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0
+      then 1
+      else 2
+      end;`;
     const qna_sql = `select * from campaign_qna`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.user_seq, ca.campaign_seq, ca.acquaint_content, ca.select_reward, ca.camera_code, ca.face_exposure, ca.address, ca.receiver, ca.receiver_phonenumber, ca.joint_blog, ca.other_answers, ca.status, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.grade,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext
@@ -66,7 +72,12 @@ async function getAllCampaignBylastest(req, res, next) {
                           (select campaign_seq,count(*) as count
                             from campaign_application group by campaign_seq) as cc
                           on c.campaign_seq = cc.campaign_seq
-                          order by recruit_start_date desc limit ? offset ?`;
+                          order by
+                            (case 
+                              when timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0
+                                then 1
+                              else 2
+                            end), recruit_start_date desc limit ? offset ?`;
 
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
@@ -118,7 +129,12 @@ async function getAllCampaignByPopular(req, res, next) {
                           (select campaign_seq,count(*) as count
                             from campaign_application group by campaign_seq) as cc
                           on c.campaign_seq = cc.campaign_seq
-                          order by applicant_count desc limit ? offset ?`;
+                          order by
+                            (case 
+                              when timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0
+                                then 1
+                              else 2
+                            end), applicant_count desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.user_seq, ca.campaign_seq, ca.acquaint_content, ca.select_reward, ca.camera_code, ca.face_exposure, ca.address, ca.receiver, ca.receiver_phonenumber, ca.joint_blog, ca.other_answers, ca.status, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.grade,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
@@ -168,7 +184,12 @@ async function getAllCampaignBySelection(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                           on c.campaign_seq = cc.campaign_seq
-                          order by recruit_end_date asc limit ? offset ?`;
+                          order by
+                            (case 
+                              when timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0
+                                then 1
+                              else 2
+                            end), recruit_end_date asc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.user_seq, ca.campaign_seq, ca.acquaint_content, ca.select_reward, ca.camera_code, ca.face_exposure, ca.address, ca.receiver, ca.receiver_phonenumber, ca.joint_blog, ca.other_answers, ca.status, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.grade,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
