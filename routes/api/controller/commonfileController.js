@@ -5,7 +5,7 @@ const dbpool = await pool;
 
 // 배너 등록
 async function createBanner(req, res, next) {
-  const banner_img = req.files;
+  const banner_img = req.file;
 
   if (banner_img === undefined) {
     res.status(500).json({
@@ -39,15 +39,12 @@ async function createBanner(req, res, next) {
       });
     }
 
-    for (let i = 0; i < banner_img.length; i++) {
-      console.log(banner_img);
-      const filename = "banner_" + banner_img[i].originalname;
-      const filepath = banner_img[i].location;
-      const ext = banner_img[i].mimetype.split("/")[1];
-      const filekey = banner_img[i].key;
+    const filename = "banner_" + banner_img[i].originalname;
+    const filepath = banner_img[i].location;
+    const ext = banner_img[i].mimetype.split("/")[1];
+    const filekey = banner_img[i].key;
 
-      await dbpool.execute(sql, [filename, filepath, ext, filekey, 1]);
-    }
+    await dbpool.execute(sql, [filename, filepath, ext, filekey, 1]);
 
     res.status(200).json({
       message: "배너 등록 성공",
