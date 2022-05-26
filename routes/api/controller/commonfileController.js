@@ -1,4 +1,5 @@
 import pool from "./../../../config/dbpool.js";
+import { s3, Bucket } from "./../../../util/s3.js";
 
 const dbpool = await pool;
 
@@ -12,13 +13,38 @@ async function createBanner(req, res, next) {
     });
   }
   try {
+    const file_sql = `select * from commonfile where category = "banner"`;
+    const file_delete_sql = `delete from commonfile where file_seq = ?`;
     const sql = `insert into commonfile (category, name, path, extension, filekey, is_active) values ("banner", ?, ?, ?, ?, ?)`;
 
+    const file_results = await dbpool.query(file_sql);
+    const files = file_results[0];
+
+    for (let i = 0; i < files.length; i++) {
+      const filekey = files[i].filekey;
+
+      let params = {
+        Bucket: Bucket,
+        Key: filekey,
+      };
+
+      s3.deleteObject(params, async function (err, data) {
+        if (err) console.log(err, err.stack);
+
+        try {
+          await dbpool.execute(file_delete_sql, [files[i].file_seq]);
+        } catch (err) {
+          console.log(err);
+        }
+      });
+    }
+
     for (let i = 0; i < banner_img.length; i++) {
+      console.log(banner_img);
       const filename = "banner_" + banner_img[i].originalname;
       const filepath = banner_img[i].location;
       const ext = banner_img[i].mimetype.split("/")[1];
-      const filekey = banner_img[i].filename + "." + ext;
+      const filekey = banner_img[i].key;
 
       await dbpool.execute(sql, [filename, filepath, ext, filekey, 1]);
     }
@@ -134,7 +160,7 @@ async function createWidget(req, res, next) {
         const filename = "widget_" + widget_img[i].originalname;
         const filepath = widget_img[i].location;
         const ext = widget_img[i].mimetype.split("/")[1];
-        const filekey = widget_img[i].filename + "." + ext;
+        const filekey = widget_img[i].key;
 
         await dbpool.execute(widget_sql, [filename, filepath, ext, filekey, 1]);
       }
@@ -152,7 +178,7 @@ async function createWidget(req, res, next) {
         const filename = "premier_widget_" + premier_widget_img[i].originalname;
         const filepath = premier_widget_img[i].location;
         const ext = premier_widget_img[i].mimetype.split("/")[1];
-        const filekey = premier_widget_img[i].filename + "." + ext;
+        const filekey = premier_widget_img[i].key;
 
         await dbpool.execute(premier_sql, [filename, filepath, ext, filekey, 1]);
       }
@@ -236,7 +262,31 @@ async function createPopup(req, res, next) {
     });
   } else {
     try {
+      const files_sql = `select * from popup`;
+      const files_delete_sql = `delete from popup where popup_seq = ?`;
       const sql = `insert into popup (name, filename, path, extension, filekey, is_active) values (?, ?, ?, ?, ?, ?)`;
+
+      const files_results = await dbpool.query(files_sql);
+      const files = files_results[0];
+
+      for (let i = 0; i < files.length; i++) {
+        const filekey = files[i].filekey;
+
+        const params = {
+          Bucket: Bucket,
+          Key: filekey,
+        };
+
+        s3.deleteObject(params, async function (err, data) {
+          if (err) console.log(err, err.stack);
+
+          try {
+            await dbpool.execute(files_delete_sql, [files[i].popup_seq]);
+          } catch (err) {
+            console.log(err);
+          }
+        });
+      }
 
       await dbpool.execute(sql, [name, filename, filepath, ext, key, is_active]);
 
@@ -263,12 +313,31 @@ async function deletePopup(req, res, next) {
     });
   } else {
     try {
+      const popup_sql = `select * from popup where popup_seq = ?`;
       const sql = `delete from popup where popup_seq = ?`;
 
-      await dbpool.execute(sql, [popup_seq]);
+      const results = await dbpool.query(popup_sql, [popup_seq]);
+      const filekey = results[0][0].filekey;
 
-      res.status(200).json({
-        message: "팝업 삭제 성공",
+      const params = {
+        Bucket: Bucket,
+        Key: filekey,
+      };
+
+      s3.deleteObject(params, async function (err, data) {
+        if (err) {
+          console.log(err, err.stack);
+
+          return res.status(500).json({
+            message: "팝업 삭제 실패",
+          });
+        }
+
+        await dbpool.execute(sql, [popup_seq]);
+
+        res.status(200).json({
+          message: "팝업 삭제 성공",
+        });
       });
     } catch (err) {
       console.log(err);
