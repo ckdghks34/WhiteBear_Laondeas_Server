@@ -39,10 +39,10 @@ async function createBanner(req, res, next) {
       });
     }
 
-    const filename = "banner_" + banner_img[i].originalname;
-    const filepath = banner_img[i].location;
-    const ext = banner_img[i].mimetype.split("/")[1];
-    const filekey = banner_img[i].key;
+    const filename = "banner_" + banner_img.originalname;
+    const filepath = banner_img.location;
+    const ext = banner_img.mimetype.split("/")[1];
+    const filekey = banner_img.key;
 
     await dbpool.execute(sql, [filename, filepath, ext, filekey, 1]);
 
