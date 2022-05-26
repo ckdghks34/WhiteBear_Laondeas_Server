@@ -248,7 +248,7 @@ async function getWidget(req, res, next) {
 
 // 팝업 등록
 async function createPopup(req, res, next) {
-  const { name, is_active } = req.body;
+  const { name } = req.body;
   const popup_img = req.file;
 
   const filename = popup_img.originalname;
@@ -256,7 +256,7 @@ async function createPopup(req, res, next) {
   const key = popup_img.key;
   const filepath = popup_img.location;
 
-  if (name === undefined || is_active === undefined || popup_img === undefined) {
+  if (name === undefined || popup_img === undefined) {
     res.status(400).json({
       message: "팝업 등록 실패, 필수 항목이 없습니다.",
     });
@@ -288,7 +288,7 @@ async function createPopup(req, res, next) {
         });
       }
 
-      await dbpool.execute(sql, [name, filename, filepath, ext, key, is_active]);
+      await dbpool.execute(sql, [name, filename, filepath, ext, key, 1]);
 
       res.status(200).json({
         message: "팝업 등록 성공",

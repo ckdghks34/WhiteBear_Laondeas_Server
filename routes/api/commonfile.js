@@ -10,7 +10,7 @@ const widget_upload = widgetUpload.fields([
 ]);
 
 // 배너 등록 (post)
-router.post("/banner", bannerUpload.array("banner_img", 5), commonfileController.createBanner);
+router.post("/banner", bannerUpload.single("banner_img"), commonfileController.createBanner);
 
 // 배너 활성화
 router.patch("/banner", commonfileController.activateBanner);
@@ -43,7 +43,7 @@ router.patch("/popup", commonfileController.activatePopup);
 router.patch("/popup/deactivate", commonfileController.deactivatePopup);
 
 // 특정 팝업 가져오기
-router.get("/popup", commonfileController.getPopup);
+router.get("/popup", commonfileController.getAllPopup);
 
 // 활성화 팝업 가져오기
 router.get("/popup/active", commonfileController.getActivatePopup);
