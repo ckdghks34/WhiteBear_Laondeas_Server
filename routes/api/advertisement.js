@@ -11,9 +11,9 @@ router.post("/", advertiseController.createAdvertise);
 router.get("/", advertiseController.getAdvertiseList);
 
 // 광고 신청 승인
-router.patch("/approve", authJWT, advertiseController.approveAdvertise);
+router.patch("/approve", /* authJWT, */ advertiseController.approveAdvertise);
 
 // 광고 신청 반려
-router.patch("/reject", authJWT, advertiseController.rejectAdvertise);
+router.patch("/reject", /* authJWT, */ advertiseController.rejectAdvertise);
 
 export default router;

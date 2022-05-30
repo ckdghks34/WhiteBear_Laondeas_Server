@@ -17,33 +17,37 @@ router.get("/all", campaignController.getAllCampaign);
 router.get("/", campaignController.getCampaign);
 
 // 캠페인 등록 (post)
-router.post("/", authJWT, campaignController.createCampaign);
+router.post("/", /* authJWT, */ campaignController.createCampaign);
 
 // 캠페인 수정 (patch)
-router.patch("/", authJWT, campaignController.updateCampaign);
+router.patch("/", /* authJWT, */ campaignController.updateCampaign);
 
 // 캠페인 삭제 (delete)
-router.delete("/", authJWT, campaignController.deleteCampaign);
+router.delete("/", /* authJWT, */ campaignController.deleteCampaign);
 
 // 캠페인 사진 업로드 (post)
-router.post("/image", authJWT, campaign_upload, campaignController.uploadCampaignImage);
+router.post("/image", /* authJWT, */ campaign_upload, campaignController.uploadCampaignImage);
 
 // 캠페인 사진 가져오기 (get)
 router.get("/image", campaignController.getCampaignImage);
 
 // 캠페인 사진 삭제 (delete)
-router.delete("/image", authJWT, campaignController.deleteCampaignImage);
+router.delete("/image", /* authJWT, */ campaignController.deleteCampaignImage);
 
 // 캠페인 썸네일 이미지 수정 (patch)
 router.patch(
   "/image/thumbnail",
-  authJWT,
+  /* authJWT, */
   campaign_upload,
   campaignController.updateCampaignThumbnail
 );
 
 // 캠페인 상세페이지 이미지 수정
-router.patch("/image/detail", authJWT, campaign_upload, campaignController.updateCampaignDetail);
+router.patch(
+  "/image/detail",
+  /* authJWT, */ campaign_upload,
+  campaignController.updateCampaignDetail
+);
 
 // 전체 최신순 캠페인 + 페이징 (get)
 router.get("/all/lastest", campaignController.getAllCampaignBylastest);
@@ -130,70 +134,70 @@ router.get("/search/popular", campaignController.getCampaignBySearchByPopular);
 router.get("/search/selection", campaignController.getCampaignBySearchBySelection);
 
 // 캠페인 신청 (post)
-router.post("/apply", authJWT, campaignController.applyCampaign);
+router.post("/apply", /* authJWT, */ campaignController.applyCampaign);
 
 // 캠페인 신청 취소 (delete)
-router.delete("/apply", authJWT, campaignController.cancelCampaign);
+router.delete("/apply", /* authJWT, */ campaignController.cancelCampaign);
 
 // 특정 캠페인 신청자 목록 + 페이징 (get)
-router.get("/campaign/applicant", authJWT, campaignController.getCampaignApplicant);
+router.get("/campaign/applicant", /* authJWT, */ campaignController.getCampaignApplicant);
 
 // 리뷰어 선정 등록 (post)
-router.post("/campaign/reviewer", authJWT, campaignController.createCampaignReviewer);
+router.post("/campaign/reviewer", /* authJWT, */ campaignController.createCampaignReviewer);
 
 // 리뷰어 선정 취소 (delete)
-router.delete("/campaign/reviewer", authJWT, campaignController.deleteCampaignReviewer);
+router.delete("/campaign/reviewer", /* authJWT, */ campaignController.deleteCampaignReviewer);
 
 // 특정 캠페인 리뷰어 선정자 목록 + 페이징 (get)
-router.get("/campaign/reviewer/list", authJWT, campaignController.getCampaignReviewer);
+router.get("/campaign/reviewer/list", /* authJWT, */ campaignController.getCampaignReviewer);
 
 // 캠페인 QnA 등록 (post)
-router.post("/campaign/qna", authJWT, campaignController.createCampaignQnA);
+router.post("/campaign/qna", /* authJWT, */ campaignController.createCampaignQnA);
 
 // 캠페인 QnA 수정 (patch)
-router.patch("/campaign/qna", authJWT, campaignController.updateCampaignQnA);
+router.patch("/campaign/qna", /* authJWT, */ campaignController.updateCampaignQnA);
 
 // 캠페인 QnA 삭제 (delete)
-router.delete("/campaign/qna", authJWT, campaignController.deleteCampaignQnA);
+router.delete("/campaign/qna", /* authJWT, */ campaignController.deleteCampaignQnA);
 
 // 캠페인 평가 등록 (post)
-router.post("/campaign/evaluation", authJWT, campaignController.createCampaignEvaluation);
+router.post("/campaign/evaluation", /* authJWT, */ campaignController.createCampaignEvaluation);
 
 // 캠페인 평가 수정 (patch)
-router.patch("/campaign/evaluation", authJWT, campaignController.updateCampaignEvaluation);
+router.patch("/campaign/evaluation", /* authJWT, */ campaignController.updateCampaignEvaluation);
 
 // 캠페인 평가 삭제 (delete)
-router.delete("/campaign/evaluation", authJWT, campaignController.deleteCampaignEvaluation);
+router.delete("/campaign/evaluation", /* authJWT, */ campaignController.deleteCampaignEvaluation);
 
 // 광고주 캠페인 정보 가져오기 (get)
-router.get("/advertiser/campaign/info", authJWT, campaignController.getCampaignByAdvertiser);
+router.get("/advertiser/campaign/info", /* authJWT, */ campaignController.getCampaignByAdvertiser);
 
 // 광고주 캠페인 신청자 목록 가져오기 (get)
 router.get(
   "/advertiser/campaign/applicant",
-  authJWT,
+  /* authJWT, */
   campaignController.getCampaignApplicantByAdvertiser
 );
 
 // 광고주 캠페인 리뷰어 선정자 목록 가져오기 (get)
 router.get(
   "/advertiser/campaign/reviewer",
-  authJWT,
+  /* authJWT, */
   campaignController.getCampaignReviewerByAdvertiser
 );
 
 // 광고주 캠페인 평가 목록 가져오기 (get)
 // router.get(
 //   "/advertiser/campaign/evaluation",
-//   authJWT,
+//   /* authJWT, */
 //   campaignController.getCampaignEvaluationByAdvertiser
 // );
 
 // 미션 완료
-router.patch("/mission/complete", authJWT, campaignController.missionComplete);
+router.patch("/mission/complete", /* authJWT, */ campaignController.missionComplete);
 
 // 미션 취소
-router.patch("/mission/cancel", authJWT, campaignController.missionCancel);
+router.patch("/mission/cancel", /* authJWT, */ campaignController.missionCancel);
 
 // 조회수 증가
 router.patch("/campaign/view-count", campaignController.increaseCampaignViewCount);
