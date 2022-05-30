@@ -6,7 +6,8 @@ const errorJsonWebToken = "JsonWebTokenError";
 async function authJWT(req, res, next) {
   if (req.headers.authorization) {
     const token = req.headers.authorization.split("Bearer ")[1]; // header에서 access token을 가져옵니다.
-    console.log(token);
+    console.log("Token : " + token);
+    console.log("authorization : " + req.headers.authorization);
     const result = await verify(token); // token을 검증합니다.
 
     console.log(result);
