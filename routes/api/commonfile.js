@@ -10,37 +10,42 @@ const widget_upload = widgetUpload.fields([
 ]);
 
 // 배너 등록 (post)
-router.post("/banner", bannerUpload.single("banner_img"), commonfileController.createBanner);
+router.post(
+  "/banner",
+  authJWT,
+  bannerUpload.single("banner_img"),
+  commonfileController.createBanner
+);
 
 // 배너 활성화
-router.patch("/banner", commonfileController.activateBanner);
+router.patch("/banner", authJWT, commonfileController.activateBanner);
 
 // 배너 비활성화
-router.patch("/banner/deactivate", commonfileController.deactivateBanner);
+router.patch("/banner/deactivate", authJWT, commonfileController.deactivateBanner);
 
 // 배너 가져오기
 router.get("/banner", commonfileController.getBanner);
 
 // 위젯 등록
-router.post("/widget", widget_upload, commonfileController.createWidget);
+router.post("/widget", authJWT, widget_upload, commonfileController.createWidget);
 
 // 위젯 삭제
-router.delete("/widget", commonfileController.deleteWidget);
+router.delete("/widget", authJWT, commonfileController.deleteWidget);
 
 // 위젯 가져오기
 router.get("/widget", commonfileController.getWidget);
 
 // 팝업 등록
-router.post("/popup", popupUpload.single("popup_img"), commonfileController.createPopup);
+router.post("/popup", authJWT, popupUpload.single("popup_img"), commonfileController.createPopup);
 
 // 팝업 삭제
-router.delete("/popup", commonfileController.deletePopup);
+router.delete("/popup", authJWT, commonfileController.deletePopup);
 
 // 팝업 활성화
-router.patch("/popup", commonfileController.activatePopup);
+router.patch("/popup", authJWT, commonfileController.activatePopup);
 
 // 팝업 비활성화
-router.patch("/popup/deactivate", commonfileController.deactivatePopup);
+router.patch("/popup/deactivate", authJWT, commonfileController.deactivatePopup);
 
 // 특정 팝업 가져오기
 router.get("/popup", commonfileController.getAllPopup);
