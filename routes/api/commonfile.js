@@ -1,4 +1,5 @@
 import express from "express";
+import { authJWT } from "./../../middleware/jwt/authJWT.js";
 import { bannerUpload, widgetUpload, popupUpload } from "./../../middleware/multer.js";
 import * as commonfileController from "./controller/commonfileController.js";
 
