@@ -6,11 +6,7 @@ const errorJsonWebToken = "JsonWebTokenError";
 async function authJWT(req, res, next) {
   if (req.headers.authorization) {
     const token = req.headers.authorization.split("Bearer ")[1]; // header에서 access token을 가져옵니다.
-    console.log("Token : " + token);
-    console.log("authorization : " + req.headers.authorization);
     const result = await verify(token); // token을 검증합니다.
-
-    console.log(result);
     if (result.verification) {
       // token이 검증되었으면 req에 값을 세팅하고, 다음 콜백함수로 갑니다.
       req.id = result.id;
@@ -32,6 +28,12 @@ async function authJWT(req, res, next) {
         });
       }
     }
+  } else {
+    res.status(401).send({
+      verification: false,
+      expire: "undefined",
+      message: "no token",
+    });
   }
 }
 
