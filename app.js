@@ -46,7 +46,7 @@ app.use(
 );
 
 const corsOptions = {
-  origin: "https://laondeas.co.kr",
+  origin: "https://www.laondeas.co.kr",
   credentials: true,
 };
 
