@@ -8,6 +8,7 @@ import cors from "cors";
 import https from "https";
 import fs from "fs";
 import session from "express-session";
+import pool from "./config/dbpool.js";
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ import campaignRouter from "./routes/api/campaign.js";
 import commonfileRouter from "./routes/api/commonfile.js";
 import statisticsRouter from "./routes/api/statistics.js";
 import niceRouter from "./routes/api/nice.js";
+import { setInterval } from "timers/promises";
 
 const app = express();
 const __dirname = path.resolve();
@@ -43,7 +45,13 @@ app.use(
     saveUninitialized: true,
   })
 );
-app.use(cors());
+
+const corsOptions = {
+  origin: "https://www.domain.com",
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 // 보안설정(Helmet)
 app.use(helmet());
 
@@ -78,12 +86,18 @@ app.listen(process.env.SERVER_PORT, () => {
 
 //https
 const options = {
- key: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/privkey.pem"),
- cert: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/fullchain.pem"),
- ca: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/chain.pem"),
+  key: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/privkey.pem"),
+  cert: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/fullchain.pem"),
+  ca: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/chain.pem"),
 };
 var httpsserver = https.createServer(options, app);
 
 httpsserver.listen(process.env.HTTPS_SERVER_PORT, () => {
   console.log(`https server(${process.env.HTTPS_SERVER_PORT}) is running...`);
- });
+});
+
+const dbpool = await pool;
+setInterval(async () => {
+  await dbpool.query("SELECT 1");
+  console.log("Running Disconnect protection query");
+}, 1000 * 60 * 60 * 3);
