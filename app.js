@@ -23,7 +23,6 @@ import campaignRouter from "./routes/api/campaign.js";
 import commonfileRouter from "./routes/api/commonfile.js";
 import statisticsRouter from "./routes/api/statistics.js";
 import niceRouter from "./routes/api/nice.js";
-import { setInterval } from "timers/promises";
 
 const app = express();
 const __dirname = path.resolve();
@@ -96,8 +95,8 @@ httpsserver.listen(process.env.HTTPS_SERVER_PORT, () => {
   console.log(`https server(${process.env.HTTPS_SERVER_PORT}) is running...`);
 });
 
-// const dbpool = await pool;
-// setInterval(async () => {
-//   await dbpool.query("SELECT 1");
-//   console.log("Running Disconnect protection query");
-// }, 1000 * 60 * 60 * 3);
+const dbpool = await pool;
+setInterval(async () => {
+  await dbpool.query("SELECT 1");
+  console.log("Running Disconnect protection query");
+}, 1000 * 60 * 60 * 3);
