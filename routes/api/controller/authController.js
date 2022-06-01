@@ -12,8 +12,6 @@ const dbpool = await pool;
 
 // 회원가입
 async function signup(req, res, next) {
-  console.log(signup);
-
   let {
     user_id,
     user_password,
@@ -86,7 +84,7 @@ Laondeas를 이용해주셔서 감사합니다.
         insertid: result[0].insertId,
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "회원가입 실패",
@@ -145,7 +143,7 @@ async function login(req, res, next) {
                 },
               });
             } catch (err) {
-              console.log(err);
+              console.error(err);
 
               res.status(400).json({
                 message: "로그인 실패",
@@ -157,7 +155,7 @@ async function login(req, res, next) {
             });
           }
         } catch (err) {
-          console.log(err);
+          console.error(err);
 
           res.status(400).json({
             message: "비밀번호가 일치하지 않습니다.",
@@ -165,7 +163,7 @@ async function login(req, res, next) {
         }
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "로그인 실패",
@@ -191,7 +189,7 @@ async function logout(req, res, next) {
         message: "로그아웃 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "로그아웃 실패",
@@ -217,7 +215,7 @@ async function deleteUser(req, res, next) {
         message: "회원탈퇴 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "회원탈퇴 실패",
@@ -252,7 +250,7 @@ async function checkID(req, res, next) {
         });
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "아이디 중복 체크 실패",
@@ -273,7 +271,7 @@ async function getCodetable(req, res, next) {
       data: results,
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "코드테이블 조회 실패",
@@ -305,7 +303,7 @@ async function addCode(req, res, next) {
       message: "코드 등록 성공",
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "코드 등록 실패",
@@ -492,7 +490,7 @@ async function kakaoLogin(req, res, next) {
       }
     } catch (err) {
       await dbpool.rollback();
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "카카오 로그인 실패",
@@ -655,7 +653,7 @@ async function naverLogin(req, res, next) {
       }
     } catch (err) {
       await dbpool.rollback();
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "네이버 로그인 실패",

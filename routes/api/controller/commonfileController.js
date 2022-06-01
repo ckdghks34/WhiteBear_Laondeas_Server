@@ -29,12 +29,12 @@ async function createBanner(req, res, next) {
       };
 
       s3.deleteObject(params, async function (err, data) {
-        if (err) console.log(err, err.stack);
+        if (err) console.error(err, err.stack);
 
         try {
           await dbpool.execute(file_delete_sql, [files[i].file_seq]);
         } catch (err) {
-          console.log(err);
+          console.error(err);
         }
       });
     }
@@ -50,7 +50,7 @@ async function createBanner(req, res, next) {
       message: "배너 등록 성공",
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "배너 등록 실패",
@@ -76,7 +76,7 @@ async function activateBanner(req, res, next) {
         message: "배너 활성화 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "배너 활성화 실패",
@@ -103,7 +103,7 @@ async function deactivateBanner(req, res, next) {
         message: "배너 비활성화 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "배너 비활성화 실패",
@@ -124,7 +124,7 @@ async function getBanner(req, res, next) {
       data: results[0],
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "배너 가져오기 실패",
@@ -188,7 +188,7 @@ async function createWidget(req, res, next) {
     });
   } catch (err) {
     await dbpool.rollback();
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "위젯 등록 실패",
@@ -214,7 +214,7 @@ async function deleteWidget(req, res, next) {
         message: "위젯 삭제 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "위젯 삭제 실패",
@@ -235,7 +235,7 @@ async function getWidget(req, res, next) {
       data: results[0],
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "위젯 가져오기 실패",
@@ -275,12 +275,12 @@ async function createPopup(req, res, next) {
         };
 
         s3.deleteObject(params, async function (err, data) {
-          if (err) console.log(err, err.stack);
+          if (err) console.error(err, err.stack);
 
           try {
             await dbpool.execute(files_delete_sql, [files[i].popup_seq]);
           } catch (err) {
-            console.log(err);
+            console.error(err);
           }
         });
       }
@@ -291,7 +291,7 @@ async function createPopup(req, res, next) {
         message: "팝업 등록 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "팝업 등록 실패",
@@ -323,7 +323,7 @@ async function deletePopup(req, res, next) {
 
       s3.deleteObject(params, async function (err, data) {
         if (err) {
-          console.log(err, err.stack);
+          console.error(err, err.stack);
 
           return res.status(500).json({
             message: "팝업 삭제 실패",
@@ -337,7 +337,7 @@ async function deletePopup(req, res, next) {
         });
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "팝업 삭제 실패",
@@ -364,7 +364,7 @@ async function activatePopup(req, res, next) {
         message: "팝업 활성화 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "팝업 활성화 실패",
@@ -391,7 +391,7 @@ async function deactivatePopup(req, res, next) {
         message: "팝업 비활성화 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "팝업 비활성화 실패",
@@ -425,7 +425,7 @@ async function getPopup(req, res, next) {
         });
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "특정 팝업 가져오기 실패",
@@ -452,7 +452,7 @@ async function getActivatePopup(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "활성화 팝업 가져오기 실패",
@@ -478,7 +478,7 @@ async function getAllPopup(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "전체 팝업 가져오기 실패",

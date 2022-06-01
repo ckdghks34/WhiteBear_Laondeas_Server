@@ -16,7 +16,6 @@ async function createSecretKey(req, res, next) {
   const date = new Date();
 
   const sCPRequest = `${sSiteCode}_${date.getTime()}`;
-  console.log(returnUrl);
   let sEncData = "";
   let sAuthType = "M";
   let sCustomize = "";
@@ -39,7 +38,6 @@ async function createSecretKey(req, res, next) {
     sEncData += data;
   });
 
-  console.log(sEncData);
   child.on("close", function () {
     //처리 결과 확인
     if (sEncData == "-1") {
@@ -73,10 +71,6 @@ async function decryptData(req, res, next) {
   const method = req.method;
   const sEncData = method === "GET" ? req.query.EncodeData : req.body.EncodeData;
   const redirectUrl = req.session.redirectUrl;
-
-  console.log(req.session);
-  console.log("redirectUrl");
-  console.log(redirectUrl);
 
   const niceInfo = pgInfo.nice;
   const moduleName = "CPClient_linux_x64";
