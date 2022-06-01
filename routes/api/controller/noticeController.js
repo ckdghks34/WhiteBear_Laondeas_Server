@@ -12,7 +12,7 @@ async function getNotice(req, res, next) {
       data: result[0],
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(400).json({
       message: "공지사항 가져오기 실패",
     });
@@ -45,7 +45,7 @@ async function createNotice(req, res, next) {
         message: "공지사항 등록 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "공지사항 등록 실패",
@@ -77,7 +77,7 @@ async function updateNotice(req, res, next) {
         message: "공지사항 수정 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "공지사항 수정 실패",
@@ -104,7 +104,7 @@ async function deleteNotice(req, res, next) {
         message: "공지사항 삭제 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "공지사항 삭제 실패",
@@ -131,7 +131,7 @@ async function increaseViewCount(req, res, next) {
         message: "조회수 증가 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "조회수 증가 실패",
@@ -158,7 +158,7 @@ async function getNoticeDetail(req, res, next) {
         data: result[0],
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "공지사항 상세 조회 실패",

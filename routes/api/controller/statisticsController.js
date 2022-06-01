@@ -132,7 +132,7 @@ async function getStatistics(req, res, next) {
         statistics,
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "통계 가져오기 실패",
@@ -220,8 +220,8 @@ async function downloadStatistics(req, res, next) {
             data["블로그 평균 방문자수"] = "정보없음";
           }
         } catch (err) {
-          console.log("Blog Analytics Error");
-          console.log(err);
+          console.error("Blog Analytics Error");
+          console.error(err);
 
           data["블로그 평균 방문자수"] = "정보없음";
         } finally {
@@ -435,17 +435,17 @@ async function downloadStatistics(req, res, next) {
       filestream.pipe(res);
       filestream.on("end", (err) => {
         if (err) {
-          console.log(err);
+          console.error(err);
         }
 
         fs.unlink(file, (err) => {
-          if (err) console.log(err);
-          console.log("file deleted");
+          if (err) console.error(err);
+          console.error("file deleted");
         });
       });
     } catch (err) {
-      console.log("query error");
-      console.log(err);
+      console.error("query error");
+      console.error(err);
 
       return res.status(500).json({
         message: "Internal Server Error",
@@ -570,8 +570,8 @@ async function getTest(req, res, next) {
             data["블로그 평균 방문자수"] = "정보없음";
           }
         } catch (err) {
-          console.log("Blog Analytics Error");
-          console.log(err);
+          console.error("Blog Analytics Error");
+          console.error(err);
 
           data["블로그 평균 방문자수"] = "정보없음";
         } finally {
@@ -783,17 +783,17 @@ async function getTest(req, res, next) {
       filestream.pipe(res);
       filestream.on("end", (err) => {
         if (err) {
-          console.log(err);
+          console.error(err);
         }
 
         fs.unlink(file, (err) => {
-          if (err) console.log(err);
-          console.log("file deleted");
+          if (err) console.error(err);
+          console.error("file deleted");
         });
       });
     } catch (err) {
-      console.log("query error");
-      console.log(err);
+      console.error("query error");
+      console.error(err);
 
       return res.status(500).json({
         message: "Internal Server Error",

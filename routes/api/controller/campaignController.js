@@ -53,7 +53,7 @@ async function getAllCampaign(req, res, next) {
       totalcount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 전체 가져오기 실패",
@@ -109,7 +109,7 @@ async function getAllCampaignBylastest(req, res, next) {
       totalCount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -165,7 +165,7 @@ async function getAllCampaignByPopular(req, res, next) {
       totalCount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -221,7 +221,7 @@ async function getAllCampaignBySelection(req, res, next) {
       totalCount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -267,7 +267,7 @@ async function getCampaign(req, res, next) {
         });
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "캠페인 가져오기 실패",
@@ -405,7 +405,7 @@ async function createCampaign(req, res, next) {
       });
     } catch (err) {
       await dbpool.rollback();
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "캠페인 등록 실패",
@@ -538,7 +538,7 @@ async function updateCampaign(req, res, next) {
       });
     } catch (err) {
       await dbpool.rollback();
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "캠페인 수정 실패",
@@ -571,7 +571,7 @@ async function deleteCampaign(req, res, next) {
       });
     } catch (err) {
       await dbpool.rollback();
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "캠페인 삭제 실패",
@@ -604,8 +604,6 @@ async function uploadCampaignImage(req, res, next) {
         let ext = campaign_img_detail[i].mimetype.split("/")[1];
         let key = campaign_img_detail[i].key;
 
-        console.log(filename, filepath, ext, key, campaign_seq, user_seq);
-
         await dbpool.execute(sql, [
           campaign_seq,
           filename,
@@ -624,8 +622,6 @@ async function uploadCampaignImage(req, res, next) {
         let filepath = campaign_img_thumbnail[i].location;
         let ext = campaign_img_thumbnail[i].mimetype.split("/")[1];
         let key = campaign_img_thumbnail[i].key;
-
-        console.log(filename, filepath, ext, key, campaign_seq, user_seq);
 
         await dbpool.execute(sql, [
           campaign_seq,
@@ -647,7 +643,7 @@ async function uploadCampaignImage(req, res, next) {
       });
     } catch (err) {
       await dbpool.rollback();
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "캠페인 사진 등록 실패",
@@ -677,7 +673,7 @@ async function getCampaignImage(req, res, next) {
         campaignImg: result[0],
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "캠페인 사진 가져오기 실패",
@@ -719,7 +715,7 @@ async function updateCampaignThumbnail(req, res, next) {
         message: "캠페인 썸네일 이미지 수정 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "캠페인 썸네일 이미지 수정 실패",
@@ -760,7 +756,7 @@ async function updateCampaignDetail(req, res, next) {
         message: "캠페인 상세페이지 이미지 수정 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "캠페인 상세페이지 이미지 수정 실패",
@@ -813,7 +809,7 @@ async function getCampaignByProgress(req, res, next) {
       totalCount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -865,7 +861,7 @@ async function getCampaignByProgressBylastest(req, res, next) {
       totalCount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -917,7 +913,7 @@ async function getCampaignByProgressByPopular(req, res, next) {
       totalCount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -969,7 +965,7 @@ async function getCampaignByProgressBySelection(req, res, next) {
       totalCount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -1020,7 +1016,7 @@ async function getCampaignByType(req, res, next) {
       totalCount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -1071,7 +1067,7 @@ async function getCampaignByTypeBylastest(req, res, next) {
       totalCount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -1122,7 +1118,7 @@ async function getCampaignByTypeByPopular(req, res, next) {
       totalCount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -1173,7 +1169,7 @@ async function getCampaignByTypeBySelection(req, res, next) {
       totalCount: totalCount_results[0][0].totalCount,
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -1275,7 +1271,7 @@ async function getCampaignByFiltering(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -1376,7 +1372,7 @@ async function getCampaignByFilteringBylastest(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -1477,7 +1473,7 @@ async function getCampaignByFilteringByPopular(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -1576,7 +1572,7 @@ async function getCampaignByFilteringBySelection(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -1635,7 +1631,7 @@ async function getPremiumCampaign(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -1694,7 +1690,7 @@ async function getPremiumCampaignBylastest(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -1753,7 +1749,7 @@ async function getPremiumCampaignByPopular(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -1812,7 +1808,7 @@ async function getPremiumCampaignBySelection(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -1871,7 +1867,7 @@ async function getCampaignByChannel(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -1930,7 +1926,7 @@ async function getCampaignByChannelBylastest(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -1989,7 +1985,7 @@ async function getCampaignByChannelByPopular(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -2048,7 +2044,7 @@ async function getCampaignByChannelBySelection(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회 실패",
@@ -2111,7 +2107,7 @@ async function getCampaignByRelation(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "연관 캠페인 조회 실패",
@@ -2175,7 +2171,7 @@ async function getCampaignBySearch(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 검색 실패",
@@ -2239,7 +2235,7 @@ async function getCampaignBySearchBylastest(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 검색 실패",
@@ -2302,7 +2298,7 @@ async function getCampaignBySearchByPopular(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 검색 실패",
@@ -2366,7 +2362,7 @@ async function getCampaignBySearchBySelection(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 검색 실패",
@@ -2436,7 +2432,7 @@ async function applyCampaign(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 신청 실패",
@@ -2465,7 +2461,7 @@ async function cancelCampaign(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 신청 취소 실패",
@@ -2503,7 +2499,7 @@ async function getCampaignApplicant(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "특정 캠페인 신청자 목록 실패",
@@ -2573,7 +2569,7 @@ async function createCampaignReviewer(req, res, next) {
     }
   } catch (err) {
     await dbpool.rollback();
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "리뷰어 선정 등록 실패",
@@ -2621,7 +2617,7 @@ async function deleteCampaignReviewer(req, res, next) {
     }
   } catch (err) {
     await dbpool.rollback();
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "리뷰어 선정 취소 실패",
@@ -2652,7 +2648,7 @@ async function getCampaignReviewer(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "특정 캠페인 리뷰어 선정자 목록 실패",
@@ -2697,7 +2693,7 @@ async function createCampaignQnA(req, res, next) {
     }
   } catch (err) {
     await dbpool.rollback();
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 QnA 등록 실패",
@@ -2742,7 +2738,7 @@ async function updateCampaignQnA(req, res, next) {
     }
   } catch (err) {
     await dbpool.rollback();
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 QnA 수정 실패",
@@ -2770,7 +2766,7 @@ async function deleteCampaignQnA(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 QnA 삭제 실패",
@@ -2807,7 +2803,7 @@ async function createCampaignEvaluation(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 평가 등록 실패",
@@ -2842,7 +2838,7 @@ async function updateCampaignEvaluation(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 평가 수정 실패",
@@ -2870,7 +2866,7 @@ async function deleteCampaignEvaluation(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 평가 삭제 실패",
@@ -2898,7 +2894,7 @@ async function getCampaignByAdvertiser(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "광고주 캠페인 정보 가져오기 실패",
@@ -2933,7 +2929,7 @@ async function getCampaignApplicantByAdvertiser(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "광고주 캠페인 신청자 목록 가져오기 실패",
@@ -2964,7 +2960,7 @@ async function getCampaignReviewerByAdvertiser(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "광고주 캠페인 리뷰어 선정자 목록 가져오기 실패",
@@ -3067,7 +3063,7 @@ async function missionComplete(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "미션 완료 실패",
@@ -3157,7 +3153,7 @@ async function missionCancel(req, res, next) {
       message: "미션 완료 취소 성공",
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "미션 완료 취소 실패",
@@ -3184,7 +3180,7 @@ async function increaseCampaignViewCount(req, res, next) {
       message: "캠페인 조회수 증가 성공",
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "캠페인 조회수 증가 실패",
@@ -3279,7 +3275,7 @@ async function test(req, res, next) {
     //   },
     // });
   } catch (err) {
-    console.log(err);
+    console.error(err);
   }
 }
 

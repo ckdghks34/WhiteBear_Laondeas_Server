@@ -27,7 +27,7 @@ async function getAllUser(req, res, next) {
       users: results[0],
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(400).json({
       message: "유저 정보 조회 실패",
@@ -68,7 +68,7 @@ async function getUser(req, res, next) {
         });
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "유저 정보 조회 실패",
@@ -132,7 +132,7 @@ async function updateUser(req, res, next) {
         message: "기본 회원 정보 수정 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "기본 회원 정보 수정 실패",
@@ -223,7 +223,7 @@ async function updateAdditionalInfo(req, res, next) {
       });
     } catch (err) {
       await dbpool.rollback();
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "부가 정보 수정 실패",
@@ -257,13 +257,12 @@ async function getAdditionalInfo(req, res, next) {
       additionalInfo["area"] = area_result[0];
       additionalInfo["channel"] = channel_result[0];
 
-      console.log(additionalInfo);
       res.status(200).json({
         message: "부가 회원 정보 가져오기 성공",
         additionalInfo,
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "유저 정보 조회 실패",
@@ -324,7 +323,7 @@ async function updateUserAdditionalInfo(req, res, next) {
         message: "추가 정보 수정 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "추가 정보 수정 실패",
@@ -357,7 +356,7 @@ async function updateSNSInfo(req, res, next) {
         message: "부가정보 수정 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "부가 정보 수정 실패",
@@ -386,7 +385,7 @@ async function updatePassword(req, res, next) {
         message: "비밀번호 수정 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "비밀번호 수정 실패",
@@ -413,7 +412,7 @@ async function updateUserGrade(req, res, next) {
         message: "등급 수정 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "등급 수정 실패",
@@ -442,7 +441,7 @@ async function createProfile(req, res, next) {
       location: filepath,
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "프로필 사진 등록 실패",
@@ -463,7 +462,7 @@ async function getProfile(req, res, next) {
       profileImg: results[0][0].profile_path,
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "프로필 사진 가져오기 실패",
@@ -486,7 +485,7 @@ async function deleteProfile(req, res, next) {
 
     s3.deleteObject(params, async (err, data) => {
       if (err) {
-        console.log(err);
+        console.error(err);
 
         res.status(500).json({
           message: "프로필 사진 삭제 실패",
@@ -501,7 +500,7 @@ async function deleteProfile(req, res, next) {
           message: "프로필 사진 삭제 성공",
         });
       } catch (err) {
-        console.log(err);
+        console.error(err);
 
         res.status(500).json({
           message: "프로필 정보 삭제 실패",
@@ -549,7 +548,7 @@ async function getInterestCampaign(req, res, next) {
         interestCampaign: interestCampaign,
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "관심 캠페인 조회 실패",
@@ -584,7 +583,7 @@ async function createInterestCampaign(req, res, next) {
         message: "관심 캠페인 등록 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "관심 캠페인 등록 실패, 이미 관심 등록된 캠페인 입니다.  ",
@@ -611,7 +610,7 @@ async function deleteInterestCampaign(req, res, next) {
         message: "관심 캠페인 해제 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "관심 캠페인 해제 실패",
@@ -653,7 +652,7 @@ async function getMyCampaign(req, res, next) {
         myCampaign: myCampaign,
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "나의 캠페인 조회 실패",
@@ -696,7 +695,7 @@ async function getEndCampaign(req, res, next) {
         endCampaign: endCampaign,
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "종료된 캠페인 조회 실패",
@@ -752,7 +751,7 @@ async function attendanceCheck(req, res, next) {
       }
     } catch (err) {
       await dbpool.rollback();
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "출석 체크 실패",
@@ -781,7 +780,7 @@ async function getAttendanceList(req, res, next) {
         attendanceList: results[0],
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "출석 리스트 조회 실패",
@@ -803,7 +802,7 @@ async function getAllAttendanceList(req, res, next) {
       attendanceList: results[0],
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "전체 출석 리스트 조회 실패",
@@ -843,7 +842,7 @@ async function accrual(req, res, next) {
       });
     } catch (err) {
       await dbpool.rollback();
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "포인트 적립 실패",
@@ -872,7 +871,7 @@ async function getUserAccrualList(req, res, next) {
         accrualList: results[0],
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "적립 내역 조회 실패",
@@ -894,7 +893,7 @@ async function getAllAccrualList(req, res, next) {
       accrualList: results[0],
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "적립 내역 조회 실패",
@@ -960,7 +959,7 @@ async function withdrawal(req, res, next) {
       });
     } catch (err) {
       await dbpool.rollback();
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "출금 완료 실패",
@@ -1004,7 +1003,7 @@ async function withdrawal_reject(req, res, next) {
       });
     } catch (err) {
       await dbpool.rollback();
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "출금 승인 거절실패",
@@ -1076,7 +1075,7 @@ async function withdrawalRequest(req, res, next) {
       }
     } catch (err) {
       await dbpool.rollback();
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "출금 신청 실패",
@@ -1105,7 +1104,7 @@ async function getWithdrawalRequestList(req, res, next) {
         withdrawalRequestList: results[0],
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "유저별 출금 신청 내역 가져오기 실패",
@@ -1126,7 +1125,7 @@ async function getAllUserWithdrawalRequestList(req, res, next) {
       withdrawalRequestList: results[0],
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(400).json({
       message: "전체 유저 출금 내역 가져오기 실패",
@@ -1147,7 +1146,7 @@ async function getAllUserAccrualList(req, res, next) {
       accrualList: results[0],
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(400).json({
       message: "전체 유저 포인트 적립내역 가져오기 실패",
@@ -1169,7 +1168,7 @@ async function getAllUserWithdrawalList(req, res, next) {
       withdrawalList: results[0],
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(400).json({
       message: "전체 유저 포인트 출금내역 가져오기 실패",
@@ -1198,7 +1197,7 @@ async function getUserWithdrawalList(req, res, next) {
         withdrawalList: results[0],
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "출금 내역 조회 실패",
@@ -1219,7 +1218,7 @@ async function getAllMessageList(req, res, next) {
       messageList: results[0],
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(400).json({
       message: "전체 메시지 조회 실패",
@@ -1251,7 +1250,7 @@ async function getUserMessageList(req, res, next) {
         messageList: results,
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "메세지 목록 조회 실패",
@@ -1287,7 +1286,7 @@ async function sendMessage(req, res, next) {
         message: "메세지 전송 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "메세지 전송 실패",
@@ -1314,7 +1313,7 @@ async function readMessage(req, res, next) {
         message: "메세지 확인 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "메세지 확인 실패",
@@ -1341,7 +1340,7 @@ async function readAllMessage(req, res, next) {
         message: "메세지 전체 읽음 처리 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "메세지 확인 실패",
@@ -1372,7 +1371,7 @@ async function getUnreadMessageCount(req, res, next) {
         count: results[0][0].count,
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "메세지 확인 실패",
@@ -1413,7 +1412,7 @@ async function createQuestion(req, res, next) {
         message: "문의 등록 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "문의 등록 실패",
@@ -1453,7 +1452,7 @@ async function createAnswer(req, res, next) {
         message: "답변 등록 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "답변 등록 실패",
@@ -1484,7 +1483,7 @@ async function updateQuestion(req, res, next) {
         message: "문의 수정 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "문의 수정 실패",
@@ -1516,7 +1515,7 @@ async function updateAnswer(req, res, next) {
         message: "답변 수정 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "답변 수정 실패",
@@ -1534,8 +1533,6 @@ async function getQNAList(req, res, next) {
     const answer_sql = `select * from answer where qna_seq = ?`;
 
     const question_results = await dbpool.query(question_sql);
-
-    console.log(question_results[0]);
 
     if (question_results[0].length == 0) {
       res.status(400).json({
@@ -1561,7 +1558,7 @@ async function getQNAList(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(400).json({
       message: "문의 전체 리스트 조회 실패",
@@ -1597,7 +1594,7 @@ async function getQNA(req, res, next) {
         });
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "문의 정보 조회 실패",
@@ -1644,7 +1641,7 @@ async function getUserQNA(req, res, next) {
         });
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "문의 정보 조회 실패",
@@ -1671,7 +1668,7 @@ async function getAllPenaltyList(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(400).json({
       message: "페널티 목록 조회 실패",
@@ -1697,7 +1694,7 @@ async function getPenaltyList(req, res, next) {
         penalty: results[0],
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "페널티 목록 조회 실패",
@@ -1726,7 +1723,7 @@ async function getPenaltyProceedingList(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(400).json({
       message: "페널티 목록 조회 실패",
@@ -1769,7 +1766,7 @@ async function createPenalty(req, res, next) {
         message: "페널티 추가 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "페널티 추가 실패",
@@ -1796,7 +1793,7 @@ async function deletePenalty(req, res, next) {
         message: "페널티 삭제 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "페널티 삭제 실패",
@@ -1825,7 +1822,7 @@ async function updatePenalty(req, res, next) {
 
       await dbpool.execute(sql, [user_seq, content, end_date, admin, new Date(), penalty_seq]);
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "페널티 수정 실패",
@@ -1884,7 +1881,7 @@ async function createAddressBook(req, res, next) {
       });
     } catch (err) {
       await dbpool.rollback();
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "주소록 등록 실패",
@@ -1911,7 +1908,7 @@ async function deleteAddressBook(req, res, next) {
         message: "주소록 삭제 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "주소록 삭제 실패",
@@ -1969,7 +1966,7 @@ async function updateAddressBook(req, res, next) {
       });
     } catch (err) {
       await dbpool.rollback();
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "주소록 수정 실패",
@@ -1996,7 +1993,7 @@ async function getAddressBook(req, res, next) {
         addressBook: results[0],
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "주소록 조회 실패",
@@ -2023,7 +2020,7 @@ async function getUserAddressBook(req, res, next) {
         addressBook: results[0],
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "주소록 조회 실패",
@@ -2057,7 +2054,7 @@ async function updateDefaultAddressBook(req, res, next) {
       });
     } catch (err) {
       await dbpool.rollback();
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "기본 배송지 변경 실패",
@@ -2108,7 +2105,7 @@ async function createPremiumRequest(req, res, next) {
         message: "프리미엄 신청 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "프리미엄 신청 실패",
@@ -2130,7 +2127,7 @@ async function getPremiumRequestList(req, res, next) {
       premiumRequestList: results[0],
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(400).json({
       message: "프리미엄 신청 목록 조회 실패",
@@ -2160,7 +2157,7 @@ async function getPremiumRequestDetail(req, res, next) {
         premiumRequestDetail: results[0][0],
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "프리미엄 신청 상세 조회 실패",
@@ -2180,7 +2177,7 @@ async function getPremiumUserList(req, res, next) {
       premiumUserList: results[0],
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(400).json({
       message: "프리미엄 회원 목록 조회 실패",
@@ -2223,7 +2220,7 @@ async function approvePremium(req, res, next) {
       });
     } catch (err) {
       await dbpool.rollback();
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "프리미엄 회원 신청 승인 실패",
@@ -2259,7 +2256,7 @@ async function rejectPremium(req, res, next) {
         message: "프리미엄 회원 신청 거절 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "프리미엄 회원 신청 거절 실패",
@@ -2285,7 +2282,7 @@ async function createPremium(req, res, next) {
         message: "프리미엄 회원 등록 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "프리미엄 회원 등록 실패",
@@ -2310,7 +2307,7 @@ async function deletePremium(req, res, next) {
         message: "프리미엄 회원 해제 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "프리미엄 회원 해제 실패",
@@ -2343,7 +2340,7 @@ async function getBlackList(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "블랙리스트 조회 실패",
@@ -2372,7 +2369,7 @@ async function getBlackListActive(req, res, next) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "블랙리스트 조회 실패",
@@ -2413,7 +2410,7 @@ async function getBlackListByUser(req, res, next) {
         });
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "블랙리스트 조회 실패",
@@ -2440,7 +2437,7 @@ async function createBlackList(req, res, next) {
         message: "블랙리스트 등록 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "블랙리스트 등록 실패",
@@ -2467,7 +2464,7 @@ async function deleteBlackList(req, res, next) {
         message: "블랙리스트 삭제 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "블랙리스트 삭제 실패",
@@ -2494,7 +2491,7 @@ async function updateBlackList(req, res, next) {
         message: "블랙리스트 수정 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "블랙리스트 수정 실패",
@@ -2521,7 +2518,7 @@ async function activeBlackList(req, res, next) {
         message: "블랙리스트 활성화 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "블랙리스트 활성화 실패",
@@ -2548,7 +2545,7 @@ async function inactiveBlackList(req, res, next) {
         message: "블랙리스트 비활성화 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "블랙리스트 비활성화 실패",

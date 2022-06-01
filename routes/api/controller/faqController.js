@@ -8,14 +8,13 @@ async function getFaq(req, res, next) {
     const sql = "select * from faq";
 
     const results = await dbpool.query(sql);
-    console.log(results[0]);
 
     res.status(200).json({
       message: "faq 불러오기 성공",
       faq: results[0],
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     res.status(500).json({
       message: "faq 불러오기 실패",
@@ -54,7 +53,7 @@ async function createFaq(req, res, next) {
         message: "faq 등록 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "faq 등록 실패",
@@ -90,7 +89,7 @@ async function updateFaq(req, res, next) {
         faq_seq,
       ]);
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "faq 수정 실패",
@@ -117,7 +116,7 @@ async function deleteFaq(req, res, next) {
         message: "faq 삭제 성공",
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       res.status(500).json({
         message: "faq 삭제 실패",
