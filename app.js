@@ -50,7 +50,7 @@ const corsOptions = {
   credentials: true,
 };
 
-app.use(cors(corsOptions));
+app.use(cors());
 // 보안설정(Helmet)
 app.use(helmet());
 
