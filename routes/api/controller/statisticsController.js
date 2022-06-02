@@ -304,10 +304,13 @@ async function downloadStatistics(req, res, next) {
       );
 
       // 신청자 목록 Header style 설정
+      console.warn(applicant_results[1][0].name);
+
       let applicant_keys = [];
-      for (let i = 0; i < Object.keys(applicantData[0]).length; i++) {
+
+      for (let i = 0; i < applicant_results[1].length; i++) {
         applicant_keys.push({
-          v: Object.keys(applicantData[0])[i],
+          v: applicant_results[1][i].name,
           t: "s",
           s: {
             fill: { fgColor: { rgb: "ffe2ae" } },
@@ -323,12 +326,33 @@ async function downloadStatistics(req, res, next) {
 
         // 최대 Cell 너비 설정(Key 기준 Initialize)
         wsMaxCol.push({
-          width:
-            Object.keys(applicantData[0])[i].length * 2.5 > 10
-              ? Object.keys(applicantData[0])[i].length * 2.5
-              : 10,
+          width: applicant_results[1][i].name * 2.5 > 10 ? applicant_results[1][i].name * 2.5 : 10,
         });
       }
+      // for (let i = 0; i < Object.keys(applicantData[0]).length; i++) {
+      // applicant_keys.push({
+      //   v: Object.keys(applicantData[0])[i],
+      //   t: "s",
+      //   s: {
+      //     fill: { fgColor: { rgb: "ffe2ae" } },
+      //     font: { name: "맑은 고딕", sz: 14, color: { rgb: "6D6D6D" }, bold: true },
+      //     border: {
+      //       top: { style: "thin" },
+      //       bottom: { style: "thin" },
+      //       left: { style: "thin" },
+      //       right: { style: "thin" },
+      //     },
+      //   },
+      // });
+
+      // // 최대 Cell 너비 설정(Key 기준 Initialize)
+      // wsMaxCol.push({
+      //   width:
+      //     Object.keys(applicantData[0])[i].length * 2.5 > 10
+      //       ? Object.keys(applicantData[0])[i].length * 2.5
+      //       : 10,
+      // });
+      // }
 
       // 최대 Cell 너비 구하기 (기준 : 신청자목록 데이터)
       for (let i = 0; i < applicantData.length; ++i) {
@@ -348,12 +372,13 @@ async function downloadStatistics(req, res, next) {
       xlsx_style.utils.sheet_add_aoa(worksheet, [applicant_keys], { origin: "B9" });
 
       // 신청자 목록 데이터 추가
-      xlsx_style.utils.sheet_add_json(worksheet, applicantData, {
-        header: Object.keys(applicantData[0]),
-        skipHeader: true,
-        origin: "B10",
-      });
-
+      if (applicantData.length > 0) {
+        xlsx_style.utils.sheet_add_json(worksheet, applicantData, {
+          header: Object.keys(applicantData[0]),
+          skipHeader: true,
+          origin: "B10",
+        });
+      }
       // "▣ 신청자 남여 비율" 추가
       xlsx_style.utils.sheet_add_aoa(
         worksheet,
@@ -381,9 +406,10 @@ async function downloadStatistics(req, res, next) {
 
       // 남여 성비 정보 Header style 설정
       let applicant_gender_keys = [];
-      for (let i = 0; i < Object.keys(applicant_gender[0]).length; i++) {
+
+      for (let i = 0; i < applicant_gender_result[1].length; i++) {
         applicant_gender_keys.push({
-          v: Object.keys(applicant_gender[0])[i],
+          v: applicant_gender_result[1][i].name,
           t: "s",
           s: {
             fill: { fgColor: { rgb: "ffe2ae" } },
@@ -398,18 +424,36 @@ async function downloadStatistics(req, res, next) {
         });
       }
 
+      // for (let i = 0; i < Object.keys(applicant_gender[0]).length; i++) {
+      //   applicant_gender_keys.push({
+      //     v: Object.keys(applicant_gender[0])[i],
+      //     t: "s",
+      //     s: {
+      //       fill: { fgColor: { rgb: "ffe2ae" } },
+      //       font: { name: "맑은 고딕", sz: 14, color: { rgb: "6D6D6D" }, bold: true },
+      //       border: {
+      //         top: { style: "thin" },
+      //         bottom: { style: "thin" },
+      //         left: { style: "thin" },
+      //         right: { style: "thin" },
+      //       },
+      //     },
+      //   });
+      // }
+
       // 남여 성비 정보  Header 추가
       xlsx_style.utils.sheet_add_aoa(worksheet, [applicant_gender_keys], {
         origin: { c: 1, r: -1 },
       });
 
       // 남여 성비 데이터 추가
-      xlsx_style.utils.sheet_add_json(worksheet, applicant_gender, {
-        header: Object.keys(applicant_gender[0]),
-        skipHeader: true,
-        origin: { c: 1, r: -1 },
-      });
-
+      if (applicant_gender.length > 0) {
+        xlsx_style.utils.sheet_add_json(worksheet, applicant_gender, {
+          header: Object.keys(applicant_gender[0]),
+          skipHeader: true,
+          origin: { c: 1, r: -1 },
+        });
+      }
       // Cell 최대 너비 설정
       worksheet["!cols"] = wsMaxCol;
 
