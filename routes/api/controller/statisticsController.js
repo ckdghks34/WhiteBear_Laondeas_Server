@@ -304,9 +304,28 @@ async function downloadStatistics(req, res, next) {
       );
 
       // 신청자 목록 Header style 설정
-      console.warn(applicant_results[1][0].name);
-
       let applicant_keys = [];
+
+      // 신청자 목록 Header 추가
+      applicant_keys.push({
+        v: "번호",
+        t: "s",
+        s: {
+          fill: { fgColor: { rgb: "ffe2ae" } },
+          font: { name: "맑은 고딕", sz: 14, color: { rgb: "6D6D6D" }, bold: true },
+          border: {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" },
+          },
+        },
+      });
+
+      wsMaxCol.push({
+        // "번호".length == 2
+        width: 2 * 2.5 > 10 ? 2 * 2.5 : 10,
+      });
 
       for (let i = 0; i < applicant_results[1].length; i++) {
         applicant_keys.push({
@@ -329,6 +348,24 @@ async function downloadStatistics(req, res, next) {
           width: applicant_results[1][i].name * 2.5 > 10 ? applicant_results[1][i].name * 2.5 : 10,
         });
       }
+
+      // 신청자 목록 Header 추가
+      applicant_keys.push({
+        v: "블로그 이용 평균 방문자수",
+        t: "s",
+        s: {
+          fill: { fgColor: { rgb: "ffe2ae" } },
+          font: { name: "맑은 고딕", sz: 14, color: { rgb: "6D6D6D" }, bold: true },
+          border: {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" },
+          },
+        },
+      });
+
+      wsMaxCol.push({ width: "블로그 이용 평균 방문자수".length * 2.5 });
       // for (let i = 0; i < Object.keys(applicantData[0]).length; i++) {
       // applicant_keys.push({
       //   v: Object.keys(applicantData[0])[i],
@@ -357,7 +394,6 @@ async function downloadStatistics(req, res, next) {
       // 최대 Cell 너비 구하기 (기준 : 신청자목록 데이터)
       for (let i = 0; i < applicantData.length; ++i) {
         let value = Object.values(applicantData[i]);
-
         for (let k = 0; k < value.length; ++k) {
           if (value[k] !== null) {
             wsMaxCol[k + 1].width =
