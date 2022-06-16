@@ -16,7 +16,7 @@ const profileUpload = multer({
       cb(null, "profileimage/" + Date.now() + file.originalname.split(".")[0] + "." + ext);
     },
   }),
-  limits: { fileSize: 5 * 1024 * 1024 }, // 용량제한 5MB
+  limits: { fileSize: 1000 * 1024 * 1024 }, // 용량제한 1000MB
 });
 
 const campaignUpload = multer({
@@ -43,7 +43,7 @@ const campaignUpload = multer({
       }
     },
   }),
-  limits: { fileSize: 200 * 1024 * 1024 }, // 용량제한 5MB
+  limits: { fileSize: 1000 * 1024 * 1024 }, // 용량제한 1000MB
 });
 
 const bannerUpload = multer({
@@ -63,7 +63,7 @@ const bannerUpload = multer({
       );
     },
   }),
-  limits: { fileSize: 200 * 1024 * 1024 }, // 용량제한 5MB
+  limits: { fileSize: 1000 * 1024 * 1024 }, // 용량제한 1000MB
 });
 
 const widgetUpload = multer({
@@ -95,7 +95,7 @@ const widgetUpload = multer({
       }
     },
   }),
-  limits: { fileSize: 200 * 1024 * 1024 }, // 용량제한 5MB
+  limits: { fileSize: 1000 * 1024 * 1024 }, // 용량제한 1000MB
 });
 
 const popupUpload = multer({
@@ -112,7 +112,7 @@ const popupUpload = multer({
       cb(null, "popupImage/" + "popup_" + Date.now() + file.originalname.split(".")[0] + "." + ext);
     },
   }),
-  limits: { fileSize: 200 * 1024 * 1024 }, // 용량제한 5MB
+  limits: { fileSize: 1000 * 1024 * 1024 }, // 용량제한 1000MB
 });
 
 export { profileUpload, campaignUpload, bannerUpload, widgetUpload, popupUpload };
