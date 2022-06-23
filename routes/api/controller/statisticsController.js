@@ -174,8 +174,8 @@ async function downloadStatistics(req, res, next) {
       when grade = 4
         then 'Master'
     end  as "체험단원 등급", 
-    ifnull(u.address,"정보없음") as "지역"
-    from campaign_application as ca join (select us.*, address from user as us join user_address_book as uab on us.user_seq = uab.user_seq where uab.is_default = 1) as u on ca.user_seq = u.user_seq
+    if(ca.address != ' ',ca.address,"정보없음") as "지역"
+    from campaign_application as ca join user as u on ca.user_seq = u.user_seq
     where ca.campaign_seq = ?;`;
 
     // 캠페인 정보 쿼리
