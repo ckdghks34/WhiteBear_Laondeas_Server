@@ -6,7 +6,9 @@ import pgInfo from "../../../config/pginfo.js";
 const __dirname = path.resolve();
 
 async function createSecretKey(req, res, next) {
-  const { returnUrl, redirectUrl } = req.query;
+  const method = req.method;
+
+  const { returnUrl, redirectUrl } = method == "GET" ? req.query : req.body;
 
   const niceInfo = pgInfo.nice;
   const moduleName = "CPClient_linux_x64";
