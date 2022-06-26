@@ -79,7 +79,7 @@ app.use(function (err, req, res, next) {
 });
 
 // http
-app.listen(process.env.HTTPS_SERVER_PORT, () => {
+app.listen(process.env.SERVER_PORT, () => {
   console.log("server is running...");
 });
 
@@ -89,11 +89,11 @@ app.listen(process.env.HTTPS_SERVER_PORT, () => {
 //   cert: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/fullchain.pem"),
 //   ca: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/chain.pem"),
 // };
-// var httpsserver = https.createServer(options, app);
+var httpsserver = https.createServer(app);
 
-// httpsserver.listen(process.env.HTTPS_SERVER_PORT, () => {
-//   console.log(`https server(${process.env.HTTPS_SERVER_PORT}) is running...`);
-// });
+httpsserver.listen(process.env.HTTPS_SERVER_PORT, () => {
+  console.log(`https server(${process.env.HTTPS_SERVER_PORT}) is running...`);
+});
 
 const dbpool = await pool;
 setInterval(async () => {
