@@ -83,20 +83,20 @@ app.listen(process.env.SERVER_PORT, () => {
   console.log("server is running...");
 });
 
-//https
-const options = {
-  key: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/privkey.pem"),
-  cert: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/fullchain.pem"),
-  ca: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/chain.pem"),
-};
-var httpsserver = https.createServer(options, app);
+// //https
+// const options = {
+//   key: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/privkey.pem"),
+//   cert: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/fullchain.pem"),
+//   ca: fs.readFileSync("/etc/letsencrypt/live/laonlaonlaon.ml/chain.pem"),
+// };
+// var httpsserver = https.createServer(options, app);
 
-httpsserver.listen(process.env.HTTPS_SERVER_PORT, () => {
-  console.log(`https server(${process.env.HTTPS_SERVER_PORT}) is running...`);
-});
+// httpsserver.listen(process.env.HTTPS_SERVER_PORT, () => {
+//   console.log(`https server(${process.env.HTTPS_SERVER_PORT}) is running...`);
+// });
 
-const dbpool = await pool;
-setInterval(async () => {
-  await dbpool.query("SELECT 1");
-  console.log("Running Disconnect protection query");
-}, 1000 * 60 * 60 * 3);
+// const dbpool = await pool;
+// setInterval(async () => {
+//   await dbpool.query("SELECT 1");
+//   console.log("Running Disconnect protection query");
+// }, 1000 * 60 * 60 * 3);
