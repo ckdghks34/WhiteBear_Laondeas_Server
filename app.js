@@ -79,7 +79,7 @@ app.use(function (err, req, res, next) {
 });
 
 // http
-app.listen(process.env.SERVER_PORT, () => {
+app.listen(process.env.HTTPS_SERVER_PORT, () => {
   console.log("server is running...");
 });
 
