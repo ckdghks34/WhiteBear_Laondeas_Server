@@ -675,8 +675,8 @@ async function getEndCampaign(req, res, next) {
       from (select *
       from campaign_application
       where user_seq = ?) as ca join campaign as c on ca.campaign_seq = c.campaign_seq
-      where c.recruit_end_date < ?`;
-      const campaignImg_sql = `select * from campaign_file where campaign_seq = ?`;
+      where c.campaign_state = 0;`;
+      const campaignImg_sql = `select file_seq, campaign_seq, name, path, extension, filekey from campaign_file where campaign_seq = ?`;
 
       const results = await dbpool.query(sql, [user_seq, new Date()]);
 
@@ -703,6 +703,47 @@ async function getEndCampaign(req, res, next) {
     }
   }
 }
+
+// Reviewer 선정 된 캠페인 목록
+async function getReviewCampaigns(req, res, next) {
+  try {
+    const { user_seq } = req.query;
+
+    const sql = `select c.campaign_seq, c.advertiser, c.is_premium, c.title, c.category, c.product, c.channel, c.area, c.address, c.keyword, c.headcount, c.siteURL, c.misson, c.reward, c.original_price, c.discount_price, c.accrual_point, c.campaign_guide, c.recruit_start_date, c.recruit_end_date, c.reviewer_announcement_date, c.review_start_date, c.review_end_date, c.campaign_end_date, c.agreement_portrait, c.agreement_provide_info, c.campaign_state, c.view_count, c.first_register_id, c.first_register_date, c.last_register_id, c.last_register_date
+    from reviewer as r, campaign as c
+    where r.user_seq = ? and r.campaign_seq = c.campaign_seq;`;
+
+    const campaignImg_sql = `select file_seq, campaign_seq, name, path, extension, filekey from campaign_file where campaign_seq = ?`;
+
+    const results = await dbpool.query(sql, [user_seq]);
+    const campaigns = results[0];
+
+    for (let i = 0; i < campaigns.length; i++) {
+      const campaign_seq = campaigns[i].campaign_seq;
+
+      const campaignImg = await dbpool.query(campaignImg_sql, campaign_seq);
+
+      campaigns[i]["campaign_file"] = campaignImg[0];
+    }
+
+    res.status(200).json({
+      message: "Reviewer 선정된 캠페인 조회 성공",
+      campaigns: campaigns,
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      message: "Reviewer 선정된 캠페인 조회 실패",
+    });
+  }
+}
+
+// Reviewer 선정된 캠페인 중 리뷰 등록 완료한 목록
+async function getReviewCamapaignsByComplete(req, res, next) {}
+
+// Reviewer 선정된 캠페인 중 리뷰 등록이 필요한 목록
+async function getReviewCamapaignsByImcomplete(req, res, next) {}
 
 // 출석체크
 async function attendanceCheck(req, res, next) {
