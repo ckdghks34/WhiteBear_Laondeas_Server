@@ -637,7 +637,7 @@ async function getMyCampaign(req, res, next) {
       const results = await dbpool.query(sql, user_seq);
       const applicant_sql = `select ca.user_seq, ca.campaign_seq, ca.acquaint_content, ca.select_reward, ca.camera_code, ca.face_exposure, ca.address, ca.receiver, ca.receiver_phonenumber, ca.joint_blog, ca.other_answers, ca.status, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.grade,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
 
-      const myCampaign = results[0];
+      let myCampaign = results[0];
       for (let i = 0; i < myCampaign.length; i++) {
         const campaign_seq = myCampaign[i].campaign_seq;
 
@@ -680,7 +680,7 @@ async function getEndCampaign(req, res, next) {
 
       const results = await dbpool.query(sql, [user_seq, new Date()]);
 
-      const endCampaign = results[0];
+      let endCampaign = results[0];
 
       for (let i = 0; i < endCampaign.length; i++) {
         const campaign_seq = endCampaign[i].campaign_seq;
@@ -716,20 +716,26 @@ async function getReviewCampaigns(req, res, next) {
     const campaignImg_sql = `select file_seq, campaign_seq, name, path, extension, filekey from campaign_file where campaign_seq = ?`;
 
     const results = await dbpool.query(sql, [user_seq]);
-    const campaigns = results[0];
+    let campaigns = results[0];
 
-    for (let i = 0; i < campaigns.length; i++) {
-      const campaign_seq = campaigns[i].campaign_seq;
+    if (campaigns.length === 0) {
+      res.status(200).json({
+        message: "리뷰 등록한 캠페인이 없습니다.",
+      });
+    } else {
+      for (let i = 0; i < campaigns.length; i++) {
+        const campaign_seq = campaigns[i].campaign_seq;
 
-      const campaignImg = await dbpool.query(campaignImg_sql, campaign_seq);
+        const campaignImg = await dbpool.query(campaignImg_sql, campaign_seq);
 
-      campaigns[i]["campaign_file"] = campaignImg[0];
+        campaigns[i]["campaign_file"] = campaignImg[0];
+      }
+
+      res.status(200).json({
+        message: "Reviewer 선정된 캠페인 조회 성공",
+        campaigns: campaigns,
+      });
     }
-
-    res.status(200).json({
-      message: "Reviewer 선정된 캠페인 조회 성공",
-      campaigns: campaigns,
-    });
   } catch (err) {
     console.error(err);
 
@@ -740,10 +746,86 @@ async function getReviewCampaigns(req, res, next) {
 }
 
 // Reviewer 선정된 캠페인 중 리뷰 등록 완료한 목록
-async function getReviewCamapaignsByComplete(req, res, next) {}
+async function getReviewCamapaignsByComplete(req, res, next) {
+  try {
+    const { user_seq } = req.query;
+
+    const sql = `select c.campaign_seq, c.advertiser, c.is_premium, c.title, c.category, c.product, c.channel, c.area, c.address, c.keyword, c.headcount, c.siteURL, c.misson, c.reward, c.original_price, c.discount_price, c.accrual_point, c.campaign_guide, c.recruit_start_date, c.recruit_end_date, c.reviewer_announcement_date, c.review_start_date, c.review_end_date, c.campaign_end_date, c.agreement_portrait, c.agreement_provide_info, c.campaign_state, c.view_count, c.first_register_id, c.first_register_date, c.last_register_id, c.last_register_date
+    from reviewer as r, campaign as c
+    where r.user_seq = ? and r.campaign_seq = c.campaign_seq and r.complete_mission = 1;`;
+
+    const campaignImg_sql = `select file_seq, campaign_seq, name, path, extension, filekey from campaign_file where campaign_seq = ?`;
+
+    const results = await dbpool.query(sql, [user_seq]);
+    let campaigns = results[0];
+
+    if (campaigns.length === 0) {
+      res.status(200).json({
+        message: "리뷰 등록한 캠페인이 없습니다.",
+      });
+    } else {
+      for (let i = 0; i < campaigns.length; i++) {
+        const campaign_seq = campaigns[i].campaign_seq;
+
+        const campaignImg = await dbpool.query(campaignImg_sql, campaign_seq);
+
+        campaigns[i]["campaign_file"] = campaignImg[0];
+      }
+
+      res.status(200).json({
+        message: "Reviewer 선정된 캠페인 조회 성공",
+        campaigns: campaigns,
+      });
+    }
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      message: "Reviewer 선정된 캠페인 조회 실패",
+    });
+  }
+}
 
 // Reviewer 선정된 캠페인 중 리뷰 등록이 필요한 목록
-async function getReviewCamapaignsByImcomplete(req, res, next) {}
+async function getReviewCamapaignsByImcomplete(req, res, next) {
+  try {
+    const { user_seq } = req.query;
+
+    const sql = `select c.campaign_seq, c.advertiser, c.is_premium, c.title, c.category, c.product, c.channel, c.area, c.address, c.keyword, c.headcount, c.siteURL, c.misson, c.reward, c.original_price, c.discount_price, c.accrual_point, c.campaign_guide, c.recruit_start_date, c.recruit_end_date, c.reviewer_announcement_date, c.review_start_date, c.review_end_date, c.campaign_end_date, c.agreement_portrait, c.agreement_provide_info, c.campaign_state, c.view_count, c.first_register_id, c.first_register_date, c.last_register_id, c.last_register_date
+    from reviewer as r, campaign as c
+    where r.user_seq = ? and r.campaign_seq = c.campaign_seq and r.complete_mission = 0;`;
+
+    const campaignImg_sql = `select file_seq, campaign_seq, name, path, extension, filekey from campaign_file where campaign_seq = ?`;
+
+    const results = await dbpool.query(sql, [user_seq]);
+    let campaigns = results[0];
+
+    if (campaigns.length === 0) {
+      res.status(200).json({
+        message: "리뷰 등록이 필요한 캠페인이 없습니다.",
+      });
+    } else {
+      for (let i = 0; i < campaigns.length; i++) {
+        const campaign_seq = campaigns[i].campaign_seq;
+
+        const campaignImg = await dbpool.query(campaignImg_sql, campaign_seq);
+
+        campaigns[i]["campaign_file"] = campaignImg[0];
+      }
+
+      res.status(200).json({
+        message: "Reviewer 선정된 캠페인 조회 성공",
+        campaigns: campaigns,
+      });
+    }
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      message: "Reviewer 선정된 캠페인 조회 실패",
+    });
+  }
+}
 
 // 출석체크
 async function attendanceCheck(req, res, next) {
@@ -2667,4 +2749,7 @@ export {
   approvePremium,
   rejectPremium,
   updateUserAdditionalInfo,
+  getReviewCampaigns,
+  getReviewCamapaignsByComplete,
+  getReviewCamapaignsByImcomplete,
 };
