@@ -3187,6 +3187,7 @@ async function increaseCampaignViewCount(req, res, next) {
     });
   }
 }
+
 // 리뷰 등록
 async function createReview(req, res, next) {
   try {
@@ -3204,20 +3205,31 @@ async function createReview(req, res, next) {
         message: "필수 데이터가 없습니다.",
       });
     } else {
-      const sql = `update reviewer set complete_mission = 1,review_URL = ?, satisfaction_score = ?, satisfaction_content = ? where user_seq = ? and campaign_seq = ?`;
-      await dbpool.execute(sql, [
-        review_URL,
-        satisfaction_score,
-        satisfaction_content,
-        user_seq,
-        campaign_seq,
-      ]);
+      const review_sql = `select complete_mission from reviewer where user_seq = ? and campaign_seq = ?`;
+      const review_results = await dbpool.execute(review_sql, [user_seq, campaign_seq]);
 
-      await checkCampaignDone(campaign_seq);
+      if (review_results[0][0].complete_mission === 1) {
+        res.status(400).json({
+          message: "이미 리뷰를 등록하였습니다.",
+        });
+      } else {
+        const sql = `update reviewer set complete_mission = 1,review_URL = ?, satisfaction_score = ?, satisfaction_content = ?, last_register_id = ?, last_register_date = ? where user_seq = ? and campaign_seq = ?`;
+        await dbpool.execute(sql, [
+          review_URL,
+          satisfaction_score,
+          satisfaction_content,
+          user_seq,
+          new Date(),
+          user_seq,
+          campaign_seq,
+        ]);
 
-      res.status(200).json({
-        message: "리뷰 등록 성공",
-      });
+        await checkCampaignDone(campaign_seq);
+
+        res.status(200).json({
+          message: "리뷰 등록 성공",
+        });
+      }
     }
   } catch (err) {
     console.error(err);
@@ -3228,7 +3240,7 @@ async function createReview(req, res, next) {
 }
 
 // 리뷰 수정
-async function modifyReview(req, res, next) {
+async function updateReview(req, res, next) {
   try {
     const { user_seq, campaign_seq, review_URL, satisfaction_score, satisfaction_content } =
       req.body;
@@ -3244,18 +3256,29 @@ async function modifyReview(req, res, next) {
         message: "필수 데이터가 없습니다.",
       });
     } else {
-      const sql = `update reviewer set review_URL = ?, satisfaction_score = ?, satisfaction_content = ? where user_seq = ? and campaign_seq = ?`;
-      await dbpool.execute(sql, [
-        review_URL,
-        satisfaction_score,
-        satisfaction_content,
-        user_seq,
-        campaign_seq,
-      ]);
+      const review_sql = `select complete_mission from reviewer where user_seq = ? and campaign_seq = ?`;
+      const review_results = await dbpool.execute(review_sql, [user_seq, campaign_seq]);
 
-      res.status(200).json({
-        message: "리뷰 수정 성공",
-      });
+      if (review_results[0][0].complete_mission === 0) {
+        res.status(400).json({
+          message: "작성된 리뷰가 존재하지 않습니다.",
+        });
+      } else {
+        const sql = `update reviewer set review_URL = ?, satisfaction_score = ?, satisfaction_content = ?, last_register_id = ?, last_register_date = ? where user_seq = ? and campaign_seq = ?`;
+        await dbpool.execute(sql, [
+          review_URL,
+          satisfaction_score,
+          satisfaction_content,
+          user_seq,
+          new Date(),
+          user_seq,
+          campaign_seq,
+        ]);
+
+        res.status(200).json({
+          message: "리뷰 수정 성공",
+        });
+      }
     }
   } catch (err) {
     console.error(err);
@@ -3274,13 +3297,22 @@ async function deleteReview(req, res, next) {
         message: "필수 데이터가 없습니다.",
       });
     } else {
-      const sql = `update reviewer set complete_mission = 0, review_URL = null, satisfaction_score = null, satisfaction_content = null where user_seq = ? and campaign_seq = ?`;
-      await dbpool.execute(sql, [user_seq, campaign_seq]);
+      const review_sql = `select complete_mission from reviewer where user_seq = ? and campaign_seq = ?`;
+      const review_results = await dbpool.execute(review_sql, [user_seq, campaign_seq]);
 
-      await checkCampaignDone(campaign_seq);
-      res.status(200).json({
-        message: "리뷰 삭제 성공",
-      });
+      if (review_results[0][0].complete_mission === 0) {
+        res.status(400).json({
+          message: "작성된 리뷰가 존재하지 않습니다.",
+        });
+      } else {
+        const sql = `update reviewer set complete_mission = 0, review_URL = null, satisfaction_score = null, satisfaction_content = null, last_register_id = ?, last_register_date = ? where user_seq = ? and campaign_seq = ?`;
+        await dbpool.execute(sql, [user_seq, new Date(), user_seq, campaign_seq]);
+
+        await checkCampaignDone(campaign_seq);
+        res.status(200).json({
+          message: "리뷰 삭제 성공",
+        });
+      }
     }
   } catch (err) {
     console.error(err);
@@ -3305,14 +3337,14 @@ async function getAllReview(req, res, next) {
       res.status(200).json({
         message: "등록된 리뷰가 없습니다.",
       });
+    } else {
+      res.status(200).json({
+        message: "리뷰 조회 성공",
+        reviews,
+      });
     }
-
-    res.status(200).json({
-      message: "리뷰 조회 성공",
-      reviews,
-    });
   } catch (err) {
-    console.err(err);
+    console.error(err);
 
     res.status(500).json({
       message: "리뷰 조회 실패",
@@ -3332,7 +3364,7 @@ async function getReviewDetail(req, res, next) {
     } else {
       const sql = `select r.user_seq, u.id, u.name, u.nickname, r.campaign_seq, c.title, c.campaign_state, r.complete_mission, r.review_URL, r.satisfaction_score, r.satisfaction_content, r.first_register_id, r.first_register_date, r.last_register_id, r.last_register_date
       from reviewer as r, user as u, campaign as c
-      where r.user_seq = u.user_seq and r.campaign_seq = c.campaign_seq and r.user_seq = ? and r.campaign_seq = ?`;
+      where r.user_seq = u.user_seq and r.campaign_seq = c.campaign_seq and r.user_seq = ? and r.campaign_seq = ? and r.complete_mission = 1`;
 
       const results = await dbpool.execute(sql, [user_seq, campaign_seq]);
       const review = results[0][0];
@@ -3341,12 +3373,12 @@ async function getReviewDetail(req, res, next) {
         res.status(200).json({
           message: "등록된 리뷰가 없습니다.",
         });
+      } else {
+        res.status(200).json({
+          message: "리뷰 조회 성공",
+          review,
+        });
       }
-
-      res.status(200).json({
-        message: "리뷰 조회 성공",
-        review,
-      });
     }
   } catch (err) {
     console.log(err);
@@ -3356,6 +3388,7 @@ async function getReviewDetail(req, res, next) {
     });
   }
 }
+
 // 유저별 등록 리뷰 가져오기
 async function getReviewByUser(req, res, next) {
   try {
@@ -3368,7 +3401,7 @@ async function getReviewByUser(req, res, next) {
     } else {
       const sql = `select r.user_seq, u.id, u.name, u.nickname, r.campaign_seq, c.title, c.campaign_state, r.complete_mission, r.review_URL, r.satisfaction_score, r.satisfaction_content, r.first_register_id, r.first_register_date, r.last_register_id, r.last_register_date
       from reviewer as r, user as u, campaign as c
-      where r.user_seq = u.user_seq and r.campaign_seq = c.campaign_seq and r.user_seq = ?`;
+      where r.user_seq = u.user_seq and r.campaign_seq = c.campaign_seq and r.user_seq = ? and r.complete_mission = 1`;
 
       const results = await dbpool.execute(sql, [user_seq]);
       const reviews = results[0];
@@ -3377,12 +3410,12 @@ async function getReviewByUser(req, res, next) {
         res.status(200).json({
           message: "등록된 리뷰가 없습니다.",
         });
+      } else {
+        res.status(200).json({
+          message: "리뷰 조회 성공",
+          reviews,
+        });
       }
-
-      res.status(200).json({
-        message: "리뷰 조회 성공",
-        reviews,
-      });
     }
   } catch (err) {
     console.error(err);
@@ -3405,7 +3438,7 @@ async function getReviewByCampaign(req, res, next) {
     } else {
       const sql = `select r.user_seq, u.id, u.name, u.nickname, r.campaign_seq, c.title, c.campaign_state, r.complete_mission, r.review_URL, r.satisfaction_score, r.satisfaction_content, r.first_register_id, r.first_register_date, r.last_register_id, r.last_register_date
       from reviewer as r, user as u, campaign as c
-      where r.user_seq = u.user_seq and r.campaign_seq = c.campaign_seq and r.campaign_seq = ?`;
+      where r.user_seq = u.user_seq and r.campaign_seq = c.campaign_seq and r.campaign_seq = ? and r.complete_mission = 1`;
 
       const results = await dbpool.execute(sql, [campaign_seq]);
       const reviews = results[0];
@@ -3413,6 +3446,11 @@ async function getReviewByCampaign(req, res, next) {
       if (reviews.length === 0) {
         res.status(200).json({
           message: "등록된 리뷰가 없습니다.",
+        });
+      } else {
+        res.status(200).json({
+          message: "리뷰 조회 성공",
+          reviews,
         });
       }
     }
@@ -3432,7 +3470,10 @@ async function checkCampaignDone(campagin_seq) {
     const result = await dbpool.execute(sql, [campagin_seq]);
 
     if (result[0][0].count === 0) {
-      const sql = `update campaign set campaign_status = 0 where campaign_seq = ?`;
+      const sql = `update campaign set campaign_state = 0 where campaign_seq = ?`;
+      await dbpool.execute(sql, [campagin_seq]);
+    } else {
+      const sql = `update campaign set campaign_state = 1 where campaign_seq = ?`;
       await dbpool.execute(sql, [campagin_seq]);
     }
   } catch (err) {
@@ -3589,5 +3630,12 @@ export {
   increaseCampaignViewCount,
   updateCampaignDetail,
   updateCampaignThumbnail,
-  test,
+  createReview,
+  updateReview,
+  deleteReview,
+  getAllReview,
+  getReviewDetail,
+  getReviewByUser,
+  getReviewByCampaign,
+  //test,
 };
