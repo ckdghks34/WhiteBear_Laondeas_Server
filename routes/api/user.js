@@ -60,6 +60,23 @@ router.get("/my-campaign", authJWT, userController.getMyCampaign);
 router.get("/end-campaign", authJWT, userController.getEndCampaign);
 
 /**
+ * 리뷰어 관련 목록
+ */
+
+// Reviewer 선정 된 캠페인 목록
+router.get("/my-campaign/reviewer", authJWT, userController.getReviewCampaigns);
+
+// Reviewer 선정된 캠페인 중 리뷰 등록 완료한 목록
+router.get("/my-campaign/reviewer/complete", authJWT, userController.getReviewCamapaignsByComplete);
+
+// Reviewer 선정된 캠페인 중 리뷰 등록이 필요한 목록
+router.get(
+  "/my-campaign/reviewer/incomplete",
+  authJWT,
+  userController.getReviewCamapaignsByImcomplete
+);
+
+/**
  * 프리미엄 기능
  */
 
