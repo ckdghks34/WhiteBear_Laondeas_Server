@@ -198,6 +198,27 @@ router.patch("/mission/cancel", authJWT, campaignController.missionCancel);
 // 조회수 증가
 router.patch("/campaign/view-count", campaignController.increaseCampaignViewCount);
 
-router.get("/test/test", campaignController.test);
+// 리뷰 등록 (post)
+router.post("/review", authJWT, campaignController.createReview);
+
+// 리뷰 수정 (patch)
+router.patch("/review", authJWT, campaignController.updateReview);
+
+// 리뷰 삭제 (delete)
+router.delete("/review", authJWT, campaignController.deleteReview);
+
+// 등록된 모든 리뷰 가져오기 (get)
+router.get("/reviews", authJWT, campaignController.getAllReview);
+
+// 상세 리뷰 가져오기 (get)
+router.get("/review/detail", authJWT, campaignController.getReviewDetail);
+
+// 유저별 등록 리뷰 가져오기 (get)
+router.get("/review/user", authJWT, campaignController.getReviewByUser);
+
+// 캠페인별 등록 리뷰 가져오기 (get)
+router.get("/review/campaign", authJWT, campaignController.getReviewByCampaign);
+
+// router.get("/test/test", campaignController.test);
 
 export default router;
