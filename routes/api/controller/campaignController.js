@@ -3006,6 +3006,7 @@ async function missionComplete(req, res, next) {
       }
 
       const sql = `update campaign_application set status = 2 where user_seq = ? and campaign_seq = ?`;
+      const review_sql = `update reviewer set complete_mission = 1 where user_seq = ? and campaign_seq = ?`;
       const campaign_sql = `select * from campaign where campaign_seq = ?`;
 
       // 포인트 적립
@@ -3025,6 +3026,8 @@ async function missionComplete(req, res, next) {
       await dbpool.beginTransaction();
 
       await dbpool.execute(sql, [user_seq, campaign_seq]);
+
+      await dbpool.execute(review_sql, [user_seq, campaign_seq]);
 
       await dbpool.execute(user_point_sql, [
         campaign.accrual_point,
@@ -3058,6 +3061,7 @@ async function missionComplete(req, res, next) {
 
       await dbpool.commit();
 
+      checkCampaignDone(campaign_seq);
       res.status(200).json({
         message: "미션 완료 성공",
       });
@@ -3099,6 +3103,7 @@ async function missionCancel(req, res, next) {
     }
 
     const sql = `update campaign_application set status = 1 where user_seq = ? and campaign_seq = ?`;
+    const review_sql = `update reviewer set complete_mission = 0 where user_seq = ? and campaign_seq = ?`;
 
     const campaign_sql = `select * from campaign where campaign_seq = ?`;
     const user_point_sql = `update user set point = point - ?, accumulated_point = accumulated_point - ? where user_seq = ?`;
@@ -3123,7 +3128,7 @@ async function missionCancel(req, res, next) {
     await dbpool.beginTransaction();
 
     await dbpool.execute(sql, [user_seq, campaign_seq]);
-
+    await dbpool.execute(review_sql, [user_seq, campaign_seq]);
     await dbpool.execute(user_point_sql, [
       campaign.accrual_point,
       campaign.accrual_point,
@@ -3149,6 +3154,7 @@ async function missionCancel(req, res, next) {
 
     await dbpool.commit();
 
+    checkCampaignDone(campaign_seq);
     res.status(200).json({
       message: "미션 완료 취소 성공",
     });
@@ -3214,6 +3220,9 @@ async function createReview(req, res, next) {
         });
       } else {
         const sql = `update reviewer set complete_mission = 1,review_URL = ?, satisfaction_score = ?, satisfaction_content = ?, last_register_id = ?, last_register_date = ? where user_seq = ? and campaign_seq = ?`;
+        const applicant_sql = `update campaign_application set status = 2 where user_seq = ? and campaign_seq = ?`;
+
+        await dbpool.beginTransaction();
         await dbpool.execute(sql, [
           review_URL,
           satisfaction_score,
@@ -3224,6 +3233,9 @@ async function createReview(req, res, next) {
           campaign_seq,
         ]);
 
+        await dbpool.execute(applicant_sql, [user_seq, campaign_seq]);
+
+        await dbpool.commit();
         await checkCampaignDone(campaign_seq);
 
         res.status(200).json({
@@ -3265,6 +3277,7 @@ async function updateReview(req, res, next) {
         });
       } else {
         const sql = `update reviewer set review_URL = ?, satisfaction_score = ?, satisfaction_content = ?, last_register_id = ?, last_register_date = ? where user_seq = ? and campaign_seq = ?`;
+
         await dbpool.execute(sql, [
           review_URL,
           satisfaction_score,
@@ -3306,7 +3319,14 @@ async function deleteReview(req, res, next) {
         });
       } else {
         const sql = `update reviewer set complete_mission = 0, review_URL = null, satisfaction_score = null, satisfaction_content = null, last_register_id = ?, last_register_date = ? where user_seq = ? and campaign_seq = ?`;
+        const applicant_sql = `update campaign_application set status = 1 where user_seq = ? and campaign_seq = ?`;
+
+        await dbpool.beginTransaction();
+
         await dbpool.execute(sql, [user_seq, new Date(), user_seq, campaign_seq]);
+        await dbpool.execute(applicant_sql, [user_seq, campaign_seq]);
+
+        await dbpool.commit();
 
         await checkCampaignDone(campaign_seq);
         res.status(200).json({
