@@ -2563,6 +2563,8 @@ async function createCampaignReviewer(req, res, next) {
         console.error(`id : ${user.id}, email : ${user.email} 메일 발송 실패`);
       }
 
+      checkCampaignDone(campaign_seq);
+
       res.status(200).json({
         message: "리뷰어 선정 등록 성공",
       });
@@ -2611,6 +2613,7 @@ async function deleteCampaignReviewer(req, res, next) {
       await dbpool.execute(status_sql, [campaign_seq, user_seq]);
       await dbpool.commit();
 
+      checkCampaignDone(campaign_seq);
       res.status(200).json({
         message: "리뷰어 선정 취소 성공",
       });
