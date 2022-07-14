@@ -1,7 +1,12 @@
 import bcrypt from "bcrypt";
 import pool from "./../../../config/dbpool.js";
 import dotenv from "dotenv";
-import { sign, verify, refresh, refreshVerify } from "./../../../util/jwt-util.js";
+import {
+  sign,
+  verify,
+  refresh,
+  refreshVerify,
+} from "./../../../util/jwt-util.js";
 import jwt from "jsonwebtoken";
 import axios from "axios";
 import { sendMail } from "./../../../config/mailPoster.js";
@@ -70,7 +75,8 @@ async function signup(req, res, next) {
       let mail_title = "[Laondeas] 회원가입을 진심으로 축하드립니다.";
       let mail_contents = `${user_name}님의 회원가입을 진심으로 축하합니다.
 Laondeas를 이용해주셔서 감사합니다.
-이제 이용하시는 모든 분들은 Laondeas의 서비스를 이용하실 수 있습니다. `;
+이제 이용하시는 모든 분들은 Laondeas의 서비스를 이용하실 수 있습니다.
+<a href="https://www.laondeas.co.kr/">https://www.laondeas.co.kr/</a> `;
       // let mail_contents = user_name+"님의 회원가입을 진심으로 축하합니다.\nLaondeas를 이용해주셔서 감사합니다.\n이제 이용하시는 모든 분들은 Laondeas의 서비스를 이용하실 수 있습니다. ";
 
       if (sendMail(user_email, mail_title, mail_contents)) {
@@ -110,7 +116,10 @@ async function login(req, res, next) {
       } else {
         // 입력받은 비밀번호와 데이터베이스에 저장된 비밀번호(암호화 된) 비교
         try {
-          const result = bcrypt.compareSync(user_password, results[0][0].password);
+          const result = bcrypt.compareSync(
+            user_password,
+            results[0][0].password
+          );
           // 비밀번호가 맞으면
           if (result) {
             try {
@@ -297,7 +306,12 @@ async function addCode(req, res, next) {
   try {
     const sql = `INSERT INTO code_table (code_value, code_name, top_level_code, code_step) VALUES (?,?,?,?)`;
 
-    await dbpool.execute(sql, [code_value, code_name, top_level_code, code_step]);
+    await dbpool.execute(sql, [
+      code_value,
+      code_name,
+      top_level_code,
+      code_step,
+    ]);
 
     res.status(200).json({
       message: "코드 등록 성공",
@@ -330,7 +344,11 @@ async function tokenLogin(req, res, next) {
 
     let user = { user_seq: decoded.seq, id: decoded.id };
 
-    const refreshResult = await refreshVerify(refreshToken, decoded.seq, decoded.id);
+    const refreshResult = await refreshVerify(
+      refreshToken,
+      decoded.seq,
+      decoded.id
+    );
 
     if (authResult.verification || refreshResult) {
       // 새로운 accessToken, refreshToken 발급
@@ -507,7 +525,8 @@ async function kakaoLogin(req, res, next) {
 
 // 네이버 로그인
 async function naverLogin(req, res, next) {
-  const { id, name, email, gender, mobile, birthyear, profile_image } = req.body;
+  const { id, name, email, gender, mobile, birthyear, profile_image } =
+    req.body;
   if (
     id === undefined ||
     name === undefined ||
