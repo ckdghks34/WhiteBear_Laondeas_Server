@@ -3020,10 +3020,8 @@ async function missionComplete(req, res, next) {
       const grade_count_sql = `select count(*) as count from campaign_application where user_seq = ? and status = 2`;
       const grade_count_results = await dbpool.query(grade_count_sql, [user_seq]);
 
-      // const user_result = await dbpool.execute(user_sql, [user_seq]);
       const campaign_result = await dbpool.query(campaign_sql, [campaign_seq]);
 
-      // const user = user_result[0][0];
       const campaign = campaign_result[0][0];
 
       await dbpool.beginTransaction();
@@ -3224,6 +3222,18 @@ async function createReview(req, res, next) {
       } else {
         const sql = `update reviewer set complete_mission = 1,review_URL = ?, satisfaction_score = ?, satisfaction_content = ?, last_register_id = ?, last_register_date = ? where user_seq = ? and campaign_seq = ?`;
         const applicant_sql = `update campaign_application set status = 2 where user_seq = ? and campaign_seq = ?`;
+        const campaign_sql = `select * from campaign where campaign_seq = ?`;
+        // 포인트 적립
+        const user_point_sql = `update user set point = point + ?, accumulated_point = accumulated_point + ? where user_seq = ?`;
+        const accrual_detail_sql = `insert into accrual_detail(user_seq, accrual_point, accrual_content, accrual_point_date, first_register_id, first_register_date, last_register_id, last_register_date) values (?,?,?,now(),?,now(),?,now())`;
+
+        // 회원 등급 조정
+        const grade_count_sql = `select count(*) as count from campaign_application where user_seq = ? and status = 2`;
+        const grade_count_results = await dbpool.query(grade_count_sql, [user_seq]);
+
+        const campaign_result = await dbpool.query(campaign_sql, [campaign_seq]);
+
+        const campaign = campaign_result[0][0];
 
         await dbpool.beginTransaction();
         await dbpool.execute(sql, [
@@ -3237,6 +3247,36 @@ async function createReview(req, res, next) {
         ]);
 
         await dbpool.execute(applicant_sql, [user_seq, campaign_seq]);
+
+        await dbpool.execute(user_point_sql, [
+          campaign.accrual_point,
+          campaign.accrual_point,
+          user_seq,
+        ]);
+
+        await dbpool.execute(accrual_detail_sql, [
+          user_seq,
+          campaign.accrual_point,
+          `${campaign.title} 캠페인 미션 완료!`,
+          user_seq,
+          user_seq,
+        ]);
+
+        // 30건 이상 완료 한경우 (등급 조정 : 4 (Master))
+        if (grade_count_results[0][0].count >= 30) {
+          const grade_sql = `update user set grade = 4 where user_seq = ?`;
+          await dbpool.execute(grade_sql, [user_seq]);
+        }
+        // 15건 이상 완료 한경우 (등급 조정 : 3 (Senior))
+        else if (grade_count_results[0][0].count >= 15) {
+          const grade_sql = `update user set grade = 3 where user_seq = ?`;
+          await dbpool.execute(grade_sql, [user_seq]);
+        }
+        // 5건 이상 완료 한경우 (등급 조정 : 2 (Junior))
+        else if (grade_count_results[0][0].count >= 5) {
+          const grade_sql = `update user set grade = 2 where user_seq = ?`;
+          await dbpool.execute(grade_sql, [user_seq]);
+        }
 
         await dbpool.commit();
         await checkCampaignDone(campaign_seq);
@@ -3324,10 +3364,61 @@ async function deleteReview(req, res, next) {
         const sql = `update reviewer set complete_mission = 0, review_URL = null, satisfaction_score = null, satisfaction_content = null, last_register_id = ?, last_register_date = ? where user_seq = ? and campaign_seq = ?`;
         const applicant_sql = `update campaign_application set status = 1 where user_seq = ? and campaign_seq = ?`;
 
+        const campaign_sql = `select * from campaign where campaign_seq = ?`;
+        const user_point_sql = `update user set point = point - ?, accumulated_point = accumulated_point - ? where user_seq = ?`;
+
+        // const accrual_detail_sql = `delete from accrual_detail where user_seq = ? and accrual_seq = ?`;
+        const accrual_detail_sql_2 = `insert into accrual_detail(user_seq, accrual_point, accrual_content, accrual_point_date, first_register_id, first_register_date, last_register_id, last_register_date) values (?,?,?,now(),?,now(),?,now())`;
+        const detail_sql = `select * from accrual_detail where user_seq = ? and accrual_point = ? and accrual_content = ?`;
+
+        // 회원 등급 조정
+        const grade_count_sql = `select count(*) as count from campaign_application where user_seq = ? and status = 2`;
+        const grade_count_results = await dbpool.query(grade_count_sql, [user_seq]);
+
+        const campaign_result = await dbpool.execute(campaign_sql, [campaign_seq]);
+        const campaign = campaign_result[0][0];
+
+        // const detail_sql_result = await dbpool.execute(detail_sql, [
+        //   user_seq,
+        //   campaign.accrual_point,
+        //   `${campaign.title} 캠페인 미션 완료!`,
+        // ]);
+        // const detail = detail_sql_result[0][0];
+
         await dbpool.beginTransaction();
 
         await dbpool.execute(sql, [user_seq, new Date(), user_seq, campaign_seq]);
         await dbpool.execute(applicant_sql, [user_seq, campaign_seq]);
+        await dbpool.execute(user_point_sql, [
+          campaign.accrual_point,
+          campaign.accrual_point,
+          user_seq,
+        ]);
+
+        // await dbpool.execute(accrual_detail_sql, [user_seq, detail.accrual_seq]);
+        await dbpool.execute(accrual_detail_sql_2, [
+          user_seq,
+          campaign.accrual_point * -1,
+          `${campaign.title} 캠페인 미션 취소`,
+          user_seq,
+          user_seq,
+        ]);
+
+        // 30건 이상 완료 한경우 (등급 조정 : 4 (Master))
+        if (grade_count_results[0][0].count >= 30) {
+          const grade_sql = `update user set grade = 4 where user_seq = ?`;
+          await dbpool.execute(grade_sql, [user_seq]);
+        }
+        // 15건 이상 완료 한경우 (등급 조정 : 3 (Senior))
+        else if (grade_count_results[0][0].count >= 15) {
+          const grade_sql = `update user set grade = 3 where user_seq = ?`;
+          await dbpool.execute(grade_sql, [user_seq]);
+        }
+        // 5건 이상 완료 한경우 (등급 조정 : 2 (Junior))
+        else if (grade_count_results[0][0].count >= 5) {
+          const grade_sql = `update user set grade = 2 where user_seq = ?`;
+          await dbpool.execute(grade_sql, [user_seq]);
+        }
 
         await dbpool.commit();
 
