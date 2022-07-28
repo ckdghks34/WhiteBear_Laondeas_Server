@@ -9,18 +9,150 @@ const dbpool = await pool;
 // 전체 유저 조회하기
 async function getAllUser(req, res, next) {
   try {
-    const sql = `select * from user`;
-    const userimgsql = `select * from user_file where user_seq = ?`;
+    const sql = `select user_seq, id, name, nickname, phonenumber, gender, birth, email, grade, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_name, profile_path, profile_ext, profile_key, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal, first_register_date, last_register_date from user
+                  where is_admin = 0;`;
 
     let results = await dbpool.query(sql);
 
-    for (let i = 0; i < results[0].length; i++) {
-      results[0][i].password = undefined;
+    res.status(200).json({
+      message: "전체 유저 조회 성공",
+      users: results[0],
+    });
+  } catch (err) {
+    console.error(err);
 
-      const imgresult = await dbpool.query(userimgsql, results[0][i].user_seq);
+    res.status(400).json({
+      message: "유저 정보 조회 실패",
+    });
+  }
+}
 
-      if (imgresult[0].length !== 0) results[0][i]["profile_img"] = imgresult[0][i].path;
-    }
+// 전체 회원 조회 가입 입자별 (필터링)
+async function getAllUserByJoinDate(req, res, next) {
+  try {
+    /* 
+      filter = desc 이면 최신순
+      filter = asc 이면 오래된순
+    */
+    const { filter } = req.query;
+    const sql = `select user_seq, id, name, nickname, phonenumber, gender, birth, email, grade, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_name, profile_path, profile_ext, profile_key, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal, first_register_date, last_register_date 
+                  from user
+                  where is_admin = 0
+                  order by first_register_date ${filter};`;
+
+    let results = await dbpool.query(sql);
+
+    res.status(200).json({
+      message: "전체 유저 조회 성공",
+      users: results[0],
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(400).json({
+      message: "유저 정보 조회 실패",
+    });
+  }
+}
+
+// 전체 회원 조회 포인트별 (필터링)
+async function getAllUserByPoint(req, res, next) {
+  try {
+    /* 
+      filter = desc 이면 포인트가 높은순
+      filter = asc 이면 포인트가 낮은순
+    */
+    const { filter } = req.query;
+    const sql = `select user_seq, id, name, nickname, phonenumber, gender, birth, email, grade, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_name, profile_path, profile_ext, profile_key, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal, first_register_date, last_register_date 
+                  from user
+                  where is_admin = 0
+                  order by point ${filter}, first_register_date;`;
+
+    let results = await dbpool.query(sql);
+
+    res.status(200).json({
+      message: "전체 유저 조회 성공",
+      users: results[0],
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(400).json({
+      message: "유저 정보 조회 실패",
+    });
+  }
+}
+
+// 전체 회원 조회 누적포인트별 (필터링)
+async function getAllUserByAccumulatePoint(req, res, next) {
+  try {
+    /* 
+      filter = desc 이면 포인트가 높은순
+      filter = asc 이면 포인트가 낮은순
+    */
+    const { filter } = req.query;
+    const sql = `select user_seq, id, name, nickname, phonenumber, gender, birth, email, grade, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_name, profile_path, profile_ext, profile_key, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal, first_register_date, last_register_date 
+                  from user
+                  where is_admin = 0
+                  order by accumulated_point ${filter}, first_register_date;`;
+
+    let results = await dbpool.query(sql);
+
+    res.status(200).json({
+      message: "전체 유저 조회 성공",
+      users: results[0],
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(400).json({
+      message: "유저 정보 조회 실패",
+    });
+  }
+}
+
+// 전체 회원 조회 유형별(일반, 프리미엄) (필터링)
+async function getAllUserByType(req, res, next) {
+  try {
+    /* 
+      filter = desc 이면 프리미엄 회원부터
+      filter = asc 이면 일반 회원 부터
+    */
+    const { filter } = req.query;
+    const sql = `select user_seq, id, name, nickname, phonenumber, gender, birth, email, grade, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_name, profile_path, profile_ext, profile_key, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal, first_register_date, last_register_date 
+                  from user
+                  where is_admin = 0
+                  order by is_premium ${filter}, first_register_date ;`;
+
+    let results = await dbpool.query(sql);
+
+    res.status(200).json({
+      message: "전체 유저 조회 성공",
+      users: results[0],
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(400).json({
+      message: "유저 정보 조회 실패",
+    });
+  }
+}
+
+// 전체 회원 조회 성별(남, 여) (필터링)
+async function getAllUserByGender(req, res, next) {
+  try {
+    /* 
+      filter = desc 이면 남자, 여자, NUll
+      filter = asc 이면 Null, 여자, 남자
+    */
+    const { filter } = req.query;
+    const sql = `select user_seq, id, name, nickname, phonenumber, gender, birth, email, grade, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_name, profile_path, profile_ext, profile_key, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal, first_register_date, last_register_date 
+                  from user
+                  where is_admin = 0
+                  order by gender ${filter}, first_register_date;`;
+
+    let results = await dbpool.query(sql);
 
     res.status(200).json({
       message: "전체 유저 조회 성공",
@@ -1240,7 +1372,7 @@ async function getWithdrawalRequestList(req, res, next) {
 async function getAllUserWithdrawalRequestList(req, res, next) {
   try {
     const sql = `select wr.request_seq, wr.user_seq, u.id, u.name, wr.withdrawal_point, wr.withdrawal_bank, wr.withdrawal_account, wr.is_pending, wr.first_register_id, wr.first_register_date, wr.last_register_id, wr.last_register_date
-    from withdrawal_request as wr join user as u on wr.user_seq = u.user_seq`;
+    from withdrawal_request as wr join user as u on wr.user_seq = u.user_seq;`;
     const results = await dbpool.query(sql);
 
     res.status(200).json({
@@ -2240,9 +2372,75 @@ async function createPremiumRequest(req, res, next) {
 // 프리미엄 신청 목록
 async function getPremiumRequestList(req, res, next) {
   try {
-    const sql = `select pa.premium_seq,pa.user_seq,pa.is_pending, u.name,u.phonenumber,u.birth,u.gender, u.grade, u.influencer,u.blog,u.instagram, u.youtube, u.address_seq, u.address, pa.agreement_content 
-    from premium_application as pa left join (select us.user_seq,us.name,us.phonenumber,us.birth,us.gender,us.grade,us.influencer,us.blog,us.instagram, us.youtube, uab.address_seq, uab.address
+    const sql = `select pa.premium_seq,pa.user_seq,pa.is_pending, u.name,u.phonenumber,u.birth,u.gender, u.grade,u.point,u.accumulated_point, u.influencer,u.blog,u.instagram, u.youtube, u.address_seq, u.address, pa.agreement_content 
+    from premium_application as pa left join (select us.user_seq,us.name,us.phonenumber,us.birth,us.gender,us.grade,us.point,us.accumulated_point,us.influencer,us.blog,us.instagram, us.youtube, uab.address_seq, uab.address
                       from user as us left join user_address_book as uab on us.user_seq = uab.user_seq and uab.is_default = 1) as u on pa.user_seq = u.user_seq;`;
+    const results = await dbpool.query(sql);
+
+    res.status(200).json({
+      message: "프리미엄 신청 목록 조회 성공",
+      premiumRequestList: results[0],
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(400).json({
+      message: "프리미엄 신청 목록 조회 실패",
+    });
+  }
+}
+
+// 프리미엄 신청 목록 포인트별 내림차순
+async function getPremiumRequestListByPoint(req, res, next) {
+  try {
+    const sql = `select pa.premium_seq,pa.user_seq,pa.is_pending, u.name,u.phonenumber,u.birth,u.gender, u.grade,u.point,u.accumulated_point, u.influencer,u.blog,u.instagram, u.youtube, u.address_seq, u.address, pa.agreement_content 
+                  from premium_application as pa left join (select us.user_seq,us.name,us.phonenumber,us.birth,us.gender,us.grade,us.point,us.accumulated_point,us.influencer,us.blog,us.instagram, us.youtube, uab.address_seq, uab.address
+                      from user as us left join user_address_book as uab on us.user_seq = uab.user_seq and uab.is_default = 1) as u on pa.user_seq = u.user_seq
+	                order by u.point desc;`;
+    const results = await dbpool.query(sql);
+
+    res.status(200).json({
+      message: "프리미엄 신청 목록 조회 성공",
+      premiumRequestList: results[0],
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(400).json({
+      message: "프리미엄 신청 목록 조회 실패",
+    });
+  }
+}
+
+// 프리미엄 신청 목록 처리 승인 목록
+async function getPremiumRequestListByComplete(req, res, next) {
+  try {
+    const sql = `select pa.premium_seq,pa.user_seq,pa.is_pending, u.name,u.phonenumber,u.birth,u.gender, u.grade,u.point,u.accumulated_point, u.influencer,u.blog,u.instagram, u.youtube, u.address_seq, u.address, pa.agreement_content 
+                  from premium_application as pa left join (select us.user_seq,us.name,us.phonenumber,us.birth,us.gender,us.grade,us.point,us.accumulated_point,us.influencer,us.blog,us.instagram, us.youtube, uab.address_seq, uab.address
+                      from user as us left join user_address_book as uab on us.user_seq = uab.user_seq and uab.is_default = 1) as u on pa.user_seq = u.user_seq
+	                where pa.is_pending = 0;`;
+    const results = await dbpool.query(sql);
+
+    res.status(200).json({
+      message: "프리미엄 신청 목록 조회 성공",
+      premiumRequestList: results[0],
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(400).json({
+      message: "프리미엄 신청 목록 조회 실패",
+    });
+  }
+}
+
+// 프리미엄 신청 목록 처리 대기 목록
+async function getPremiumRequestListByPending(req, res, next) {
+  try {
+    const sql = `select pa.premium_seq,pa.user_seq,pa.is_pending, u.name,u.phonenumber,u.birth,u.gender, u.grade,u.point,u.accumulated_point, u.influencer,u.blog,u.instagram, u.youtube, u.address_seq, u.address, pa.agreement_content 
+                  from premium_application as pa left join (select us.user_seq,us.name,us.phonenumber,us.birth,us.gender,us.grade,us.point,us.accumulated_point,us.influencer,us.blog,us.instagram, us.youtube, uab.address_seq, uab.address
+                      from user as us left join user_address_book as uab on us.user_seq = uab.user_seq and uab.is_default = 1) as u on pa.user_seq = u.user_seq
+	                where pa.is_pending = 1;`;
     const results = await dbpool.query(sql);
 
     res.status(200).json({
@@ -2268,10 +2466,10 @@ async function getPremiumRequestDetail(req, res, next) {
     });
   } else {
     try {
-      const sql = `select pa.premium_seq,pa.user_seq,pa.is_pending, u.name,u.phonenumber,u.birth,u.gender, u.grade, u.influencer,u.blog,u.instagram, u.youtube, u.address_seq, u.address, pa.agreement_content 
-      from premium_application as pa left join (select us.user_seq,us.name,us.phonenumber,us.birth,us.gender,us.grade,us.influencer,us.blog,us.instagram, us.youtube, uab.address_seq, uab.address
+      const sql = `select pa.premium_seq,pa.user_seq,pa.is_pending, u.name,u.phonenumber,u.birth,u.gender, u.grade,u.point,u.accumulated_point, u.influencer,u.blog,u.instagram, u.youtube, u.address_seq, u.address, pa.agreement_content 
+                    from premium_application as pa left join (select us.user_seq,us.name,us.phonenumber,us.birth,us.gender,us.grade,us.point,us.accumulated_point,us.influencer,us.blog,us.instagram, us.youtube, uab.address_seq, uab.address
                         from user as us left join user_address_book as uab on us.user_seq = uab.user_seq and uab.is_default = 1) as u on pa.user_seq = u.user_seq
-      where pa.premium_seq = ?;`;
+                    where pa.premium_seq = ?;`;
 
       const results = await dbpool.query(sql, premium_seq);
 
@@ -2678,6 +2876,11 @@ async function inactiveBlackList(req, res, next) {
 }
 export {
   getUser,
+  getAllUserByJoinDate,
+  getAllUserByPoint,
+  getAllUserByAccumulatePoint,
+  getAllUserByType,
+  getAllUserByGender,
   updateUser,
   getAddressBook,
   updateAddressBook,
@@ -2720,6 +2923,9 @@ export {
   updateUserGrade,
   createPremiumRequest,
   getPremiumRequestList,
+  getPremiumRequestListByPoint,
+  getPremiumRequestListByComplete,
+  getPremiumRequestListByPending,
   getPremiumUserList,
   createPremium,
   deletePremium,
