@@ -78,6 +78,9 @@ router.get("/progress/type/popular", campaignController.getCampaignByTypeByPopul
 // 진행중인 타입별(방문형,배송형,기자단) 캠페인 선정마감순 + 페이징 (get)
 router.get("/progress/type/selection", campaignController.getCampaignByTypeBySelection);
 
+// 진행중인 캠페인(캠페인 마감일자가 지나지 않은 캠페인 중 모집마감이 되지 않은 캠페인 우선)
+router.get("/progress/campaign", campaignController.getCampaignByCampaign);
+
 // 진행중인 캠페인 필터링 + 페이징 (get)
 router.get("/progress/filter", campaignController.getCampaignByFiltering);
 
@@ -210,6 +213,16 @@ router.delete("/review", authJWT, campaignController.deleteReview);
 // 등록된 모든 리뷰 가져오기 (get)
 router.get("/reviews", authJWT, campaignController.getAllReview);
 
+// 등록된 모든 리뷰 캠페인별 가져오기  (get)
+router.get("/reviews/group", authJWT, campaignController.getAllReviewGroupByCampaign);
+
+// 등록된 모든 리뷰 캠페인별 가져오기 카테고리별(배송형,방문형,기자단,프리미엄) (get)
+router.get(
+  "/reviews/group/type",
+  authJWT,
+  campaignController.getAllReviewGroupByCampaignByCategory
+);
+
 // 상세 리뷰 가져오기 (get)
 router.get("/review/detail", authJWT, campaignController.getReviewDetail);
 
@@ -218,6 +231,12 @@ router.get("/review/user", authJWT, campaignController.getReviewByUser);
 
 // 캠페인별 등록 리뷰 가져오기 (get)
 router.get("/review/campaign", authJWT, campaignController.getReviewByCampaign);
+
+// 조회수 기준 캠페인 가져오기
+router.get("/all/viewcount", authJWT, campaignController.getCampaignByViewCount);
+
+// 조회수 기준 진행중인 캠페인 가져오기
+router.get("/all/progress/viewcount", authJWT, campaignController.getCampaignByProgressByViewCount);
 
 // router.get("/test/test", campaignController.test);
 
