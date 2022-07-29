@@ -776,7 +776,7 @@ async function getCampaignByProgress(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0
+                            where campaign_state = 1 and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0
                             order by recruit_end_date desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
@@ -828,7 +828,7 @@ async function getCampaignByProgressBylastest(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0
+                            where campaign_state = 1 and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0
                             order by recruit_start_date desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
@@ -880,7 +880,7 @@ async function getCampaignByProgressByPopular(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0
+                            where campaign_state = 1 and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0
                             order by applicant_count desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
@@ -932,7 +932,7 @@ async function getCampaignByProgressBySelection(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0
+                            where campaign_state = 1 and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0
                             order by recruit_end_date asc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
@@ -984,7 +984,7 @@ async function getCampaignByType(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where category = ? and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0  limit ? offset ?`;
+                            where category = ? and campaign_state = 1 and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0  limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.user_seq, ca.campaign_seq, ca.acquaint_content, ca.select_reward, ca.camera_code, ca.face_exposure, ca.address, ca.receiver, ca.receiver_phonenumber, ca.joint_blog, ca.other_answers, ca.status, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.grade,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
@@ -1035,7 +1035,7 @@ async function getCampaignByTypeBylastest(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where category = ? and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0  order by recruit_start_date desc limit ? offset ?`;
+                            where category = ? and campaign_state = 1 and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0  order by recruit_start_date desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.user_seq, ca.campaign_seq, ca.acquaint_content, ca.select_reward, ca.camera_code, ca.face_exposure, ca.address, ca.receiver, ca.receiver_phonenumber, ca.joint_blog, ca.other_answers, ca.status, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.grade,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
@@ -1086,7 +1086,7 @@ async function getCampaignByTypeByPopular(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where category = ? and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0  order by applicant_count desc limit ? offset ?`;
+                            where category = ? and campaign_state = 1 and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0  order by applicant_count desc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.user_seq, ca.campaign_seq, ca.acquaint_content, ca.select_reward, ca.camera_code, ca.face_exposure, ca.address, ca.receiver, ca.receiver_phonenumber, ca.joint_blog, ca.other_answers, ca.status, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.grade,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
@@ -1137,7 +1137,7 @@ async function getCampaignByTypeBySelection(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where category = ? and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0  order by recruit_end_date asc limit ? offset ?`;
+                            where category = ? and campaign_state = 1 and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0  order by recruit_end_date asc limit ? offset ?`;
     const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
     const img_sql = `select * from campaign_file where campaign_seq = ?`;
     const applicant_sql = `select ca.user_seq, ca.campaign_seq, ca.acquaint_content, ca.select_reward, ca.camera_code, ca.face_exposure, ca.address, ca.receiver, ca.receiver_phonenumber, ca.joint_blog, ca.other_answers, ca.status, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.grade,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
@@ -1177,6 +1177,66 @@ async function getCampaignByTypeBySelection(req, res, next) {
   }
 }
 
+// 진행중인 캠페인(캠페인 마감일자가 지나지 않은 캠페인 중 모집마감이 되지 않은 캠페인 우선)
+async function getCampaignByCampaign(req, res, next) {
+  try {
+    const { page } = req.query;
+    const offset = (page - 1) * pagelimit;
+    const campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, address, keyword, headcount, siteURL, misson, reward, original_price, discount_price, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date,last_register_id, last_register_date, ifnull(cc.count,0) as applicant_count, view_count 
+                          from (select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, address, keyword, headcount, siteURL, misson, reward, original_price, discount_price, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, review_start_date, review_end_date, campaign_end_date, agreement_portrait, agreement_provide_info, campaign_state, view_count, first_register_id, first_register_date, last_register_id, last_register_date, c.headcount-ifnull(r.reviewer_count,0) as reviewer_count
+                                from campaign as c 
+                                      left join 
+                                        (select campaign_seq, count(campaign_seq) as reviewer_count
+                                        from reviewer as r
+                                        group by r.campaign_seq) as r 
+                                      on c.campaign_seq = r.campaign_seq
+                                where c.campaign_state = 1
+                                order by timediff(c.recruit_end_date,now()) desc, reviewer_count desc) as c
+                          left join
+                                (select campaign_seq,count(*) as count
+                                  from campaign_application group by campaign_seq) as cc
+                          on c.campaign_seq = cc.campaign_seq
+                          where campaign_state = 1
+                          order by recruit_end_date desc limit ? offset ?;`;
+    const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+    const img_sql = `select * from campaign_file where campaign_seq = ?`;
+    const applicant_sql = `select ca.user_seq, ca.campaign_seq, ca.acquaint_content, ca.select_reward, ca.camera_code, ca.face_exposure, ca.address, ca.receiver, ca.receiver_phonenumber, ca.joint_blog, ca.other_answers, ca.status, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.grade,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+    const totalCount_sql = `select count(*) as totalCount from campaign where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
+
+    const campaign_results = await dbpool.query(campaign_sql, [pagelimit, offset]);
+
+    let campaign = campaign_results[0];
+
+    // campaign + qna / applicant
+    for (let i = 0; i < campaign_results[0].length; i++) {
+      let campaign_seq = campaign_results[0][i].campaign_seq;
+
+      const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+      const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+      const img_results = await dbpool.query(img_sql, [campaign_seq]);
+
+      campaign[i]["qna"] = campaign_qna_results[0];
+      // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["campaign_file"] = img_results[0];
+      campaign[i]["applicant"] = applicant_results[0];
+    }
+
+    const totalCount_results = await dbpool.query(totalCount_sql);
+
+    res.status(200).json({
+      message: "캠페인 조회 성공",
+      campaigns: campaign,
+      totalCount: totalCount_results[0][0].totalCount,
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
+
 // 진행중인 캠페인 필터링 + 페이징
 async function getCampaignByFiltering(req, res, next) {
   try {
@@ -1195,7 +1255,7 @@ async function getCampaignByFiltering(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
+                            where campaign_state = 1 and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.user_seq, ca.campaign_seq, ca.acquaint_content, ca.select_reward, ca.camera_code, ca.face_exposure, ca.address, ca.receiver, ca.receiver_phonenumber, ca.joint_blog, ca.other_answers, ca.status, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.grade,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
@@ -1297,7 +1357,7 @@ async function getCampaignByFilteringBylastest(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
+                            where campaign_state = 1 and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.user_seq, ca.campaign_seq, ca.acquaint_content, ca.select_reward, ca.camera_code, ca.face_exposure, ca.address, ca.receiver, ca.receiver_phonenumber, ca.joint_blog, ca.other_answers, ca.status, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.grade,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
@@ -1398,7 +1458,7 @@ async function getCampaignByFilteringByPopular(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
+                            where campaign_state = 1 and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.user_seq, ca.campaign_seq, ca.acquaint_content, ca.select_reward, ca.camera_code, ca.face_exposure, ca.address, ca.receiver, ca.receiver_phonenumber, ca.joint_blog, ca.other_answers, ca.status, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.grade,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
@@ -1499,7 +1559,7 @@ async function getCampaignByFilteringBySelection(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
+                            where campaign_state = 1 and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.user_seq, ca.campaign_seq, ca.acquaint_content, ca.select_reward, ca.camera_code, ca.face_exposure, ca.address, ca.receiver, ca.receiver_phonenumber, ca.joint_blog, ca.other_answers, ca.status, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.grade,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
@@ -1598,7 +1658,7 @@ async function getPremiumCampaign(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and is_premium = 1 order by recruit_end_date desc limit ? offset ?`;
+                            where campaign_state = 1 and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and is_premium = 1 order by recruit_end_date desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.user_seq, ca.campaign_seq, ca.acquaint_content, ca.select_reward, ca.camera_code, ca.face_exposure, ca.address, ca.receiver, ca.receiver_phonenumber, ca.joint_blog, ca.other_answers, ca.status, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.grade,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
@@ -1657,7 +1717,7 @@ async function getPremiumCampaignBylastest(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and is_premium = 1 order by recruit_start_date desc limit ? offset ?`;
+                            where campaign_state = 1 and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and is_premium = 1 order by recruit_start_date desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.user_seq, ca.campaign_seq, ca.acquaint_content, ca.select_reward, ca.camera_code, ca.face_exposure, ca.address, ca.receiver, ca.receiver_phonenumber, ca.joint_blog, ca.other_answers, ca.status, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.grade,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
@@ -1716,7 +1776,7 @@ async function getPremiumCampaignByPopular(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and is_premium = 1 order by applicant_count desc limit ? offset ?`;
+                            where campaign_state = 1 and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and is_premium = 1 order by applicant_count desc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.user_seq, ca.campaign_seq, ca.acquaint_content, ca.select_reward, ca.camera_code, ca.face_exposure, ca.address, ca.receiver, ca.receiver_phonenumber, ca.joint_blog, ca.other_answers, ca.status, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.grade,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
@@ -1775,7 +1835,7 @@ async function getPremiumCampaignBySelection(req, res, next) {
                             (select campaign_seq,count(*) as count
                               from campaign_application group by campaign_seq) as cc
                             on c.campaign_seq = cc.campaign_seq
-                            where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and is_premium = 1 order by recruit_end_date asc limit ? offset ?`;
+                            where campaign_state = 1 and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0 and is_premium = 1 order by recruit_end_date asc limit ? offset ?`;
       const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
       const img_sql = `select * from campaign_file where campaign_seq = ?`;
       const applicant_sql = `select ca.user_seq, ca.campaign_seq, ca.acquaint_content, ca.select_reward, ca.camera_code, ca.face_exposure, ca.address, ca.receiver, ca.receiver_phonenumber, ca.joint_blog, ca.other_answers, ca.status, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.grade,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
@@ -3444,7 +3504,7 @@ async function getAllReview(req, res, next) {
     from reviewer as r, user as u, campaign as c
     where r.user_seq = u.user_seq and r.campaign_seq = c.campaign_seq and r.complete_mission = 1`;
 
-    const results = await dbpool.execute(sql);
+    const results = await dbpool.query(sql);
     const reviews = results[0];
 
     if (reviews.length === 0) {
@@ -3455,6 +3515,102 @@ async function getAllReview(req, res, next) {
       res.status(200).json({
         message: "리뷰 조회 성공",
         reviews,
+      });
+    }
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      message: "리뷰 조회 실패",
+    });
+  }
+}
+
+// 등록된 모든 리뷰 캠페인별 가져오기  (get)
+// 리뷰수가 많은 순으로 먼저 보임
+// Review 수가 같으면 캠페인 등록일자 기준으로 정렬
+async function getAllReviewGroupByCampaign(req, res, next) {
+  try {
+    const campaign_sql = `select campaign_seq, advertiser, is_premium, title, category, product, channel, area, address, keyword, headcount, siteURL, misson, reward, original_price, discount_price, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, review_start_date, review_end_date, campaign_end_date, agreement_portrait, agreement_provide_info,campaign_state, view_count, first_register_id, first_register_date, last_register_id, last_register_date 
+                          from campaign;`;
+
+    const review_sql = `select r.user_seq, r.campaign_seq, u.id, u.name, u.nickname,  c.title, c.campaign_state, r.complete_mission, r.review_URL, r.satisfaction_score, r.satisfaction_content, r.first_register_id, r.first_register_date, r.last_register_id, r.last_register_date
+                        from reviewer as r, user as u, campaign as c
+                        where r.user_seq = u.user_seq and r.campaign_seq = c.campaign_seq and r.campaign_seq = ? and r.complete_mission = 1
+                        order by r.last_register_date;`;
+
+    const campaign_results = await dbpool.query(campaign_sql);
+    let campaigns = campaign_results[0];
+
+    for (let i = 0; i < campaigns.length; i++) {
+      const review_results = await dbpool.query(review_sql, [campaigns[i].campaign_seq]);
+      campaigns[i].reviews = review_results[0];
+    }
+
+    campaigns.sort((a, b) => {
+      if (b.reviews.length == a.reviews.length)
+        return b.first_register_date - a.first_register_date;
+
+      return b.reviews.length - a.reviews.length;
+    });
+
+    if (campaigns.length === 0) {
+      res.status(200).json({
+        message: "등록된 리뷰가 없습니다.",
+      });
+    } else {
+      res.status(200).json({
+        message: "리뷰 조회 성공",
+        campaigns,
+      });
+    }
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      message: "리뷰 조회 실패",
+    });
+  }
+}
+
+// 등록된 모든 리뷰 캠페인별 가져오기 타입별(배송형,방문형,기자단,프리미엄) (get)
+// 리뷰수가 많은 순으로 먼저 보임
+// Review 수가 같으면 캠페인 등록일자 기준으로 정렬
+async function getAllReviewGroupByCampaignByCategory(req, res, next) {
+  try {
+    const { category } = req.query;
+    const campaign_sql = `select campaign_seq, advertiser, is_premium, title, category, product, channel, area, address, keyword, headcount, siteURL, misson, reward, original_price, discount_price, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, review_start_date, review_end_date, campaign_end_date, agreement_portrait, agreement_provide_info,campaign_state, view_count, first_register_id, first_register_date, last_register_id, last_register_date 
+                          from campaign
+                          where category = ?;`;
+
+    const review_sql = `select r.user_seq, r.campaign_seq, u.id, u.name, u.nickname,  c.title, c.campaign_state, r.complete_mission, r.review_URL, r.satisfaction_score, r.satisfaction_content, r.first_register_id, r.first_register_date, r.last_register_id, r.last_register_date
+                        from reviewer as r, user as u, campaign as c
+                        where r.user_seq = u.user_seq and r.campaign_seq = c.campaign_seq and r.campaign_seq = ? and r.complete_mission = 1
+                        order by r.last_register_date;`;
+
+    const campaign_results = await dbpool.query(campaign_sql, [category]);
+    let campaigns = campaign_results[0];
+
+    for (let i = 0; i < campaigns.length; i++) {
+      const review_results = await dbpool.query(review_sql, [campaigns[i].campaign_seq]);
+      campaigns[i].reviews = review_results[0];
+    }
+
+    campaigns.sort((a, b) => {
+      if (b.reviews.length == a.reviews.length)
+        return b.first_register_date - a.first_register_date;
+
+      return b.reviews.length - a.reviews.length;
+    });
+
+    if (campaigns.length === 0) {
+      res.status(200).json({
+        message: "등록된 리뷰가 없습니다.",
+      });
+    } else {
+      res.status(200).json({
+        message: "리뷰 조회 성공",
+        campaigns,
       });
     }
   } catch (err) {
@@ -3592,6 +3748,64 @@ async function checkCampaignDone(campagin_seq) {
     }
   } catch (err) {
     console.error(err);
+  }
+}
+
+// 조회수 기준 캠페인 가져오기
+async function getCampaignByViewCount(req, res, next) {
+  try {
+    const { filter } = req.query;
+
+    if (filter === undefined) {
+      res.status(400).json({
+        message: "필수 데이터가 없습니다.",
+      });
+    }
+
+    const sql = `select campaign_seq, advertiser, is_premium, title, category, product, channel, area, address, keyword, headcount, siteURL, misson, reward, original_price, discount_price, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, review_start_date, review_end_date, campaign_end_date, agreement_portrait, agreement_provide_info, campaign_state, view_count, first_register_id, first_register_date, last_register_id, last_register_date
+    from campaign where campaign_state = 1 order by view_count ${filter};`;
+
+    const results = await dbpool.execute(sql);
+
+    res.json({
+      message: "조회수 기준 캠페인 조회 성공",
+      campaigns: results[0],
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      message: "조회수 기준 캠페인 조회 실패",
+    });
+  }
+}
+
+// 조회수 기준 진행중인 캠페인 가져오기
+async function getCampaignByProgressByViewCount(req, res, next) {
+  try {
+    const { filter } = req.query;
+
+    if (filter === undefined) {
+      res.status(400).json({
+        message: "필수 데이터가 없습니다.",
+      });
+    }
+
+    const sql = `select campaign_seq, advertiser, is_premium, title, category, product, channel, area, address, keyword, headcount, siteURL, misson, reward, original_price, discount_price, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, reviewer_announcement_date, review_start_date, review_end_date, campaign_end_date, agreement_portrait, agreement_provide_info, campaign_state, view_count, first_register_id, first_register_date, last_register_id, last_register_date
+    from campaign where campaign_state = 1 order by view_count ${filter};`;
+
+    const results = await dbpool.execute(sql);
+
+    res.json({
+      message: "조회수 기준 진행중인 캠페인 조회 성공",
+      campaigns: results[0],
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      message: "조회수 기준 진행중인 캠페인 조회 실패",
+    });
   }
 }
 
@@ -3748,8 +3962,14 @@ export {
   updateReview,
   deleteReview,
   getAllReview,
+  getAllReviewGroupByCampaign,
+  getAllReviewGroupByCampaignByCategory,
   getReviewDetail,
   getReviewByUser,
   getReviewByCampaign,
+  getCampaignByViewCount,
+  getCampaignByProgressByViewCount,
+  getCampaignByCampaign,
+
   //test,
 };
