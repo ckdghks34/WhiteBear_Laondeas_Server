@@ -11,6 +11,21 @@ const router = express.Router();
 // 전체 회원 조회
 router.get("/all", authJWT, userController.getAllUser);
 
+// 전체 회원 조회 가입 입자별 (필터링)
+router.get("/all/filter/joindate", authJWT, userController.getAllUserByJoinDate);
+
+// 전체 회원 조회 포인트별 (필터링)
+router.get("/all/filter/point", authJWT, userController.getAllUserByPoint);
+
+// 전체 회원 조회 누적포인트별 (필터링)
+router.get("/all/filter/accumulatepoint", authJWT, userController.getAllUserByAccumulatePoint);
+
+// 전체 회원 조회 유형별(일반, 프리미엄) (필터링)
+router.get("/all/filter/type", authJWT, userController.getAllUserByType);
+
+// 전체 회원 조회 성별(남, 여) (필터링)
+router.get("/all/filter/gender", authJWT, userController.getAllUserByGender);
+
 // 특정 회원 조회하기
 router.get("/", authJWT, userController.getUser);
 
@@ -85,6 +100,27 @@ router.post("/premium/application", authJWT, userController.createPremiumRequest
 
 // 프리미엄 신청 목록
 router.get("/premium/application", authJWT, userController.getPremiumRequestList);
+
+// 프리미엄 신청 목록 포인트별 내림차순
+router.get(
+  "/premium/application/filter/point",
+  authJWT,
+  userController.getPremiumRequestListByPoint
+);
+
+// 프리미엄 신청 목록 처리 승인 목록
+router.get(
+  "/premium/application/filter/complete",
+  authJWT,
+  userController.getPremiumRequestListByComplete
+);
+
+// 프리미엄 신청 목록 처리 대기 목록
+router.get(
+  "/premium/application/filter/pending",
+  authJWT,
+  userController.getPremiumRequestListByPending
+);
 
 // 프리미엄 회원 신청 승인 (patch)
 router.patch("/premium/application/approve", authJWT, userController.approvePremium);
