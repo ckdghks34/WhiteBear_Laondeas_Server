@@ -19,6 +19,38 @@ const profileUpload = multer({
   limits: { fileSize: 1000 * 1024 * 1024 }, // 용량제한 1000MB
 });
 
+const bankbookUpload = multer({
+  storage: multerS3({
+    s3: s3,
+    bucket: Bucket,
+    contentType: multerS3.AUTO_CONTENT_TYPE,
+    key: (req, file, cb) => {
+      var ext = file.mimetype.split("/")[1];
+      if (!["png", "jpg", "jpeg", "gif", "bmp"].includes(ext)) {
+        return cb(new Error("Only images are allowed"));
+      }
+
+      cb(null, "bankbook/" + Date.now() + file.originalname.split(".")[0] + "." + ext);
+    },
+  }),
+});
+
+const identificationUpload = multer({
+  storage: multerS3({
+    s3: s3,
+    bucket: Bucket,
+    contentType: multerS3.AUTO_CONTENT_TYPE,
+    key: (req, file, cb) => {
+      var ext = file.mimetype.split("/")[1];
+      if (!["png", "jpg", "jpeg", "gif", "bmp"].includes(ext)) {
+        return cb(new Error("Only images are allowed"));
+      }
+
+      cb(null, "identification/" + Date.now() + file.originalname.split(".")[0] + "." + ext);
+    },
+  }),
+});
+
 const campaignUpload = multer({
   storage: multerS3({
     s3: s3,
@@ -115,4 +147,12 @@ const popupUpload = multer({
   limits: { fileSize: 1000 * 1024 * 1024 }, // 용량제한 1000MB
 });
 
-export { profileUpload, campaignUpload, bannerUpload, widgetUpload, popupUpload };
+export {
+  profileUpload,
+  bankbookUpload,
+  identificationUpload,
+  campaignUpload,
+  bannerUpload,
+  widgetUpload,
+  popupUpload,
+};

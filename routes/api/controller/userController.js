@@ -9,7 +9,7 @@ const dbpool = await pool;
 // 전체 유저 조회하기
 async function getAllUser(req, res, next) {
   try {
-    const sql = `select user_seq, id, name, nickname, phonenumber, gender, birth, email, grade, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_name, profile_path, profile_ext, profile_key, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal, first_register_date, last_register_date from user
+    const sql = `select user_seq, id, name, nickname, phonenumber, gender, birth, email, grade, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_name, profile_path, profile_ext, profile_key, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal, identification_name, identification_path, identification_extension, bankbook_name, bankbook_path, bankbook_extension, first_register_date, last_register_date from user
                   where is_admin = 0;`;
 
     let results = await dbpool.query(sql);
@@ -35,7 +35,7 @@ async function getAllUserByJoinDate(req, res, next) {
       filter = asc 이면 오래된순
     */
     const { filter } = req.query;
-    const sql = `select user_seq, id, name, nickname, phonenumber, gender, birth, email, grade, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_name, profile_path, profile_ext, profile_key, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal, first_register_date, last_register_date 
+    const sql = `select user_seq, id, name, nickname, phonenumber, gender, birth, email, grade, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_name, profile_path, profile_ext, profile_key, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal, identification_name, identification_path, identification_extension, bankbook_name, bankbook_path, bankbook_extension, first_register_date, last_register_date 
                   from user
                   where is_admin = 0
                   order by first_register_date ${filter};`;
@@ -63,7 +63,7 @@ async function getAllUserByPoint(req, res, next) {
       filter = asc 이면 포인트가 낮은순
     */
     const { filter } = req.query;
-    const sql = `select user_seq, id, name, nickname, phonenumber, gender, birth, email, grade, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_name, profile_path, profile_ext, profile_key, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal, first_register_date, last_register_date 
+    const sql = `select user_seq, id, name, nickname, phonenumber, gender, birth, email, grade, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_name, profile_path, profile_ext, profile_key, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal,identification_name, identification_path, identification_extension, bankbook_name, bankbook_path, bankbook_extension, first_register_date, last_register_date 
                   from user
                   where is_admin = 0
                   order by point ${filter}, first_register_date;`;
@@ -91,7 +91,7 @@ async function getAllUserByAccumulatePoint(req, res, next) {
       filter = asc 이면 포인트가 낮은순
     */
     const { filter } = req.query;
-    const sql = `select user_seq, id, name, nickname, phonenumber, gender, birth, email, grade, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_name, profile_path, profile_ext, profile_key, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal, first_register_date, last_register_date 
+    const sql = `select user_seq, id, name, nickname, phonenumber, gender, birth, email, grade, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_name, profile_path, profile_ext, profile_key, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal,identification_name, identification_path, identification_extension, bankbook_name, bankbook_path, bankbook_extension, first_register_date, last_register_date 
                   from user
                   where is_admin = 0
                   order by accumulated_point ${filter}, first_register_date;`;
@@ -119,7 +119,7 @@ async function getAllUserByType(req, res, next) {
       filter = asc 이면 일반 회원 부터
     */
     const { filter } = req.query;
-    const sql = `select user_seq, id, name, nickname, phonenumber, gender, birth, email, grade, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_name, profile_path, profile_ext, profile_key, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal, first_register_date, last_register_date 
+    const sql = `select user_seq, id, name, nickname, phonenumber, gender, birth, email, grade, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_name, profile_path, profile_ext, profile_key, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal,identification_name, identification_path, identification_extension, bankbook_name, bankbook_path, bankbook_extension, first_register_date, last_register_date 
                   from user
                   where is_admin = 0
                   order by is_premium ${filter}, first_register_date ;`;
@@ -147,7 +147,7 @@ async function getAllUserByGender(req, res, next) {
       filter = asc 이면 Null, 여자, 남자
     */
     const { filter } = req.query;
-    const sql = `select user_seq, id, name, nickname, phonenumber, gender, birth, email, grade, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_name, profile_path, profile_ext, profile_key, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal, first_register_date, last_register_date 
+    const sql = `select user_seq, id, name, nickname, phonenumber, gender, birth, email, grade, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_name, profile_path, profile_ext, profile_key, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal, identification_name, identification_path, identification_extension, bankbook_name, bankbook_path, bankbook_extension, first_register_date, last_register_date 
                   from user
                   where is_admin = 0
                   order by gender ${filter}, first_register_date;`;
@@ -177,23 +177,16 @@ async function getUser(req, res, next) {
     });
   } else {
     try {
-      const sql = `select * from user where user_seq = ?`;
-      const userimgsql = `select * from user_file where user_seq = ?`;
+      const sql = `select select user_seq, id, name, nickname, phonenumber, gender, birth, email, grade, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_name, profile_path, profile_ext, profile_key, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal, identification_name, identification_path, identification_extension, bankbook_name, bankbook_path, bankbook_extension, first_register_date, last_register_date 
+                  from user where user_seq = ?`;
 
       const results = await dbpool.query(sql, user_seq);
-
-      const userimgResult = await dbpool.query(userimgsql, user_seq);
-
-      let user = results[0][0];
 
       if (results[0].length == 0) {
         res.status(400).json({
           message: "존재하지 않는 유저입니다.",
         });
       } else {
-        user.password = undefined;
-        if (userimgResult[0].length !== 0) user["profile_img"] = userimgResult[0][0].path;
-
         res.status(200).json({
           message: "유저 정보 조회 성공",
           user: results[0][0],
@@ -2874,6 +2867,101 @@ async function inactiveBlackList(req, res, next) {
     }
   }
 }
+
+// 신분증 업로드 (post)
+async function uploadIdentification(req, res, next) {
+  const { user_seq } = req.body;
+  const filename = req.file.originalname;
+  const ext = req.file.mimetype.split("/")[1];
+  const key = req.file.key;
+  const filepath = req.file.location;
+
+  try {
+    const sql = `update user set identification_name = ?, identification_path = ?, identification_extension = ?, identification_filekey = ? where user_seq = ?`;
+
+    await dbpool.execute(sql, [filename, filepath, ext, key, user_seq]);
+
+    res.status(200).json({
+      message: "신분증 업로드 성공",
+      location: filepath,
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      message: "신분증 업로드 실패",
+    });
+  }
+}
+
+// 신분증 가져오기 (get)
+async function getIdentification(req, res, next) {
+  const { user_seq } = req.query;
+
+  try {
+    const sql = `select identification_name, identification_path, identification_extension from user where user_seq = ?`;
+    const result = await dbpool.execute(sql, [user_seq]);
+
+    res.status(200).json({
+      message: "신분증 가져오기 성공",
+      data: result[0][0].identification_path,
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      message: "신분증 가져오기 실패",
+    });
+  }
+}
+
+// 통장사본 업로드 (post)
+async function uploadBankbook(req, res, next) {
+  const { user_seq } = req.body;
+  const filename = req.file.originalname;
+  const ext = req.file.mimetype.split("/")[1];
+  const key = req.file.key;
+  const filepath = req.file.location;
+
+  try {
+    const sql = `update user set bankbook_name = ?, bankbook_path = ?, bankbook_extension = ?, bankbook_filekey = ? where user_seq = ?`;
+
+    await dbpool.execute(sql, [filename, filepath, ext, key, user_seq]);
+
+    res.status(200).json({
+      message: "통장사본 업로드 성공",
+      location: filepath,
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      message: "통장사본 업로드 실패",
+    });
+  }
+}
+
+// 통장사본 가져오기 (get)
+async function getBankbook(req, res, next) {
+  const { user_seq } = req.query;
+
+  try {
+    const sql = `select bankbook_name, bankbook_path, bankbook_extension from user where user_seq = ?`;
+    const result = await dbpool.execute(sql, [user_seq]);
+
+    res.status(200).json({
+      message: "통장사본 가져오기 성공",
+      data: result[0][0].bankbook_path,
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      message: "통장사본 가져오기 실패",
+    });
+  }
+}
+
 export {
   getUser,
   getAllUserByJoinDate,
@@ -2958,4 +3046,8 @@ export {
   getReviewCampaigns,
   getReviewCamapaignsByComplete,
   getReviewCamapaignsByImcomplete,
+  uploadIdentification,
+  getIdentification,
+  uploadBankbook,
+  getBankbook,
 };
