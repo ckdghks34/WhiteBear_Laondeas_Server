@@ -177,8 +177,9 @@ async function getUser(req, res, next) {
     });
   } else {
     try {
-      const sql = `select select user_seq, id, name, nickname, phonenumber, gender, birth, email, grade, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_name, profile_path, profile_ext, profile_key, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal, identification_name, identification_path, identification_extension, bankbook_name, bankbook_path, bankbook_extension, first_register_date, last_register_date 
-                  from user where user_seq = ?`;
+      const sql = `select user_seq, id, name, nickname, phonenumber, gender, birth, email, grade, is_premium, is_advertiser, agreement_info, agreement_email, agreement_mms, blog, instagram, influencer, youtube, point, accumulated_point, profile_name, profile_path, profile_ext, profile_key, is_admin, tops_size, bottoms_size, shoe_size, height, skin_type, marital_status, having_child, job, companion_animal, identification_name, identification_path, identification_extension, bankbook_name, bankbook_path, bankbook_extension, first_register_date, last_register_date 
+                  from user
+                  where user_seq = ?;`;
 
       const results = await dbpool.query(sql, user_seq);
 
