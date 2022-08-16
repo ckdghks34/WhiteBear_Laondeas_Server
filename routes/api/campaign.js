@@ -81,6 +81,9 @@ router.get("/progress/type/selection", campaignController.getCampaignByTypeBySel
 // 진행중인 캠페인(캠페인 마감일자가 지나지 않은 캠페인 중 모집마감이 되지 않은 캠페인 우선)
 router.get("/progress/campaign", campaignController.getCampaignByCampaign);
 
+// 진행중인 캠페인 필터링 (챗봇용)
+router.post("/chatbot/filter", campaignController.getCampaignByFilteringWithChatbot);
+
 // 진행중인 캠페인 필터링 + 페이징 (get)
 router.get("/progress/filter", campaignController.getCampaignByFiltering);
 

@@ -1243,6 +1243,88 @@ async function getCampaignByCampaign(req, res, next) {
   }
 }
 
+// (챗봇용) 진행중인 캠페인 필터링
+async function getCampaignByFilteringWithChatbot(req, res, next) {
+  try {
+    let { category, product, channel, area } = req.body;
+
+    let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, address, keyword, headcount, siteURL, misson, reward, original_price, discount_price, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,ifnull(cc.count,0) as applicant_count, view_count, extraImageURL
+                          from campaign as c
+                           left join
+                            (select campaign_seq,count(*) as count
+                              from campaign_application group by campaign_seq) as cc
+                            on c.campaign_seq = cc.campaign_seq
+                            where campaign_state = 1 and timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
+    const campaign_qna_sql = `select * from campaign_qna where campaign_seq = ?`;
+    const img_sql = `select * from campaign_file where campaign_seq = ?`;
+    const applicant_sql = `select ca.user_seq, ca.campaign_seq, ca.acquaint_content, ca.select_reward, ca.camera_code, ca.face_exposure, ca.address, ca.receiver, ca.receiver_phonenumber, ca.joint_blog, ca.other_answers, ca.status, u.id, u.name,u.nickname,u.phonenumber,u.gender,u.birth,u.grade,u.email,u.is_premium, u.is_advertiser,u.blog,u.instagram,u.influencer,u.youtube,u.point,u.profile_name, u.profile_path, u.profile_ext from campaign_application as ca join user as u on ca.user_seq = u.user_seq where ca.campaign_seq = ?`;
+    let totalCount_sql = `select count(*) as totalCount from campaign where timediff(recruit_start_date, now()) <= 0 and timediff(now(), recruit_end_date) <= 0`;
+
+    let sql_param = [];
+
+    if (category !== undefined) {
+      category = category.split(",");
+      campaign_sql += ` and category in (?)`;
+      totalCount_sql += ` and category in (?)`;
+      sql_param.push(category);
+    }
+
+    if (product !== undefined) {
+      product = product.split(",");
+      campaign_sql += ` and product in (?)`;
+      totalCount_sql += ` and product in (?)`;
+      sql_param.push(product);
+    }
+
+    if (channel !== undefined) {
+      channel = channel.split(",");
+      campaign_sql += ` and channel in (?)`;
+      totalCount_sql += ` and channel in (?)`;
+      sql_param.push(channel);
+    }
+
+    if (area !== undefined) {
+      area = area.split(",");
+      campaign_sql += ` and area in (?)`;
+      totalCount_sql += ` and area in (?)`;
+      sql_param.push(area);
+    }
+
+    console.info(campaign_sql);
+    const totalCount_results = await dbpool.query(totalCount_sql, sql_param);
+
+    const campaign_results = await dbpool.query(campaign_sql, sql_param);
+
+    let campaign = campaign_results[0];
+
+    // campaign + qna
+    for (let i = 0; i < campaign_results[0].length; i++) {
+      let campaign_seq = campaign_results[0][i].campaign_seq;
+
+      const campaign_qna_results = await dbpool.query(campaign_qna_sql, [campaign_seq]);
+      const applicant_results = await dbpool.query(applicant_sql, [campaign_seq]);
+      const img_results = await dbpool.query(img_sql, [campaign_seq]);
+
+      campaign[i]["qna"] = campaign_qna_results[0];
+      // campaign[i].keyword = campaign_results[0][i].keyword.split(",");
+      campaign[i]["campaign_file"] = img_results[0];
+      campaign[i]["applicant"] = applicant_results[0];
+    }
+
+    res.status(200).json({
+      message: "캠페인 조회 성공",
+      campaigns: campaign,
+      totalCount: totalCount_results[0][0].totalCount,
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      message: "캠페인 조회 실패",
+    });
+  }
+}
+
 // 진행중인 캠페인 필터링 + 페이징
 async function getCampaignByFiltering(req, res, next) {
   try {
@@ -3929,6 +4011,7 @@ export {
   getCampaignByTypeBylastest,
   getCampaignByTypeByPopular,
   getCampaignByTypeBySelection,
+  getCampaignByFilteringWithChatbot,
   getCampaignByFiltering,
   getCampaignByFilteringBylastest,
   getCampaignByFilteringByPopular,
