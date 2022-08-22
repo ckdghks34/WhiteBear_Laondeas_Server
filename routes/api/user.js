@@ -1,6 +1,6 @@
 import express from "express";
 import { authJWT } from "./../../middleware/jwt/authJWT.js";
-import { profileUpload } from "./../../middleware/multer.js";
+import { profileUpload, bankbookUpload, identificationUpload } from "./../../middleware/multer.js";
 import * as userController from "./controller/userController.js";
 
 const router = express.Router();
@@ -56,7 +56,7 @@ router.post("/profile", authJWT, profileUpload.single("profile_img"), userContro
 // 프로필 사진 가져오기
 router.get("/profile", authJWT, userController.getProfile);
 
-// 프로필 사진 바꾸기
+// 프로필 사진 삭제
 router.delete("/profile", authJWT, userController.deleteProfile);
 
 // 관심 캠페인 가져오기
@@ -306,5 +306,27 @@ router.patch("/blacklist/active", authJWT, userController.activeBlackList);
 
 // 블랙리스트 비활성화 (patch)
 router.patch("/blacklist/inactive", authJWT, userController.inactiveBlackList);
+
+// 신분증 업로드 (post)
+router.post(
+  "/identification",
+  authJWT,
+  identificationUpload.single("identification_img"),
+  userController.uploadIdentification
+);
+
+// 신분증 가져오기 (get)
+router.get("/identification", authJWT, userController.getIdentification);
+
+// 통장사본 업로드 (post)
+router.post(
+  "/bankbook",
+  authJWT,
+  bankbookUpload.single("bankbook_img"),
+  userController.uploadBankbook
+);
+
+// 통장사본 가져오기 (get)
+router.get("/bankbook", authJWT, userController.getBankbook);
 
 export default router;
