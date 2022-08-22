@@ -70,11 +70,12 @@ async function signup(req, res, next) {
       let mail_title = "[Laondeas] 회원가입을 진심으로 축하드립니다.";
       let mail_contents = `${user_name}님의 회원가입을 진심으로 축하합니다.
 Laondeas를 이용해주셔서 감사합니다.
-이제 이용하시는 모든 분들은 Laondeas의 서비스를 이용하실 수 있습니다. `;
+이제 이용하시는 모든 분들은 Laondeas의 서비스를 이용하실 수 있습니다.
+사이트 바로가기 : https://www.laondeas.co.kr/`;
       // let mail_contents = user_name+"님의 회원가입을 진심으로 축하합니다.\nLaondeas를 이용해주셔서 감사합니다.\n이제 이용하시는 모든 분들은 Laondeas의 서비스를 이용하실 수 있습니다. ";
 
       if (sendMail(user_email, mail_title, mail_contents)) {
-        console.error(`id : ${user_id}, email : ${user_email} 메일 발송 성공`);
+        console.info(`id : ${user_id}, email : ${user_email} 메일 발송 성공`);
       } else {
         console.error(`id : ${user_id}, email : ${user_email} 메일 발송 실패`);
       }
