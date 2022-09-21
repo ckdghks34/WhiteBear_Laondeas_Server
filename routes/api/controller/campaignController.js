@@ -1246,7 +1246,7 @@ async function getCampaignByCampaign(req, res, next) {
 // (챗봇용) 진행중인 캠페인 필터링
 async function getCampaignByFilteringWithChatbot(req, res, next) {
   try {
-    let { category, product, channel, area } = req.body;
+    let { category, product, channel, area, premium } = req.body;
 
     let campaign_sql = `select c.campaign_seq, advertiser, is_premium, title, category, product, channel, area, address, keyword, headcount, siteURL, misson, reward, original_price, discount_price, accrual_point, campaign_guide, recruit_start_date, recruit_end_date, review_start_date, review_end_date, campaign_end_date, reviewer_announcement_date, agreement_portrait, agreement_provide_info, campaign_state, first_register_id, first_register_date ,ifnull(cc.count,0) as applicant_count, view_count, extraImageURL
                           from campaign as c
@@ -1288,6 +1288,12 @@ async function getCampaignByFilteringWithChatbot(req, res, next) {
       campaign_sql += ` and area in (?)`;
       totalCount_sql += ` and area in (?)`;
       sql_param.push(area);
+    }
+
+    if (premium !== undefined) {
+      campaign_sql += ` and is_premium = ?`;
+      totalCount_sql += ` and is_premium = ?`;
+      sql_param.push(premium);
     }
 
     console.info(campaign_sql);
